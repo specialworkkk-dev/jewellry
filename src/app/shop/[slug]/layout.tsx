@@ -6,6 +6,8 @@ import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { ShareButton } from "@/components/public/ShareButton";
 
+export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
+
 export default async function PublicShopLayout({
   children,
   params,
@@ -36,6 +38,29 @@ export default async function PublicShopLayout({
           </p>
           <a href="mailto:support@luxestore.com" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">
             Contact Support
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Increment Link Opens
+  await Shop.updateOne({ _id: shop._id }, { $inc: { currentLinkOpens: 1 } });
+  
+  if (shop.currentLinkOpens >= (shop.maxLinkOpens || 500)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-orange-100">
+          <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Globe className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Store Link Limit Reached</h1>
+          <p className="text-gray-500 mb-6">
+            This shop has reached its maximum allowed visitors ({shop.maxLinkOpens}). 
+            If you are the shop owner, please contact admin to upgrade your limit.
+          </p>
+          <a href="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">
+            Back to Platform
           </a>
         </div>
       </div>

@@ -67,6 +67,18 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                   className="w-full px-3 py-2 border rounded-md" 
                 />
               </div>
+
+              <div className="space-y-2 pt-4 border-t border-dashed">
+                <label className="text-sm font-bold text-gray-900">Max Store Link Opens (Traffic Limit)</label>
+                <input 
+                  type="number" 
+                  name="maxLinkOpens" 
+                  defaultValue={shop.maxLinkOpens || 500} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
+                />
+                <p className="text-xs text-gray-500">How many times this shop's public link can be opened. The {shop.currentLinkOpens || 0}th link will be blocked.</p>
+                <p className="text-xs text-amber-600 font-medium">Currently used: {shop.currentLinkOpens || 0} opens.</p>
+              </div>
             </div>
 
             {/* Access Control */}

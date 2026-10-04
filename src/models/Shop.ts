@@ -29,6 +29,10 @@ export interface IShop extends Document {
   goldRate22K?: number;
   goldRate24K?: number;
   
+  // Link Limits
+  maxLinkOpens: number;
+  currentLinkOpens: number;
+  
   isApproved: boolean;
   isActive: boolean;
   createdAt: Date;
@@ -61,6 +65,9 @@ const ShopSchema: Schema = new Schema(
     
     goldRate22K: { type: Number },
     goldRate24K: { type: Number },
+    
+    maxLinkOpens: { type: Number, default: 500 },
+    currentLinkOpens: { type: Number, default: 0 },
     
     isApproved: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

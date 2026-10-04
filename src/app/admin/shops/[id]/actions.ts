@@ -18,6 +18,7 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
     maxProducts: parseInt(formData.get("maxProducts")?.toString() || "0"),
     maxPhotosPerDay: parseInt(formData.get("maxPhotosPerDay")?.toString() || "0"),
     maxVideosPerDay: parseInt(formData.get("maxVideosPerDay")?.toString() || "0"),
+    maxLinkOpens: parseInt(formData.get("maxLinkOpens")?.toString() || "500"),
     isActive: formData.get("isActive") === "true",
   };
 
