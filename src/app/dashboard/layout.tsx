@@ -33,7 +33,7 @@ export default async function DashboardLayout({
   const shop = await Shop.findById(session.user.shopId);
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/50">
       {/* Mobile Navigation (Client Component) */}
       <MobileSidebar />
 

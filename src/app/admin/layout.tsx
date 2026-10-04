@@ -22,7 +22,7 @@ export default async function AdminLayout({
   const displayEmail = session.user.email ?? "";
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex flex-col hidden md:flex">
         <div className="h-16 flex items-center px-6 border-b border-gray-100 font-bold text-xl text-gray-800">

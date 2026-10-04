@@ -126,7 +126,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
-        <Card className="col-span-4 shadow-sm">
+        <Card className="md:col-span-1 lg:col-span-4 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-gray-800">Recent Enquiries</CardTitle>
           </CardHeader>
@@ -150,7 +150,7 @@ export default async function DashboardOverviewPage() {
             )}
           </CardContent>
         </Card>
-        <Card className="col-span-3 shadow-sm">
+        <Card className="md:col-span-1 lg:col-span-3 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-gray-800">Top Performing Products</CardTitle>
           </CardHeader>
