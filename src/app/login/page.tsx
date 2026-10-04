@@ -79,7 +79,7 @@ export default function LoginPage() {
               </label>
               <div className="mt-1">
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
