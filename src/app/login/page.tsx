@@ -75,7 +75,7 @@ export default function LoginPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Email address
+                Username
               </label>
               <div className="mt-1">
                 <input
@@ -84,7 +84,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
-                  placeholder="shop@example.com"
+                  placeholder="Enter your username"
                 />
               </div>
             </div>
