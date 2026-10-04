@@ -1,0 +1,34 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  mobile: string;
+  passwordHash: string;
+  role: 'PLATFORM_ADMIN' | 'SHOP_OWNER' | 'CUSTOMER';
+  shopId?: mongoose.Types.ObjectId; // For SHOP_OWNER
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema: Schema = new Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    mobile: { type: String, required: true },
+    passwordHash: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ['PLATFORM_ADMIN', 'SHOP_OWNER', 'CUSTOMER'],
+      default: 'CUSTOMER',
+    },
+    shopId: { type: Schema.Types.ObjectId, ref: 'Shop' },
+  },
+  { timestamps: true }
+);
+
+// Indexes
+UserSchema.index({ email: 1 });
+UserSchema.index({ shopId: 1 });
+
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
