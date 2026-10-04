@@ -1,13 +1,16 @@
 import Shop from '@/models/Shop';
 
 export function createSlug(text: string): string {
-  return text
+  const result = text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')        // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
-    .replace(/\-\-+/g, '-');     // Replace multiple - with single -
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]+/g, '')
+    .replace(/\-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return result || 'shop';
 }
 
 export async function generateUniqueShopSlug(shopName: string): Promise<string> {
