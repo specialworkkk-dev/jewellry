@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, MapPin, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { StoreImage } from "@/components/public/StoreImage";
+
+export const metadata: Metadata = {
+  title: "LuxeStore",
+  description: "Premium handcrafted jewellery and bridal pieces.",
+  applicationName: "LuxeStore",
+  appleWebApp: {
+    title: "LuxeStore",
+    statusBarStyle: "default",
+  },
+};
 
 const whatsappNumber = "919876543210";
 const brandName = "LuxeStore";

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
@@ -6,6 +7,34 @@ import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  await connectToDatabase();
+  const shop = await Shop.findOne({ slug, isApproved: true }).lean();
+
+  if (!shop) {
+    return {
+      title: 'Shop not found',
+      description: 'This shop could not be found.',
+    };
+  }
+
+  return {
+    title: shop.name,
+    description: shop.shortDescription || `Visit ${shop.name} and explore our latest collection.`,
+    applicationName: shop.name,
+    appleWebApp: {
+      title: shop.name,
+      statusBarStyle: 'default',
+    },
+    openGraph: {
+      title: shop.name,
+      description: shop.shortDescription || `Shop by ${shop.name}`,
+      siteName: shop.name,
+    },
+  };
+}
 
 export default async function PublicShopLayout({
   children,
@@ -68,8 +97,12 @@ export default async function PublicShopLayout({
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
-      {/* Inject dynamic manifest for this specific shop */}
+      {/* Inject dynamic manifest and home-screen branding for this specific shop */}
       <link rel="manifest" href={`/api/shop/${shop.slug}/manifest.json`} />
+      <meta name="application-name" content={shop.name} />
+      <meta name="apple-mobile-web-app-title" content={shop.name} />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (
