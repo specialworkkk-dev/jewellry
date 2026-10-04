@@ -3,7 +3,6 @@ import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
 import Link from "next/link";
 import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
-import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { ShareButton } from "@/components/public/ShareButton";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
@@ -165,8 +164,6 @@ export default async function PublicShopLayout({
         <p className="mt-1 text-xs">Powered by Digital Storefront SaaS</p>
       </footer>
 
-      {/* PWA Install Prompt */}
-      <PwaInstallPrompt shopName={shop.name} />
     </div>
   );
 }
