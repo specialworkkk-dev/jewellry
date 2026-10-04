@@ -10,7 +10,7 @@ import { ProductActionButtons } from "@/components/public/ProductActionButtons";
 import { EnquiryForm } from "@/components/public/EnquiryForm";
 
 export async function generateMetadata(
-  { params }: { params: { slug: string; id: string } },
+  { params }: { params: Promise<{ slug: string; id: string }> },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   await connectToDatabase();
@@ -47,7 +47,7 @@ export async function generateMetadata(
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { slug: string; id: string };
+  params: Promise<{ slug: string; id: string }>;
 }) {
   await connectToDatabase();
   

@@ -4,7 +4,10 @@ import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -14,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     await connectToDatabase();
 
-    const { id } = await params;
+    const { id } = await context.params;
     const shop = await Shop.findById(id);
     
     if (!shop) {

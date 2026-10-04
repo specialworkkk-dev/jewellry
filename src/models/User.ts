@@ -5,7 +5,7 @@ export interface IUser extends Document {
   email: string;
   mobile: string;
   passwordHash: string;
-  role: 'PLATFORM_ADMIN' | 'SHOP_OWNER' | 'CUSTOMER';
+  role: 'SUPER_ADMIN' | 'PLATFORM_ADMIN' | 'SHOP_OWNER' | 'CUSTOMER';
   shopId?: mongoose.Types.ObjectId; // For SHOP_OWNER
   createdAt: Date;
   updatedAt: Date;
@@ -19,7 +19,7 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String, required: true },
     role: {
       type: String,
-      enum: ['PLATFORM_ADMIN', 'SHOP_OWNER', 'CUSTOMER'],
+      enum: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SHOP_OWNER', 'CUSTOMER'],
       default: 'CUSTOMER',
     },
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop' },
@@ -28,7 +28,6 @@ const UserSchema: Schema = new Schema(
 );
 
 // Indexes
-UserSchema.index({ email: 1 });
 UserSchema.index({ shopId: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

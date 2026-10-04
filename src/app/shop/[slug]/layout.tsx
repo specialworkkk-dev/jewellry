@@ -13,7 +13,7 @@ export default async function PublicShopLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
   await connectToDatabase();
   

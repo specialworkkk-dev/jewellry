@@ -76,7 +76,6 @@ const ShopSchema: Schema = new Schema(
 );
 
 // Indexes
-ShopSchema.index({ slug: 1 });
 ShopSchema.index({ ownerId: 1 });
 
 export default mongoose.models.Shop || mongoose.model<IShop>('Shop', ShopSchema);

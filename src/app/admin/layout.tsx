@@ -16,6 +16,9 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
+  const displayName = session.user.name ?? "Admin";
+  const displayEmail = session.user.email ?? "";
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -48,7 +51,7 @@ export default async function AdminLayout({
         <header className="h-16 bg-white border-b border-gray-100 flex items-center px-6 justify-between">
           <h2 className="font-medium text-gray-600">Jewellery SaaS Platform</h2>
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            <UserProfileDropdown name={session.user.name} email={session.user.email} />
+            <UserProfileDropdown name={displayName} email={displayEmail} />
           </div>
         </header>
         <div className="p-8">

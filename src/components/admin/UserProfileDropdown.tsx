@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { LogOut, User as UserIcon } from "lucide-react";
 
-export default function UserProfileDropdown({ name, email }: { name: string; email?: string | null }) {
+export default function UserProfileDropdown({ name, email }: { name?: string | null; email?: string | null }) {
+  const safeName = name || "User";
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -26,14 +27,14 @@ export default function UserProfileDropdown({ name, email }: { name: string; ema
         className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
       >
         <span className="font-bold text-sm">
-          {name.charAt(0).toUpperCase()}
+          {safeName.charAt(0).toUpperCase()}
         </span>
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 transform opacity-100 scale-100 transition-all origin-top-right">
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{safeName}</p>
             {email && <p className="text-xs text-gray-500 truncate mt-0.5">{email}</p>}
           </div>
           

@@ -4,12 +4,12 @@ import Shop from '@/models/Shop';
 
 export async function GET(
   req: Request,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectToDatabase();
     
-    const { slug } = await params;
+    const { slug } = await context.params;
     const shop = await Shop.findOne({ slug, isApproved: true });
     
     if (!shop) {
