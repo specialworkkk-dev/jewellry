@@ -120,11 +120,25 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+    box-sizing: border-box;
   }
   html {
     @apply font-sans;
+    font-size: 16px;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  img, svg, video {
+    display: block;
+    max-width: 100%;
+  }
+  input, textarea, select, button {
+    font: inherit;
+  }
+  button, a {
+    -webkit-tap-highlight-color: transparent;
   }
 }

@@ -8,7 +8,13 @@ import { generateUniqueShopSlug } from '@/lib/slugify';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request payload.' }, { status: 400 });
+    }
+
     const {
       name, username, email, mobile, password,
       shopName, address, city, state, pincode,
@@ -73,35 +79,66 @@ export async function POST(req: Request) {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(passwordValue, salt);
 
-    const newUser = new User({
-      name: nameValue,
-      username: usernameValue,
-      email: emailValue || undefined,
-      mobile: normalizedMobile,
-      passwordHash,
-      role: 'SHOP_OWNER',
-    });
+    let savedUser;
+    try {
+      savedUser = await new User({
+        name: nameValue,
+        username: usernameValue,
+        email: emailValue || undefined,
+        mobile: normalizedMobile,
+        passwordHash,
+        role: 'SHOP_OWNER',
+      }).save();
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        return NextResponse.json({ error: 'This username or email is already in use. Please choose another.' }, { status: 409 });
+      }
+      throw error;
+    }
 
-    const savedUser = await newUser.save();
-    const slug = await generateUniqueShopSlug(shopNameValue);
+    let savedShop;
+    let shopSlugAttempt = 0;
 
-    const newShop = new Shop({
-      ownerId: savedUser._id,
-      name: shopNameValue,
-      slug,
-      address: typeof address === 'string' ? address : '',
-      city: typeof city === 'string' ? city : '',
-      state: typeof state === 'string' ? state : '',
-      pincode: typeof pincode === 'string' ? pincode : '',
-      whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber : normalizedMobile,
-      businessPhone: typeof businessPhone === 'string' ? businessPhone : '',
-      isApproved: platformSettings ? platformSettings.allowAutoApproval !== false : true,
-    });
+    while (shopSlugAttempt < 8) {
+      try {
+        const slug = await generateUniqueShopSlug(shopNameValue);
+        savedShop = await new Shop({
+          ownerId: savedUser._id,
+          name: shopNameValue,
+          slug,
+          address: typeof address === 'string' ? address : '',
+          city: typeof city === 'string' ? city : '',
+          state: typeof state === 'string' ? state : '',
+          pincode: typeof pincode === 'string' ? pincode : '',
+          whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber : normalizedMobile,
+          businessPhone: typeof businessPhone === 'string' ? businessPhone : '',
+          isApproved: platformSettings ? platformSettings.allowAutoApproval !== false : true,
+        }).save();
+        break;
+      } catch (error: any) {
+        if (error?.code !== 11000 || !error?.keyPattern || !error.keyPattern.slug) {
+          throw error;
+        }
+        shopSlugAttempt += 1;
+        if (shopSlugAttempt >= 8) {
+          return NextResponse.json({ error: 'We could not create a unique shop URL. Please try a different shop name.' }, { status: 409 });
+        }
+      }
+    }
 
-    const savedShop = await newShop.save();
+    if (!savedShop) {
+      return NextResponse.json({ error: 'We could not create your shop due to a duplicate URL conflict. Please try a different shop name.' }, { status: 409 });
+    }
 
-    savedUser.shopId = savedShop._id;
-    await savedUser.save();
+    try {
+      savedUser.shopId = savedShop._id;
+      await savedUser.save();
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        return NextResponse.json({ error: 'This shop already belongs to an account. Please try again.' }, { status: 409 });
+      }
+      throw error;
+    }
 
     return NextResponse.json(
       { message: 'Shop created successfully', shopUrl: `/shop/${savedShop.slug}` },

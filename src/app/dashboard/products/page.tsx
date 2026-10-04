@@ -39,48 +39,50 @@ export default async function ProductsListPage() {
         </div>
       ) : (
         <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-600 font-medium border-b">
-              <tr>
-                <th className="px-6 py-4">Product</th>
-                <th className="px-6 py-4">SKU</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Price / Type</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {products.map((product) => (
-                <tr key={product._id.toString()} className="hover:bg-gray-50/50">
-                  <td className="px-6 py-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border">
-                      {product.images?.[0] && (
-                        <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <div className="font-medium text-gray-900">{product.name}</div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">{product.sku}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs rounded-full ${product.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {product.isPublished ? 'Published' : 'Draft'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {product.priceType === 'FIXED_PRICE' ? `₹${product.price}` : product.priceType.replace(/_/g, ' ')}
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-blue-600">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-sm text-left">
+              <thead className="bg-gray-50 text-gray-600 font-medium border-b">
+                <tr>
+                  <th className="px-6 py-4">Product</th>
+                  <th className="px-6 py-4">SKU</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Price / Type</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {products.map((product) => (
+                  <tr key={product._id.toString()} className="hover:bg-gray-50/50">
+                    <td className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border">
+                        {product.images?.[0] && (
+                          <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="font-medium text-gray-900">{product.name}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">{product.sku}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 text-xs rounded-full ${product.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        {product.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {product.priceType === 'FIXED_PRICE' ? `₹${product.price}` : product.priceType.replace(/_/g, ' ')}
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-blue-600">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
