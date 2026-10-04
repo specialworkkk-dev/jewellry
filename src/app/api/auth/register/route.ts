@@ -10,21 +10,26 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { 
-      name, email, mobile, password, 
+      name, username, email, mobile, password, 
       shopName, address, city, state, pincode, 
       whatsappNumber, businessPhone 
     } = body;
 
     // Validate inputs
-    if (!name?.trim() || !email?.trim() || !password || !shopName?.trim()) {
-      return NextResponse.json({ error: 'Name, email, password and shop name are required' }, { status: 400 });
+    if (!name?.trim() || !username?.trim() || !password || !shopName?.trim()) {
+      return NextResponse.json({ error: 'Name, username, password and shop name are required' }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = username.toString().trim().toLowerCase();
+    const normalizedEmail = email?.toString().trim().toLowerCase() || '';
     const normalizedMobile = mobile?.toString().trim();
     const passwordText = password.toString();
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    if (!/^[a-z0-9._-]{3,20}$/.test(normalizedUsername)) {
+      return NextResponse.json({ error: 'Username must be 3-20 characters using letters, numbers, dots, underscores or hyphens.' }, { status: 400 });
+    }
+
+    if (normalizedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
     }
 
@@ -48,9 +53,16 @@ export async function POST(req: Request) {
     }
 
     // Check if user exists
-    const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) {
-      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 });
+    const existingUserByUsername = await User.findOne({ username: normalizedUsername });
+    if (existingUserByUsername) {
+      return NextResponse.json({ error: 'This username is already taken' }, { status: 400 });
+    }
+
+    if (normalizedEmail) {
+      const existingUserByEmail = await User.findOne({ email: normalizedEmail });
+      if (existingUserByEmail) {
+        return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 });
+      }
     }
 
     // Hash password
@@ -60,7 +72,8 @@ export async function POST(req: Request) {
     // Create user (temporarily without shopId)
     const newUser = new User({
       name: name.trim(),
-      email: normalizedEmail,
+      username: normalizedUsername,
+      email: normalizedEmail || undefined,
       mobile: normalizedMobile,
       passwordHash,
       role: 'SHOP_OWNER',

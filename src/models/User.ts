@@ -2,7 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
   name: string;
-  email: string;
+  username: string;
+  email?: string;
   mobile: string;
   passwordHash: string;
   role: 'SUPER_ADMIN' | 'PLATFORM_ADMIN' | 'SHOP_OWNER' | 'CUSTOMER';
@@ -14,7 +15,8 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    email: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     mobile: { type: String, required: true },
     passwordHash: { type: String, required: true },
     role: {

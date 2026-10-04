@@ -14,6 +14,7 @@ export default function RegisterPage() {
   
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     email: "",
     mobile: "",
     password: "",
@@ -33,13 +34,18 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.mobile.trim() || !formData.password.trim() || !formData.shopName.trim()) {
+    if (!formData.name.trim() || !formData.username.trim() || !formData.mobile.trim() || !formData.password.trim() || !formData.shopName.trim()) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      setError("Please enter a valid email address.");
+    if (!/^[a-z0-9._-]{3,20}$/.test(formData.username.trim().toLowerCase())) {
+      setError("Username must be 3-20 characters using letters, numbers, dots, underscores or hyphens.");
+      return;
+    }
+
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setError("Please enter a valid email address or leave it empty.");
       return;
     }
 
@@ -64,6 +70,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           ...formData,
           name: formData.name.trim(),
+          username: formData.username.trim().toLowerCase(),
           email: formData.email.trim().toLowerCase(),
           mobile: formData.mobile.trim(),
           shopName: formData.shopName.trim(),
@@ -77,20 +84,23 @@ export default function RegisterPage() {
       }
 
       setSuccess("Account created successfully! Logging you in...");
-      
-      // Auto-login after registration
-      setTimeout(async () => {
-        await signIn("credentials", {
-          email: formData.email,
-          password: formData.password,
-          callbackUrl: "/dashboard"
-        });
-      }, 1500);
 
+      const signInResult = await signIn("credentials", {
+        redirect: false,
+        username: formData.username.trim().toLowerCase(),
+        password: formData.password,
+      });
+
+      if (signInResult?.error) {
+        throw new Error("Account created, but we could not log you in automatically. Please sign in manually.");
+      }
+
+      router.push("/dashboard");
+      router.refresh();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to create account.");
     } finally {
-      if (!success) setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -136,23 +146,29 @@ export default function RegisterPage() {
                   value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="John Doe" />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">Username</label>
+                <input required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                  value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value.replace(/\s+/g, "")})} placeholder="johnjewels" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email Address (optional)</label>
+                <input type="email" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                  value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value.trimStart()})} placeholder="shop@example.com" />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Mobile Number (WhatsApp)</label>
                 <input required type="tel" inputMode="numeric" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/[^\d+\s]/g, "")})} placeholder="+1 234 567 8900" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input required type="email" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
-                  value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value.trimStart()})} placeholder="shop@example.com" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input required type="password" minLength={8} className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
-                  value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input required type="password" minLength={8} className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
             </div>
 
             <div className="border-t border-gray-200 pt-5 mt-5">

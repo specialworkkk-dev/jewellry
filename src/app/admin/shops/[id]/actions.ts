@@ -6,6 +6,12 @@ import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.trunc(parsed);
+};
+
 export async function updateShopLimits(shopId: string, formData: FormData) {
   const session = await getServerSession(authOptions);
   const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
@@ -17,10 +23,10 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   await connectToDatabase();
   
   const updates = {
-    maxProducts: parseInt(formData.get("maxProducts")?.toString() || "0"),
-    maxPhotosPerDay: parseInt(formData.get("maxPhotosPerDay")?.toString() || "0"),
-    maxVideosPerDay: parseInt(formData.get("maxVideosPerDay")?.toString() || "0"),
-    maxLinkOpens: parseInt(formData.get("maxLinkOpens")?.toString() || "500"),
+    maxProducts: parsePositiveInt(formData.get("maxProducts"), 50),
+    maxPhotosPerDay: parsePositiveInt(formData.get("maxPhotosPerDay"), 30),
+    maxVideosPerDay: parsePositiveInt(formData.get("maxVideosPerDay"), 2),
+    maxLinkOpens: parsePositiveInt(formData.get("maxLinkOpens"), 500),
     isActive: formData.get("isActive") === "true",
   };
 

@@ -8,7 +8,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,8 +16,8 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter your email and password.");
+    if (!usernameOrEmail.trim() || !password.trim()) {
+      setError("Please enter your username or email and password.");
       return;
     }
 
@@ -27,12 +27,13 @@ export default function LoginPage() {
     try {
       const res = await signIn("credentials", {
         redirect: false,
-        email: email.trim(),
+        username: usernameOrEmail.trim(),
+        email: usernameOrEmail.trim(),
         password,
       });
 
       if (res?.error) {
-        setError("Invalid email or password. Please try again.");
+        setError("Invalid username/email or password. Please try again.");
       } else {
         router.push("/dashboard");
         router.refresh();
@@ -81,17 +82,17 @@ export default function LoginPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Email address
+                Username or Email
               </label>
               <div className="mt-1">
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
+                  value={usernameOrEmail}
+                  onChange={(e) => setUsernameOrEmail(e.target.value)}
+                  autoComplete="username"
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
-                  placeholder="Enter your email address"
+                  placeholder="Enter your username or email"
                 />
               </div>
             </div>

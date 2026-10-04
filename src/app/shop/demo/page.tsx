@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, MapPin, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { StoreImage } from "@/components/public/StoreImage";
 
+const whatsappNumber = "919876543210";
+const brandName = "LuxeStore";
+const supportEmail = "support@luxestore.com";
+
 const featuredProducts = [
   {
     name: "Royal Emerald Necklace",
@@ -23,7 +27,10 @@ const featuredProducts = [
     price: "₹89,900",
     image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=80",
   },
-];
+].map((product) => ({
+  ...product,
+  enquiryUrl: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about ${product.name}.`)}`,
+}));
 
 export default function DemoStorePage() {
   return (
@@ -33,7 +40,7 @@ export default function DemoStorePage() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">L</div>
             <div>
-              <p className="font-serif text-xl font-semibold">Luxe Atelier</p>
+              <p className="font-serif text-xl font-semibold">{brandName}</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
@@ -41,7 +48,7 @@ export default function DemoStorePage() {
             <a href="#about" className="hover:text-gray-900">About</a>
             <a href="#contact" className="hover:text-gray-900">Contact</a>
           </nav>
-          <a href="https://wa.me/919876543210?text=Hi%20Luxe%20Atelier%2C%20I%20want%20to%20enquire%20about%20a%20jewellery%20piece." target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
+          <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about a jewellery piece.`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
             <MessageCircle className="w-4 h-4" /> WhatsApp
           </a>
         </div>
@@ -105,7 +112,7 @@ export default function DemoStorePage() {
                   <h3 className="mt-1 text-lg font-medium text-gray-900">{product.name}</h3>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="font-semibold text-gray-900">{product.price}</span>
-                    <button className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-medium text-white">Enquire</button>
+                    <a href={product.enquiryUrl} target="_blank" rel="noreferrer" className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-medium text-white inline-flex items-center hover:bg-amber-600">Enquire</a>
                   </div>
                 </div>
               </article>
@@ -136,10 +143,10 @@ export default function DemoStorePage() {
 
       <footer id="contact" className="border-t border-amber-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600">
-          <p>© 2026 Luxe Atelier. Crafted for every celebration.</p>
+          <p>© 2026 {brandName}. Crafted for every celebration.</p>
           <div className="flex items-center gap-4">
-            <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="hover:text-gray-900">WhatsApp</a>
-            <a href="mailto:hello@luxeatelier.example" className="hover:text-gray-900">Email</a>
+            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-gray-900">WhatsApp</a>
+            <a href={`mailto:${supportEmail}`} className="hover:text-gray-900">Email</a>
           </div>
         </div>
       </footer>

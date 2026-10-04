@@ -8,19 +8,28 @@ export const authOptions: any = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
+        username: { label: "Username or Email", type: "text" },
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const usernameInput = credentials?.username?.toString().trim().toLowerCase();
+        const emailInput = credentials?.email?.toString().trim().toLowerCase();
+
+        if ((!usernameInput && !emailInput) || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
-        const normalizedEmail = credentials.email.toString().trim().toLowerCase();
+        const lookupValue = usernameInput || emailInput;
 
         await connectToDatabase();
 
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({
+          $or: [
+            { username: lookupValue },
+            ...(emailInput ? [{ email: emailInput }] : []),
+          ],
+        });
 
         if (!user || !user.passwordHash) {
           throw new Error("User not found");
@@ -37,7 +46,7 @@ export const authOptions: any = {
 
         return {
           id: user._id.toString(),
-          email: user.email,
+          email: user.email || `${user.username}@local`,
           name: user.name,
           role: user.role,
           shopId: user.shopId ? user.shopId.toString() : null,
