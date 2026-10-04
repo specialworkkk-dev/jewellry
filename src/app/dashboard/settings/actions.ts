@@ -17,6 +17,8 @@ export async function updateShopSettings(formData: FormData) {
     shortDescription: formData.get("shortDescription")?.toString() || "",
     whatsappNumber: formData.get("whatsappNumber")?.toString() || "",
     instagramUrl: formData.get("instagramUrl")?.toString() || "",
+    facebookUrl: formData.get("facebookUrl")?.toString() || "",
+    websiteUrl: formData.get("websiteUrl")?.toString() || "",
     logoUrl: formData.get("logoUrl")?.toString() || "",
     coverUrl: formData.get("coverUrl")?.toString() || "",
     address: formData.get("address")?.toString() || "",

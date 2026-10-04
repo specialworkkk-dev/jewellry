@@ -65,9 +65,9 @@ export default async function ProductDetailPage({
     notFound(); // Handle invalid ObjectId
   }
 
-  // Pre-fill WhatsApp message
+  const normalizedPhone = (shop.whatsappNumber || "").replace(/\D/g, "");
   const waMessage = encodeURIComponent(`Hi! I'm interested in this product: ${product.name} (SKU: ${product.sku}). Could you provide more details?`);
-  const waUrl = `https://wa.me/${shop.whatsappNumber}?text=${waMessage}`;
+  const waUrl = normalizedPhone ? `https://wa.me/${normalizedPhone}?text=${waMessage}` : "#";
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

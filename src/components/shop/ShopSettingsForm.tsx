@@ -1,14 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
+import { AtSign, Check, Copy, MessageCircle, Share2, Users } from "lucide-react";
 
 export function ShopSettingsForm({ shop }: { shop: any }) {
   const [logoUrl, setLogoUrl] = useState(shop?.logoUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
+  const [copied, setCopied] = useState(false);
+  const [publicShopUrl, setPublicShopUrl] = useState("");
+
+  useEffect(() => {
+    if (shop?.slug) {
+      setPublicShopUrl(`${window.location.origin}/shop/${shop.slug}`);
+    }
+  }, [shop?.slug]);
+
+  const whatsappShareUrl = shop?.whatsappNumber
+    ? `https://wa.me/${shop.whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(`Visit my jewellery shop: ${publicShopUrl}`)}`
+    : `https://wa.me/?text=${encodeURIComponent(`Visit my jewellery shop: ${publicShopUrl}`)}`;
+
+  const handleCopyLink = async () => {
+    if (!publicShopUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicShopUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // no-op: browser may block clipboard access
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -55,6 +79,42 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Public Store Link</CardTitle>
+          <CardDescription>Share this unique storefront URL with customers, and post it across your social channels.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Shop URL</p>
+                <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{publicShopUrl || "Your shop link will appear here"}</p>
+              </div>
+              <Button type="button" variant="outline" onClick={handleCopyLink} className="shrink-0 gap-2">
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? "Copied" : "Copy link"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+            <a href={shop?.instagramUrl || "https://www.instagram.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700">
+              <AtSign className="w-4 h-4" /> Instagram
+            </a>
+            <a href={shop?.facebookUrl || "https://www.facebook.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <Users className="w-4 h-4" /> Facebook
+            </a>
+            <a href={publicShopUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <Share2 className="w-4 h-4" /> Share Link
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Business Information</CardTitle>
           <CardDescription>Update your public contact details and description.</CardDescription>
         </CardHeader>
@@ -80,6 +140,14 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Instagram URL</label>
                 <input name="instagramUrl" type="url" defaultValue={shop?.instagramUrl} placeholder="https://instagram.com/..." className="w-full px-3 py-2 border rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Facebook URL</label>
+                <input name="facebookUrl" type="url" defaultValue={shop?.facebookUrl} placeholder="https://facebook.com/..." className="w-full px-3 py-2 border rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Website URL</label>
+                <input name="websiteUrl" type="url" defaultValue={shop?.websiteUrl} placeholder="https://yourwebsite.com" className="w-full px-3 py-2 border rounded-md" />
               </div>
             </div>
 

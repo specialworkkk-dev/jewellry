@@ -74,6 +74,8 @@ export default async function PublicShopLayout({
 
   // Increment Link Opens
   await Shop.updateOne({ _id: shop._id }, { $inc: { currentLinkOpens: 1 } });
+
+  const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
   
   if (shop.currentLinkOpens >= (shop.maxLinkOpens || 500)) {
     return (
@@ -157,7 +159,7 @@ export default async function PublicShopLayout({
             {/* Quick Actions & Socials */}
             <div className="flex items-center justify-between w-full sm:w-auto gap-4">
               <div className="flex gap-2 w-full sm:w-auto">
-                <a href={`https://wa.me/${shop.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm">
+                <a href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : "#"} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm">
                   <Phone className="w-4 h-4" /> WhatsApp
                 </a>
                 <ShareButton title={shop.name} />
