@@ -11,7 +11,10 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== 'PLATFORM_ADMIN') {
+    const allowedAdminRoles = new Set(['SUPER_ADMIN', 'PLATFORM_ADMIN']);
+    const activeRole = session?.user?.role ?? '';
+
+    if (!session || !allowedAdminRoles.has(activeRole)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

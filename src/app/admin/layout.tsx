@@ -11,8 +11,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
+  const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
+  const activeRole = session?.user?.role ?? "";
 
-  if (!session || session.user.role !== "SUPER_ADMIN") {
+  if (!session || !allowedAdminRoles.has(activeRole)) {
     redirect("/login");
   }
 

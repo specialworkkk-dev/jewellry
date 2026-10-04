@@ -3,6 +3,7 @@ import Shop from "@/models/Shop";
 import Product from "@/models/Product";
 import { notFound } from "next/navigation";
 import { CinematicHero } from "@/components/public/CinematicHero";
+import { StoreImage } from "@/components/public/StoreImage";
 
 // Optional: Optimize Next.js dynamic rendering
 // export const revalidate = 60; // revalidate every 60 seconds
@@ -85,10 +86,10 @@ export default async function PublicShopPage({
               <div key={product._id.toString()} className="group relative">
                 <div className="aspect-[4/5] w-full overflow-hidden rounded-lg bg-gray-100">
                   {product.images?.[0] ? (
-                    <img 
-                      src={product.images[0]} 
-                      alt={product.name} 
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
+                    <StoreImage
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-gray-300">No Image</div>

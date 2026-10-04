@@ -16,9 +16,11 @@ export const authOptions: any = {
           throw new Error("Invalid credentials");
         }
 
+        const normalizedEmail = credentials.email.toString().trim().toLowerCase();
+
         await connectToDatabase();
 
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user || !user.passwordHash) {
           throw new Error("User not found");

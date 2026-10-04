@@ -8,7 +8,9 @@ import { redirect } from "next/navigation";
 
 export async function updateShopLimits(shopId: string, formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "SUPER_ADMIN") {
+  const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
+  const activeRole = session?.user?.role ?? "";
+  if (!session || !allowedAdminRoles.has(activeRole)) {
     throw new Error("Unauthorized");
   }
   

@@ -15,13 +15,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
       const res = await signIn("credentials", {
         redirect: false,
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -75,17 +81,17 @@ export default function LoginPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Username
+                Email address
               </label>
               <div className="mt-1">
                 <input
-                  type="text"
+                  type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="off"
+                  autoComplete="email"
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email address"
                 />
               </div>
             </div>

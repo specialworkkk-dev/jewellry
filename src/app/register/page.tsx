@@ -32,6 +32,27 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.mobile.trim() || !formData.password.trim() || !formData.shopName.trim()) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!/^[+]?\d{8,15}$/.test(formData.mobile.replace(/\s+/g, ""))) {
+      setError("Please enter a valid mobile number.");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -40,7 +61,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          mobile: formData.mobile.trim(),
+          shopName: formData.shopName.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -110,8 +137,8 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Mobile Number (WhatsApp)</label>
-                <input required type="tel" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
-                  value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value})} placeholder="+1 234 567 8900" />
+                <input required type="tel" inputMode="numeric" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                  value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/[^\d+\s]/g, "")})} placeholder="+1 234 567 8900" />
               </div>
             </div>
 
@@ -119,11 +146,11 @@ export default function RegisterPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email Address</label>
                 <input required type="email" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
-                  value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="shop@example.com" />
+                  value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value.trimStart()})} placeholder="shop@example.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input required type="password" minLength={6} className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <input required type="password" minLength={8} className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
               </div>
             </div>

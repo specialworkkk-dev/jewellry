@@ -12,7 +12,7 @@ export default function Home() {
             LuxeStore SaaS
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/api/auth/signin" className="text-sm font-medium text-gray-600 hover:text-black">
+            <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-black">
               Login
             </Link>
             <Link href="/register" className="text-sm font-medium bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors">
