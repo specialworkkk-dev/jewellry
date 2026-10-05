@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
+import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
 import "./globals.css";
 
 const inter = Inter({ 
@@ -35,6 +36,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased h-full flex flex-col min-h-screen`}>
         {children}
+        <PwaServiceWorker />
         <PwaInstallPrompt />
       </body>
     </html>

@@ -5,9 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, Loader2 } from "lucide-react";
+import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -60,13 +62,16 @@ export default function LoginPage() {
             LuxeStore
           </Link>
         </div>
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
         <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your dashboard
+          {t("welcomeBack")}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{" "}
           <Link href="/register" className="font-medium text-amber-600 hover:text-amber-500 transition-colors">
-            create a new shop account
+            {t("openYourStore")}
           </Link>
         </p>
       </div>
@@ -82,7 +87,7 @@ export default function LoginPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Username or Email
+                {t("login")}
               </label>
               <div className="mt-1">
                 <input
@@ -122,7 +127,7 @@ export default function LoginPage() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  "Sign in securely"
+                  t("login")
                 )}
               </button>
             </div>

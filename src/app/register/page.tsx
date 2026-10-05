@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, Loader2, Store } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -118,13 +120,16 @@ export default function RegisterPage() {
             LuxeStore
           </Link>
         </div>
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
         <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-          Create your digital shop
+          {t("openYourStore")}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-amber-600 hover:text-amber-500">
-            Sign in
+            {t("login")}
           </Link>
         </p>
       </div>
@@ -194,7 +199,7 @@ export default function RegisterPage() {
 
             <div className="pt-2">
               <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-black transition-all disabled:opacity-70">
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Launch My Digital Store"}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("launchYourStore")}
               </button>
             </div>
           </form>
