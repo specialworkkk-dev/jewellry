@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Store, TrendingUp } from "lucide-react";
 import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
+import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 
 export default function Home() {
   const { t } = useLocale();
@@ -71,6 +72,11 @@ export default function Home() {
           </div>
         </div>
       </main>
+      <PwaInstallPrompt
+        appId="platform"
+        appName="LuxeStore"
+        description="Install LuxeStore for faster access to jewellery storefronts."
+      />
     </div>
   );
 }

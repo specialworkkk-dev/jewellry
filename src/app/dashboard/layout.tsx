@@ -8,6 +8,22 @@ import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
 import Shop from "@/models/Shop";
 import connectToDatabase from "@/lib/mongoose";
 import { LanguageSwitcher } from "@/i18n/useLocale";
+import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
+import type { Metadata } from "next";
+import { connection } from "next/server";
+
+export async function generateMetadata(): Promise<Metadata> {
+  await connection();
+  return {
+    applicationName: "LuxeStore Owner",
+    manifest: "/api/pwa/owner/manifest.json",
+    appleWebApp: {
+      capable: true,
+      title: "LuxeStore Owner",
+      statusBarStyle: "default",
+    },
+  };
+}
 
 export default async function DashboardLayout({
   children,
@@ -34,6 +50,11 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/50">
+      <PwaInstallPrompt
+        appId="owner"
+        appName="LuxeStore Owner"
+        description="Install your owner dashboard to manage products and enquiries faster."
+      />
       {/* Mobile Navigation (Client Component) */}
       <MobileSidebar />
 

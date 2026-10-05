@@ -7,6 +7,7 @@ import Link from "next/link";
 import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
+import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -26,7 +27,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: shop.name,
     description: shop.shortDescription || `Visit ${shop.name} and explore our latest collection.`,
     applicationName: shop.name,
+    manifest: `/api/shop/${shop.slug}/manifest.json`,
+    icons: {
+      apple: [{
+        url: `/api/shop/${shop.slug}/icon/180`,
+        sizes: "180x180",
+        type: "image/png",
+      }],
+    },
     appleWebApp: {
+      capable: true,
       title: shop.name,
       statusBarStyle: 'default',
     },
@@ -102,12 +112,11 @@ export default async function PublicShopLayout({
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
-      {/* Inject dynamic manifest and home-screen branding for this specific shop */}
-      <link rel="manifest" href={`/api/shop/${shop.slug}/manifest.json`} />
-      <meta name="application-name" content={shop.name} />
-      <meta name="apple-mobile-web-app-title" content={shop.name} />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      <PwaInstallPrompt
+        appId={`shop-${shop.slug}`}
+        appName={shop.name}
+        description={`Install ${shop.name} for quick access to this jewellery collection.`}
+      />
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (

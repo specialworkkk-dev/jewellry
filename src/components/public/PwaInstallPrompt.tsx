@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { Download, Share, Smartphone, X } from "lucide-react";
 
-const INSTALL_STORAGE_KEY = "luxestore-pwa-installed";
-const INSTALL_DISMISSED_KEY = "luxestore-pwa-dismissed-at";
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -27,23 +25,39 @@ function isStandaloneMode() {
   return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as NavigatorWithStandalone).standalone);
 }
 
-export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
+interface PwaInstallPromptProps {
+  appId: string;
+  appName: string;
+  description?: string;
+}
+
+export function PwaInstallPrompt({ appId, appName, description }: PwaInstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
+  const storageSuffix = appId.replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
+  const installStorageKey = `luxestore-pwa-${storageSuffix}-installed`;
+  const dismissedStorageKey = `luxestore-pwa-${storageSuffix}-dismissed-at`;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const promptIsSuppressed = () => {
+      const installed = localStorage.getItem(installStorageKey) === "true" || isStandaloneMode();
+      const dismissedAt = Number(localStorage.getItem(dismissedStorageKey) || 0);
+      const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_DURATION_MS;
+      return installed || recentlyDismissed;
+    };
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
-      setIsVisible(true);
+      if (!promptIsSuppressed()) setIsVisible(true);
     };
 
     const handleAppInstalled = () => {
-      localStorage.setItem(INSTALL_STORAGE_KEY, "true");
+      localStorage.setItem(installStorageKey, "true");
       setIsVisible(false);
     };
 
@@ -51,10 +65,7 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
     window.addEventListener("appinstalled", handleAppInstalled);
 
     const initializePrompt = window.setTimeout(() => {
-      const installed = localStorage.getItem(INSTALL_STORAGE_KEY) === "true" || isStandaloneMode();
-      const dismissedAt = Number(localStorage.getItem(INSTALL_DISMISSED_KEY) || 0);
-      const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_DURATION_MS;
-      if (installed || recentlyDismissed) return;
+      if (promptIsSuppressed()) return;
 
       const ios = isIOSDevice();
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -67,10 +78,10 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [dismissedStorageKey, installStorageKey]);
 
   const markInstalled = () => {
-    localStorage.setItem(INSTALL_STORAGE_KEY, "true");
+    localStorage.setItem(installStorageKey, "true");
     setIsVisible(false);
   };
 
@@ -94,13 +105,13 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
   };
 
   const dismissPrompt = () => {
-    localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now()));
+    localStorage.setItem(dismissedStorageKey, String(Date.now()));
     setIsVisible(false);
   };
 
   if (!isVisible) return null;
 
-  const title = shopName ? `Install ${shopName}` : "Install app";
+  const title = `Install ${appName}`;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[60] px-3 pb-4 sm:px-4">
@@ -113,9 +124,9 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
           <div className="flex-1">
             <div className="text-sm font-semibold text-slate-900">{title}</div>
             <div className="mt-1 text-xs text-slate-600">
-              {isIOS
-                ? "Add this store to your Home Screen for faster access on iPhone and iPad."
-                : "Install the app for a faster, app-like experience on your phone."}
+              {description || (isIOS
+                ? `Add ${appName} to your Home Screen for faster access on iPhone and iPad.`
+                : `Install ${appName} for a faster, app-like experience.`)}
             </div>
 
             {showManualSteps && (

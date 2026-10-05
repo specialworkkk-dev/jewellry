@@ -5,8 +5,23 @@ import Link from "next/link";
 import { LayoutDashboard, Store, Users, Settings } from "lucide-react";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
 import MobileSidebar from "@/components/admin/MobileSidebar";
+import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
+import type { Metadata } from "next";
+import { connection } from "next/server";
 
 export const dynamic = "force-dynamic";
+export async function generateMetadata(): Promise<Metadata> {
+  await connection();
+  return {
+    applicationName: "LuxeStore Admin",
+    manifest: "/api/pwa/admin/manifest.json",
+    appleWebApp: {
+      capable: true,
+      title: "LuxeStore Admin",
+      statusBarStyle: "default",
+    },
+  };
+}
 
 export default async function AdminLayout({
   children,
@@ -26,6 +41,11 @@ export default async function AdminLayout({
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      <PwaInstallPrompt
+        appId="admin"
+        appName="LuxeStore Admin"
+        description="Install the admin app for direct access to platform management."
+      />
       <MobileSidebar mode="admin" />
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex flex-col hidden md:flex">
