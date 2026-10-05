@@ -1,7 +1,3 @@
-import connectToDatabase from "@/lib/mongoose";
-import Shop from "@/models/Shop";
-import Product from "@/models/Product";
-import "@/models/Category";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MessageCircle, Phone, ShieldCheck, MapPin } from "lucide-react";
 import Link from "next/link";
@@ -10,19 +6,18 @@ import { ProductActionButtons } from "@/components/public/ProductActionButtons";
 import { EnquiryForm } from "@/components/public/EnquiryForm";
 import { StoreImage } from "@/components/public/StoreImage";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
+import { getPublicProductById, getPublicShopBySlug } from "@/lib/public-store";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  await connectToDatabase();
-  
   const { slug, id } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
-  if (!shop) return { title: "Not Found" };
+  const shop = await getPublicShopBySlug(slug);
+  if (!shop || shop.isActive === false) return { title: "Not Found" };
 
   try {
-    const product = await Product.findOne({ _id: id, shopId: shop._id, isPublished: true });
+    const product = await getPublicProductById(shop._id.toString(), id);
     if (!product) return { title: "Not Found" };
 
     const previousImages = (await parent).openGraph?.images || [];
@@ -51,18 +46,14 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ slug: string; id: string }>;
 }) {
-  await connectToDatabase();
-  
   const { slug, id } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
-  if (!shop) notFound();
+  const shop = await getPublicShopBySlug(slug);
+  if (!shop || shop.isActive === false) notFound();
 
   let product;
   try {
-    product = await Product.findById(id).populate('categoryId');
-    if (!product || product.shopId.toString() !== shop._id.toString() || !product.isPublished) {
-      notFound();
-    }
+    product = await getPublicProductById(shop._id.toString(), id);
+    if (!product) notFound();
   } catch {
     notFound(); // Handle invalid ObjectId
   }

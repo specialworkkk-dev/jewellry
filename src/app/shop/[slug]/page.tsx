@@ -1,5 +1,3 @@
-import connectToDatabase from "@/lib/mongoose";
-import Shop from "@/models/Shop";
 import Product from "@/models/Product";
 import { notFound } from "next/navigation";
 import { CinematicHero } from "@/components/public/CinematicHero";
@@ -13,6 +11,7 @@ import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, Gem, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Types } from "mongoose";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
+import { getPublicShopBySlug } from "@/lib/public-store";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -23,14 +22,10 @@ export default async function PublicShopPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ category?: string }>;
 }) {
-  await connectToDatabase();
-  
   const { slug } = await params;
   const { category: activeCategory } = await searchParams;
-  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true })
-    .select("name slug coverUrl shortDescription whatsappNumber")
-    .lean();
-  if (!shop) notFound();
+  const shop = await getPublicShopBySlug(slug);
+  if (!shop || shop.isActive === false) notFound();
 
   // Fetch all categories for this shop
   const categories = await Category.find({ $or: [{ shopId: shop._id }, { isSystemDefault: true }] })

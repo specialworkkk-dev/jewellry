@@ -1,22 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import connectToDatabase from "@/lib/mongoose";
-import Shop from "@/models/Shop";
 import Link from "next/link";
 import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { StoreImage } from "@/components/public/StoreImage";
+import { getPublicShopBySlug } from "@/lib/public-store";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  await connectToDatabase();
-  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true }).lean();
+  const shop = await getPublicShopBySlug(slug);
 
-  if (!shop) {
+  if (!shop || shop.isActive === false) {
     return {
       title: 'Shop not found',
       description: 'This shop could not be found.',
@@ -56,13 +54,8 @@ export default async function PublicShopLayout({
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
 }) {
-  await connectToDatabase();
-  
-  // Fetch the shop by slug
   const { slug } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true })
-    .select("name slug logoUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens isActive")
-    .lean();
+  const shop = await getPublicShopBySlug(slug);
   
   if (!shop) {
     notFound();
