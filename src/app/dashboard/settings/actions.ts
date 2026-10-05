@@ -9,10 +9,11 @@ import { revalidatePath } from "next/cache";
 export async function updateShopSettings(formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Unauthorized");
-  
+
   await connectToDatabase();
   const shopId = (session.user as any).shopId;
-  
+  const shop = await Shop.findById(shopId).lean();
+
   const updates = {
     shortDescription: formData.get("shortDescription")?.toString() || "",
     whatsappNumber: formData.get("whatsappNumber")?.toString() || "",
@@ -28,8 +29,10 @@ export async function updateShopSettings(formData: FormData) {
   };
 
   await Shop.findByIdAndUpdate(shopId, { $set: updates });
-  
-  // Revalidate the dashboard and public shop paths to instantly reflect changes
+
   revalidatePath("/dashboard/settings");
+  if (shop?.slug) {
+    revalidatePath(`/shop/${shop.slug}`);
+  }
   revalidatePath("/shop/[slug]", "page");
 }

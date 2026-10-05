@@ -9,6 +9,7 @@ export default async function ShopSettingsPage() {
   await connectToDatabase();
 
   const shop = await Shop.findById((session?.user as any).shopId).lean();
+  const serializableShop = shop ? JSON.parse(JSON.stringify(shop)) : undefined;
 
-  return <ShopSettingsForm shop={shop} />;
+  return <ShopSettingsForm shop={serializableShop} />;
 }

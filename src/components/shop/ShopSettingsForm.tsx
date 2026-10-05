@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
@@ -29,11 +29,14 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const [logoUrl, setLogoUrl] = useState(shop?.logoUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
   const [copied, setCopied] = useState(false);
+  const [publicShopUrl, setPublicShopUrl] = useState("");
   const { t } = useLocale();
 
-  const publicShopUrl = shop?.slug && typeof window !== "undefined"
-    ? `${window.location.origin}/shop/${shop.slug}`
-    : "";
+  useEffect(() => {
+    if (shop?.slug) {
+      setPublicShopUrl(`${window.location.origin}/shop/${shop.slug}`);
+    }
+  }, [shop?.slug]);
 
   const readableShopUrl = publicShopUrl ? publicShopUrl.replace(/^https?:\/\//, "") : "";
   const shopShareText = publicShopUrl ? `Visit my jewellery shop: ${publicShopUrl}` : "Visit my jewellery shop";
