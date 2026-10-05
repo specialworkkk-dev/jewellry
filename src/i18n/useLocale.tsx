@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supportedLocales, translations, type LocaleCode, type TranslationKey } from "@/i18n/translations";
 
 const STORAGE_KEY = "jewelry-locale";
@@ -21,6 +21,17 @@ const localeTextMap: Record<LocaleCode, Record<string, string>> = {
     "Enquiries": "Enquiries",
     "Welcome back": "Welcome back",
     "View Live Shop": "View Live Shop",
+    "Latest Collection": "Latest Collection",
+    "All Items": "All Items",
+    "No products published yet. Check back later!": "No products published yet. Check back later!",
+    "Price on Request": "Price on Request",
+    "Enquire": "Enquire",
+    "About": "About",
+    "Contact": "Contact",
+    "Live Gold Rates:": "Live Gold Rates:",
+    "Store Link Limit Reached": "Store Link Limit Reached",
+    "Back to Platform": "Back to Platform",
+    "Account Suspended": "Account Suspended",
   },
   hi: {
     "Login": "लॉगिन",
@@ -37,6 +48,17 @@ const localeTextMap: Record<LocaleCode, Record<string, string>> = {
     "Enquiries": "पुछताछ",
     "Welcome back": "फिर से स्वागत है",
     "View Live Shop": "लाइव स्टोर देखें",
+    "Latest Collection": "नवीनतम कलेक्शन",
+    "All Items": "सभी आइटम",
+    "No products published yet. Check back later!": "अभी तक कोई प्रोडक्ट नहीं है। कुछ देर बाद देखें!",
+    "Price on Request": "मांग पर कीमत",
+    "Enquire": "पूछताछ करें",
+    "About": "हमारे बारे में",
+    "Contact": "संपर्क",
+    "Live Gold Rates:": "लाइव गोल्ड रेट:",
+    "Store Link Limit Reached": "स्टोर लिंक लिमिट पूरी हुई",
+    "Back to Platform": "प्लेटफ़ॉर्म पर वापस जाएँ",
+    "Account Suspended": "अकाउंट निलंबित",
   },
   gu: {
     "Login": "લૉગિન",
@@ -47,12 +69,23 @@ const localeTextMap: Record<LocaleCode, Record<string, string>> = {
     "Create your digital shop": "તમારો ડિજિટલ સ્ટોર બનાવી શકો છો",
     "Already have an account?": "પહેલેથી એકાઉન્ટ છે?",
     "Dashboard": "ડેશબોર્ડ",
-    "Shop Settings": "સ્ટોર સેટિંગ્સ",
+    "Shop Settings": "સ્ટोर સેટિંગ્સ",
     "Overview": "ઓવરવ્યુ",
     "Products": "પ્રોડક્ટ્સ",
     "Enquiries": "પૂછપરછ",
     "Welcome back": "ફરીથી સ્વાગત છે",
     "View Live Shop": "લાઇવ સ્ટોર જુઓ",
+    "Latest Collection": "નવીનતમ કલેક્શન",
+    "All Items": "બધા આઈટમ્સ",
+    "No products published yet. Check back later!": "હજી સુધી કોઈ પ્રોડક્ટ્સ જાહેર નથી થયા. થોડા સમય પછી ફરીથી તપાસો!",
+    "Price on Request": "માગણી પર કિંમત",
+    "Enquire": "પૂછપરછ કરો",
+    "About": "અમારા વિશે",
+    "Contact": "સંપર્ક",
+    "Live Gold Rates:": "લાઇવ ગોલ્ડ રેટ:",
+    "Store Link Limit Reached": "સ્ટોર લિંક લિમિટ પૂરી થઈ",
+    "Back to Platform": "પ્લેટફોર્મ પર પાછા જાઓ",
+    "Account Suspended": "એકાઉન્ટ સસ્પેન્ડેડ",
   },
   marvadi: {
     "Login": "लॉगिन",
@@ -69,14 +102,38 @@ const localeTextMap: Record<LocaleCode, Record<string, string>> = {
     "Enquiries": "पूछताछ",
     "Welcome back": "फिर से स्वागत है",
     "View Live Shop": "लाइव स्टोर देखो",
+    "Latest Collection": "नवीनतम कलेक्शन",
+    "All Items": "सब आइटम",
+    "No products published yet. Check back later!": "अभी तक कोई प्रोडक्ट्स नहीं हैं। थोड़ी देर बाद फिर देखें!",
+    "Price on Request": "मांग पर कीमत",
+    "Enquire": "पूछताछ करो",
+    "About": "हमारे बारे में",
+    "Contact": "संपर्क",
+    "Live Gold Rates:": "लाइव गोल्ड रेट:",
+    "Store Link Limit Reached": "स्टोर लिंक लिमिट पूरी हुई",
+    "Back to Platform": "प्लेटफ़ॉर्म पर वापस जाओ",
+    "Account Suspended": "अकाउंट निलंबित",
   },
 };
 
-function applyLocaleText(locale: LocaleCode) {
+const reverseLocaleTextMap = Object.fromEntries(
+  Object.entries(localeTextMap).map(([locale, map]) => [
+    locale,
+    Object.fromEntries(
+      Object.entries(map).map(([source, target]) => [target, source])
+    ),
+  ])
+) as Record<LocaleCode, Record<string, string>>;
+
+function applyLocaleText(locale: LocaleCode, previousLocale?: LocaleCode) {
   if (typeof document === "undefined") return;
 
+  const root = document.body;
+  if (!root) return;
+
+  const previousMap = previousLocale && previousLocale !== locale ? reverseLocaleTextMap[previousLocale] ?? {} : {};
   const replacements = localeTextMap[locale] ?? localeTextMap.en;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
@@ -87,6 +144,10 @@ function applyLocaleText(locale: LocaleCode) {
 
     let value = node.textContent ?? "";
     let updated = value;
+
+    Object.entries(previousMap).forEach(([source, target]) => {
+      updated = updated.split(source).join(target);
+    });
 
     Object.entries(replacements).forEach(([source, target]) => {
       updated = updated.split(source).join(target);
@@ -107,21 +168,28 @@ export function useLocale() {
     const saved = window.localStorage.getItem(STORAGE_KEY) as LocaleCode | null;
     return supportedLocales.some((item) => item.code === saved) ? saved ?? "en" : "en";
   });
+  const previousLocaleRef = useRef<LocaleCode | undefined>(undefined);
 
   useEffect(() => {
+    const previousLocale = previousLocaleRef.current;
+
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, locale);
     }
+
     const languageMap: Record<LocaleCode, string> = {
       en: "en",
       hi: "hi",
       gu: "gu",
       marvadi: "mr",
     };
+
     if (typeof document !== "undefined") {
       document.documentElement.lang = languageMap[locale] ?? "en";
     }
-    applyLocaleText(locale);
+
+    applyLocaleText(locale, previousLocale);
+    previousLocaleRef.current = locale;
   }, [locale]);
 
   const t = (key: TranslationKey) => translations[locale]?.[key] ?? translations.en[key];
