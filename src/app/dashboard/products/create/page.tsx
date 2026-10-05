@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCategoriesAction } from "../actions";
@@ -8,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import Link from "next/link";
 import { ArrowLeft, Loader2, X } from "lucide-react";
+
+interface CategoryOption {
+  _id: string;
+  name: string;
+}
 
 export default function CreateProductPage() {
   const router = useRouter();
@@ -28,11 +34,11 @@ export default function CreateProductPage() {
   const [price, setPrice] = useState("");
   const [images, setImages] = useState<string[]>([]);
   
-  const [categories, setCategories] = useState<any[]>([]);
-  const [categoryId, setCategoryId] = useState(""); 
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryId, setCategoryId] = useState("");
 
   useEffect(() => {
-    getCategoriesAction().then(data => {
+    getCategoriesAction().then((data: CategoryOption[]) => {
       setCategories(data);
       if (data.length > 0) setCategoryId(data[0]._id);
     });
@@ -83,40 +89,40 @@ export default function CreateProductPage() {
 
       router.push("/dashboard/products");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create product");
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-20">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link href="/dashboard/products">
-            <Button variant="ghost" size="icon" type="button">
+            <Button variant="ghost" size="icon" type="button" className="shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Add Product</h1>
-            <p className="text-gray-500 mt-1">Create a new jewellery piece for your catalog.</p>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 break-words">Add Product</h1>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">Create a new jewellery piece for your catalog.</p>
           </div>
         </div>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto text-sm sm:text-base">
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save & Publish Product
         </Button>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200">
+        <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200 text-sm sm:text-base">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
+        <div className="xl:col-span-2 space-y-5 sm:space-y-6">
           {/* General Information */}
           <Card>
             <CardHeader>
@@ -134,7 +140,7 @@ export default function CreateProductPage() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">SKU *</label>
                   <input 
@@ -178,7 +184,7 @@ export default function CreateProductPage() {
               <CardTitle>Jewellery Specifications</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Gold Purity</label>
                   <select 
@@ -270,14 +276,14 @@ export default function CreateProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {images.map((url, index) => (
                   <div key={index} className="relative group rounded-md overflow-hidden border aspect-square">
-                    <img src={url} alt="Product" className="w-full h-full object-cover" />
+                    <Image src={url} alt="Product" fill className="object-cover" unoptimized />
                     <button 
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -285,7 +291,9 @@ export default function CreateProductPage() {
                 ))}
               </div>
 
-              <MediaUploader folder="products" onUploadSuccess={handleUploadSuccess} />
+              <div className="w-full">
+                <MediaUploader folder="products" onUploadSuccess={handleUploadSuccess} />
+              </div>
               
             </CardContent>
           </Card>

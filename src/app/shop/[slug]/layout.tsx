@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
 import Link from "next/link";
 import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
+import { LanguageSwitcher } from "@/i18n/useLocale";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -89,9 +91,9 @@ export default async function PublicShopLayout({
             This shop has reached its maximum allowed visitors ({shop.maxLinkOpens}). 
             If you are the shop owner, please contact admin to upgrade your limit.
           </p>
-          <a href="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">
+          <Link href="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">
             Back to Platform
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -130,7 +132,7 @@ export default async function PublicShopLayout({
             <div className="flex items-center gap-4 self-start sm:self-auto w-full sm:w-auto">
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center flex-shrink-0">
                 {shop.logoUrl ? (
-                  <img src={shop.logoUrl} alt={shop.name} className="w-full h-full object-cover" />
+                  <Image src={shop.logoUrl} alt={shop.name} width={64} height={64} className="w-full h-full object-cover" unoptimized />
                 ) : (
                   <span className="text-xl font-serif text-gray-400">{shop.name.charAt(0)}</span>
                 )}
@@ -158,7 +160,8 @@ export default async function PublicShopLayout({
 
             {/* Quick Actions & Socials */}
             <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto items-center">
+                <LanguageSwitcher />
                 <a href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : "#"} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm">
                   <Phone className="w-4 h-4" /> WhatsApp
                 </a>

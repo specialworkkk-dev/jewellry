@@ -2,12 +2,12 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import Link from "next/link";
-import { LayoutDashboard, Package, Image as ImageIcon, Settings, Megaphone, HelpCircle, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink } from "lucide-react";
 import MobileSidebar from "@/components/admin/MobileSidebar";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
-import User from "@/models/User";
 import Shop from "@/models/Shop";
 import connectToDatabase from "@/lib/mongoose";
+import { LanguageSwitcher } from "@/i18n/useLocale";
 
 export default async function DashboardLayout({
   children,
@@ -72,12 +72,12 @@ export default async function DashboardLayout({
             Welcome back, {session.user.name}
           </div>
           <div className="flex items-center gap-4 flex-shrink-0">
+             <LanguageSwitcher />
              {shop && (
                <Link href={`/shop/${shop.slug}`} target="_blank" className="flex items-center gap-2 text-sm text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
                  View Live Shop <ExternalLink className="w-4 h-4" />
                </Link>
              )}
-             {/* User Profile / Logout Dropdown */}
              <UserProfileDropdown name={session.user.name} email={session.user.email} />
           </div>
         </header>

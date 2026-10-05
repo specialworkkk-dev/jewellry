@@ -1,17 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, MapPin, MessageCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { StoreImage } from "@/components/public/StoreImage";
-
-export const metadata: Metadata = {
-  title: "LuxeStore",
-  description: "Premium handcrafted jewellery and bridal pieces.",
-  applicationName: "LuxeStore",
-  appleWebApp: {
-    title: "LuxeStore",
-    statusBarStyle: "default",
-  },
-};
+import { ShareButton } from "@/components/public/ShareButton";
+import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
 
 const whatsappNumber = "919876543210";
 const brandName = "LuxeStore";
@@ -44,10 +37,12 @@ const featuredProducts = [
 }));
 
 export default function DemoStorePage() {
+  const { t } = useLocale();
+
   return (
     <div className="min-h-screen bg-[#f9f6f2] text-gray-900">
       <header className="border-b border-amber-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">L</div>
             <div>
@@ -55,13 +50,17 @@ export default function DemoStorePage() {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-            <a href="#collection" className="hover:text-gray-900">Collection</a>
+            <a href="#collection" className="hover:text-gray-900">{t("collection")}</a>
             <a href="#about" className="hover:text-gray-900">About</a>
             <a href="#contact" className="hover:text-gray-900">Contact</a>
           </nav>
-          <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about a jewellery piece.`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
-            <MessageCircle className="w-4 h-4" /> WhatsApp
-          </a>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <LanguageSwitcher />
+            <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about a jewellery piece.`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
+              <MessageCircle className="w-4 h-4" /> {t("whatsapp")}
+            </a>
+            <ShareButton title={brandName} />
+          </div>
         </div>
       </header>
 
@@ -71,20 +70,20 @@ export default function DemoStorePage() {
           <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center relative z-10">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                <Sparkles className="w-3.5 h-3.5" /> Premium handcrafted jewellery
+                <Sparkles className="w-3.5 h-3.5" /> {t("premiumHandcraftedJewellery")}
               </span>
               <h1 className="mt-6 text-4xl md:text-6xl font-serif font-bold tracking-tight">
-                Crafted for life’s <span className="text-amber-600">beautiful moments</span>
+                {t("craftedForLifeMoments").split(" ").slice(0, 3).join(" ")} <span className="text-amber-600">{t("craftedForLifeMoments").split(" ").slice(3).join(" ")}</span>
               </h1>
               <p className="mt-5 text-lg text-gray-600 max-w-xl">
-                Discover heirloom-worthy rings, necklaces, and bridal pieces designed with purity, beauty, and modern elegance.
+                {t("discoverHeirloom")}
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <a href="#collection" className="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-6 py-3 font-medium hover:bg-black">
-                  <ShoppingBag className="w-4 h-4" /> Explore collection
+                  <ShoppingBag className="w-4 h-4" /> {t("exploreCollection")}
                 </a>
                 <Link href="/register" className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 hover:border-gray-400">
-                  Open your shop <ArrowRight className="w-4 h-4" />
+                  {t("openYourShop")} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
@@ -102,10 +101,10 @@ export default function DemoStorePage() {
         <section id="collection" className="max-w-6xl mx-auto px-4 py-16">
           <div className="flex items-center justify-between gap-4 mb-8">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">Collection</p>
-              <h2 className="mt-2 text-3xl font-serif font-bold">Featured designs</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">{t("collection")}</p>
+              <h2 className="mt-2 text-3xl font-serif font-bold">{t("featuredDesigns")}</h2>
             </div>
-            <span className="text-sm text-gray-500">Handpicked for ceremonies & daily shine</span>
+            <span className="text-sm text-gray-500">{t("handpickedForCeremonies")}</span>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -135,18 +134,18 @@ export default function DemoStorePage() {
           <div className="max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-3 gap-8">
             <div className="rounded-2xl border border-gray-200 p-6 bg-gray-50">
               <BadgeCheck className="w-8 h-8 text-amber-600" />
-              <h3 className="mt-4 text-xl font-semibold">Hallmarked quality</h3>
-              <p className="mt-2 text-gray-600">Certified purity and authentic craftsmanship for every collection.</p>
+              <h3 className="mt-4 text-xl font-semibold">{t("hallmarkedQuality")}</h3>
+              <p className="mt-2 text-gray-600">{t("hallmarkedQualityText")}</p>
             </div>
             <div className="rounded-2xl border border-gray-200 p-6 bg-gray-50">
               <MapPin className="w-8 h-8 text-amber-600" />
-              <h3 className="mt-4 text-xl font-semibold">Trusted city location</h3>
-              <p className="mt-2 text-gray-600">Convenient store visits, personal consultation, and jewellery guidance.</p>
+              <h3 className="mt-4 text-xl font-semibold">{t("trustedCityLocation")}</h3>
+              <p className="mt-2 text-gray-600">{t("trustedCityLocationText")}</p>
             </div>
             <div className="rounded-2xl border border-gray-200 p-6 bg-gray-50">
               <MessageCircle className="w-8 h-8 text-amber-600" />
-              <h3 className="mt-4 text-xl font-semibold">WhatsApp-first service</h3>
-              <p className="mt-2 text-gray-600">Quick enquiries, product conversations, and direct customer support.</p>
+              <h3 className="mt-4 text-xl font-semibold">{t("whatsappFirstService")}</h3>
+              <p className="mt-2 text-gray-600">{t("whatsappFirstServiceText")}</p>
             </div>
           </div>
         </section>
@@ -156,7 +155,7 @@ export default function DemoStorePage() {
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600">
           <p>© 2026 {brandName}. Crafted for every celebration.</p>
           <div className="flex items-center gap-4">
-            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-gray-900">WhatsApp</a>
+            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-gray-900">{t("whatsapp")}</a>
             <a href={`mailto:${supportEmail}`} className="hover:text-gray-900">Email</a>
           </div>
         </div>

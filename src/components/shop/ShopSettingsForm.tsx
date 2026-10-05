@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
 import { AtSign, Check, Copy, MessageCircle, Share2, Users } from "lucide-react";
+import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
 
 type ShopSettings = {
   slug?: string;
@@ -28,6 +29,7 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const [logoUrl, setLogoUrl] = useState(shop?.logoUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
   const [copied, setCopied] = useState(false);
+  const { t } = useLocale();
 
   const publicShopUrl = shop?.slug && typeof window !== "undefined"
     ? `${window.location.origin}/shop/${shop.slug}`
@@ -74,9 +76,12 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Shop Settings</h1>
-        <p className="text-gray-500 mt-2">Manage your public storefront profile, visuals, and contact information.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t("shopSettings")}</h1>
+          <p className="text-gray-500 mt-2">{t("shopSettingsDescription")}</p>
+        </div>
+        <LanguageSwitcher />
       </div>
 
       <Card>
@@ -117,35 +122,35 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Public Store Link</CardTitle>
-          <CardDescription>Share this unique storefront URL with customers, and post it across your social channels.</CardDescription>
+          <CardTitle>{t("publicStoreLink")}</CardTitle>
+          <CardDescription>{t("publicStoreLinkDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Shop URL</p>
-                <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{readableShopUrl || "Your shop link will appear here"}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("shopUrl")}</p>
+                <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{readableShopUrl || t("shopUrlPlaceholder")}</p>
               </div>
               <Button type="button" variant="outline" onClick={handleCopyLink} className="shrink-0 gap-2">
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copied" : "Copy link"}
+                {copied ? t("copied") : t("copyLink")}
               </Button>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
+              <MessageCircle className="w-4 h-4" /> {t("whatsapp")}
             </a>
             <a href={shop?.instagramUrl || "https://www.instagram.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700">
-              <AtSign className="w-4 h-4" /> Instagram
+              <AtSign className="w-4 h-4" /> {t("instagram")}
             </a>
             <a href={shop?.facebookUrl || "https://www.facebook.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              <Users className="w-4 h-4" /> Facebook
+              <Users className="w-4 h-4" /> {t("facebook")}
             </a>
             <Button type="button" variant="outline" onClick={handleShareLink} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <Share2 className="w-4 h-4" /> Share Link
+              <Share2 className="w-4 h-4" /> {t("shareLink")}
             </Button>
           </div>
         </CardContent>
