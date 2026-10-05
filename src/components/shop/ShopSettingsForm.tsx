@@ -1,27 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
 import { AtSign, Check, Copy, MessageCircle, Share2, Users } from "lucide-react";
 
-export function ShopSettingsForm({ shop }: { shop: any }) {
+type ShopSettings = {
+  slug?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  whatsappNumber?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  name?: string;
+  shortDescription?: string;
+  websiteUrl?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+};
+
+export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const [logoUrl, setLogoUrl] = useState(shop?.logoUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
   const [copied, setCopied] = useState(false);
-  const [publicShopUrl, setPublicShopUrl] = useState("");
 
-  useEffect(() => {
-    if (shop?.slug) {
-      setPublicShopUrl(`${window.location.origin}/shop/${shop.slug}`);
-    }
-  }, [shop?.slug]);
+  const publicShopUrl = shop?.slug && typeof window !== "undefined"
+    ? `${window.location.origin}/shop/${shop.slug}`
+    : "";
+
+  const readableShopUrl = publicShopUrl ? publicShopUrl.replace(/^https?:\/\//, "") : "";
+  const shopShareText = publicShopUrl ? `Visit my jewellery shop: ${publicShopUrl}` : "Visit my jewellery shop";
 
   const whatsappShareUrl = shop?.whatsappNumber
-    ? `https://wa.me/${shop.whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(`Visit my jewellery shop: ${publicShopUrl}`)}`
-    : `https://wa.me/?text=${encodeURIComponent(`Visit my jewellery shop: ${publicShopUrl}`)}`;
+    ? `https://wa.me/${shop.whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(shopShareText)}`
+    : `https://wa.me/?text=${encodeURIComponent(shopShareText)}`;
 
   const handleCopyLink = async () => {
     if (!publicShopUrl) return;
@@ -32,6 +49,27 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
     } catch {
       // no-op: browser may block clipboard access
     }
+  };
+
+  const handleShareLink = async () => {
+    if (!publicShopUrl) return;
+
+    const sharePayload = {
+      title: "My Jewellery Shop",
+      text: shopShareText,
+      url: publicShopUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(sharePayload);
+        return;
+      }
+    } catch {
+      // Fall back to WhatsApp when the system share sheet is cancelled or unsupported.
+    }
+
+    window.open(whatsappShareUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -53,7 +91,7 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 bg-gray-100 rounded-full border flex items-center justify-center overflow-hidden">
                   {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    <Image src={logoUrl} alt="Logo" width={80} height={80} className="w-full h-full object-cover" unoptimized />
                   ) : (
                     <span className="text-gray-400 text-xs">No Logo</span>
                   )}
@@ -66,7 +104,7 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
               <label className="text-sm font-medium text-gray-700">Cover Banner</label>
               <div className="w-full h-24 bg-gray-100 rounded-md border flex items-center justify-center overflow-hidden">
                 {coverUrl ? (
-                  <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                  <Image src={coverUrl} alt="Cover" width={640} height={96} className="w-full h-full object-cover" unoptimized />
                 ) : (
                   <span className="text-gray-400 text-xs">No Cover Image</span>
                 )}
@@ -87,7 +125,7 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Shop URL</p>
-                <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{publicShopUrl || "Your shop link will appear here"}</p>
+                <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{readableShopUrl || "Your shop link will appear here"}</p>
               </div>
               <Button type="button" variant="outline" onClick={handleCopyLink} className="shrink-0 gap-2">
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -106,9 +144,9 @@ export function ShopSettingsForm({ shop }: { shop: any }) {
             <a href={shop?.facebookUrl || "https://www.facebook.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
               <Users className="w-4 h-4" /> Facebook
             </a>
-            <a href={publicShopUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <Button type="button" variant="outline" onClick={handleShareLink} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
               <Share2 className="w-4 h-4" /> Share Link
-            </a>
+            </Button>
           </div>
         </CardContent>
       </Card>
