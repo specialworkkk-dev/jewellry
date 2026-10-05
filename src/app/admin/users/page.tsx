@@ -3,7 +3,11 @@ import User from "@/models/User";
 
 export default async function AdminUsersPage() {
   await connectToDatabase();
-  const users = await User.find().sort({ createdAt: -1 }).lean();
+  const users = await User.find()
+    .select("name email role createdAt")
+    .sort({ createdAt: -1 })
+    .limit(500)
+    .lean();
 
   return (
     <div className="space-y-6">

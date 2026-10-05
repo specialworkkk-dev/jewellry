@@ -49,8 +49,10 @@ export default function CreateProductPage() {
     let cancelled = false;
     const loadOptions = async () => {
       try {
-        const data = await getCategoriesAction() as CategoryOption[];
-        const policy = await getProductMediaPolicyAction();
+        const [data, policy] = await Promise.all([
+          getCategoriesAction() as Promise<CategoryOption[]>,
+          getProductMediaPolicyAction(),
+        ]);
         if (cancelled) return;
         setCategories(data);
         if (data.length > 0) setCategoryId(data[0]._id);
@@ -127,7 +129,7 @@ export default function CreateProductPage() {
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-20">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <Link href="/dashboard/products">
+          <Link prefetch={true} href="/dashboard/products">
             <Button variant="ghost" size="icon" type="button" className="shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>

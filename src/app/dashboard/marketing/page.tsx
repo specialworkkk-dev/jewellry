@@ -1,18 +1,21 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Advertisement from "@/models/Advertisement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Tag, TrendingUp, Presentation } from "lucide-react";
 import Image from "next/image";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function MarketingDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const ads = await Advertisement.find({ shopId }).sort({ createdAt: -1 });
+  const ads = await Advertisement.find({ shopId })
+    .select("title type message imageUrl isActive validUntil createdAt")
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean();
 
   return (
     <div className="space-y-6 max-w-5xl">

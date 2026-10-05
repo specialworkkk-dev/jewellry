@@ -5,7 +5,11 @@ import { ExternalLink } from "lucide-react";
 
 export default async function AdminShopsPage() {
   await connectToDatabase();
-  const shops = await Shop.find().sort({ createdAt: -1 }).lean();
+  const shops = await Shop.find()
+    .select("name slug isActive createdAt")
+    .sort({ createdAt: -1 })
+    .limit(500)
+    .lean();
 
   return (
     <div className="space-y-6">
@@ -36,7 +40,7 @@ export default async function AdminShopsPage() {
                     <Link href={`/shop/${shop.slug}`} target="_blank" className="text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
                       Visit <ExternalLink className="w-3 h-3" />
                     </Link>
-                    <Link href={`/admin/shops/${shop._id}`} className="text-amber-600 hover:text-amber-700 font-medium">
+                    <Link prefetch={true} href={`/admin/shops/${shop._id}`} className="text-amber-600 hover:text-amber-700 font-medium">
                       Configure
                     </Link>
                   </td>

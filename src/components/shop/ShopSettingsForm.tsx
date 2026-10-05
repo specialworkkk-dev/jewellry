@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
 import { AtSign, Check, Copy, MessageCircle, Share2, Users } from "lucide-react";
@@ -227,7 +228,7 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
             </div>
 
             <div className="pt-4 flex justify-end">
-              <Button type="submit">Save Changes</Button>
+              <ActionSubmitButton pendingLabel="Saving changes…">Save Changes</ActionSubmitButton>
             </div>
           </form>
         </CardContent>

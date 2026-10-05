@@ -26,6 +26,9 @@ InteractionSchema.index({ userId: 1, targetId: 1, interactionType: 1 }, { unique
 // Optimize counting likes for a specific product/post
 InteractionSchema.index({ targetId: 1, interactionType: 1 });
 
+// Optimize owner dashboard totals without scanning interactions from other shops.
+InteractionSchema.index({ shopId: 1, interactionType: 1 });
+
 // Optimize finding all favorites for a specific user
 InteractionSchema.index({ userId: 1, interactionType: 1 });
 

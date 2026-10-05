@@ -84,6 +84,8 @@ const ProductSchema: Schema = new Schema(
 // Indexes for fast querying on the public storefront
 ProductSchema.index({ shopId: 1, isPublished: 1 });
 ProductSchema.index({ shopId: 1, categoryId: 1 });
+ProductSchema.index({ shopId: 1, createdAt: -1 });
+ProductSchema.index({ shopId: 1, viewsCount: -1, likesCount: -1 });
 ProductSchema.index({ sku: 1, shopId: 1 }, { unique: true }); // SKU must be unique per shop
 
 export default mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);

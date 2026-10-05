@@ -1,5 +1,3 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 import "@/models/Category";
@@ -9,13 +7,19 @@ import { Plus, Package, Edit } from "lucide-react";
 import Image from "next/image";
 import { deleteProductAction, toggleProductPublishedAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
+import { ActionSubmitButton } from "@/components/ui/action-submit-button";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function ProductsListPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const products = await Product.find({ shopId }).sort({ createdAt: -1 }).populate('categoryId');
+  const products = await Product.find({ shopId })
+    .select("name sku images priceType price isPublished categoryId createdAt")
+    .sort({ createdAt: -1 })
+    .populate("categoryId", "name")
+    .lean();
 
   return (
     <div className="space-y-6">
@@ -24,7 +28,7 @@ export default async function ProductsListPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Products</h1>
           <p className="text-gray-500 mt-2">Manage your jewellery inventory and catalog.</p>
         </div>
-        <Link href="/dashboard/products/create" className="w-full sm:w-auto">
+        <Link prefetch={true} href="/dashboard/products/create" className="w-full sm:w-auto">
           <Button className="w-full gap-2 sm:w-auto min-h-11">
             <Plus className="w-4 h-4" /> Add Product
           </Button>
@@ -36,7 +40,7 @@ export default async function ProductsListPage() {
           <Package className="w-12 h-12 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No products yet</h3>
           <p className="text-gray-500 mt-1 mb-4">Get started by adding your first jewellery piece to the catalog.</p>
-          <Link href="/dashboard/products/create">
+          <Link prefetch={true} href="/dashboard/products/create">
             <Button variant="outline">Add your first product</Button>
           </Link>
         </div>
@@ -68,9 +72,9 @@ export default async function ProductsListPage() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <form action={toggleProductPublishedAction.bind(null, product._id.toString())}>
-                    <Button type="submit" variant="outline" className="w-full min-h-11">
+                    <ActionSubmitButton pendingLabel={product.isPublished ? "Saving Draft…" : "Publishing…"} variant="outline" className="w-full min-h-11">
                       <Edit className="mr-2 h-4 w-4" /> {product.isPublished ? "Make Draft" : "Publish"}
-                    </Button>
+                    </ActionSubmitButton>
                   </form>
                   <form action={deleteProductAction.bind(null, product._id.toString())}>
                     <ConfirmDeleteProductButton />
@@ -112,9 +116,9 @@ export default async function ProductsListPage() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <form action={toggleProductPublishedAction.bind(null, product._id.toString())} className="inline-block">
-                        <Button type="submit" variant="ghost" size="icon" title={product.isPublished ? "Unpublish" : "Publish"} className="h-8 w-8 text-gray-500 hover:text-blue-600">
+                        <ActionSubmitButton pendingLabel="" variant="ghost" size="icon" title={product.isPublished ? "Unpublish" : "Publish"} className="h-8 w-8 text-gray-500 hover:text-blue-600">
                           <Edit className="w-4 h-4" />
-                        </Button>
+                        </ActionSubmitButton>
                       </form>
                       <form action={deleteProductAction.bind(null, product._id.toString())} className="inline-block">
                         <ConfirmDeleteProductButton compact />

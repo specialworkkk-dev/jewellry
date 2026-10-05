@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import type { InfrastructureMetric, InfrastructureReport, InfrastructureServiceReport } from "@/lib/infrastructure-monitor";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
 import { refreshInfrastructureReport } from "./actions";
+import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -116,9 +117,9 @@ export default async function InfrastructurePage() {
           <p className="mt-2 text-gray-500">MongoDB, Cloudflare R2 and Vercel allowance, usage and cost alerts.</p>
         </div>
         <form action={refreshInfrastructureReport}>
-          <button type="submit" className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black">
+          <ActionSubmitButton pendingLabel="Checking services…" className="h-auto bg-gray-900 px-4 py-2.5 text-white hover:bg-black">
             <RefreshCw className="h-4 w-4" /> Run live check
-          </button>
+          </ActionSubmitButton>
         </form>
       </div>
 

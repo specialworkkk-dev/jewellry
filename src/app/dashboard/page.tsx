@@ -12,13 +12,13 @@ import { revalidatePath } from "next/cache";
 import { GoldRateUpdater } from "@/components/admin/GoldRateUpdater";
 import Image from "next/image";
 import Link from "next/link";
+import { getCurrentSession } from "@/lib/session";
+import { getOwnerShop } from "@/lib/owner-data";
 
 export default async function DashboardOverviewPage() {
-  const session = await getServerSession(authOptions);
-  await connectToDatabase();
-
+  const session = await getCurrentSession();
   const shopId = session?.user.shopId;
-  const shop = await Shop.findById(shopId).lean();
+  if (!shopId) throw new Error("Shop owner account is missing a shop");
 
   async function updateGoldRate(rate22k: number | null, rate24k: number | null) {
     "use server";
@@ -42,20 +42,25 @@ export default async function DashboardOverviewPage() {
     revalidatePath("/dashboard");
   }
 
-  // Real Database Metrics
-  const totalProducts = await Product.countDocuments({ shopId });
-  const profileViews = await AnalyticsEvent.countDocuments({ shopId, eventType: 'SHOP_VIEW' });
-  const productLikes = await Interaction.countDocuments({ shopId, interactionType: 'LIKE' });
-  const newEnquiries = await Enquiry.countDocuments({ shopId, status: 'NEW' });
-  
-  const recentEnquiries = await Enquiry.find({ shopId })
-    .sort({ createdAt: -1 })
-    .limit(3)
-    .populate('productId', 'name');
-
-  const topProducts = await Product.find({ shopId })
-    .sort({ viewsCount: -1, likesCount: -1 })
-    .limit(3);
+  await connectToDatabase();
+  const [shop, totalProducts, profileViews, productLikes, newEnquiries, recentEnquiries, topProducts] = await Promise.all([
+    getOwnerShop(shopId),
+    Product.countDocuments({ shopId }),
+    AnalyticsEvent.countDocuments({ shopId, eventType: "SHOP_VIEW" }),
+    Interaction.countDocuments({ shopId, interactionType: "LIKE" }),
+    Enquiry.countDocuments({ shopId, status: "NEW" }),
+    Enquiry.find({ shopId })
+      .select("customerName message status productId createdAt")
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .populate("productId", "name")
+      .lean(),
+    Product.find({ shopId })
+      .select("name images viewsCount likesCount")
+      .sort({ viewsCount: -1, likesCount: -1 })
+      .limit(3)
+      .lean(),
+  ]);
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -64,7 +69,7 @@ export default async function DashboardOverviewPage() {
           <p className="mt-1 text-sm text-gray-500">Update rates, add jewellery and reply to customers.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Link href="/dashboard/products/create" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+          <Link prefetch={true} href="/dashboard/products/create" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
             <Plus className="h-4 w-4" /> Add Product
           </Link>
           {shop?.slug && (

@@ -51,6 +51,7 @@ async function seed() {
       maxVideosPerDay: 2,
       maxLinkOpens: 500,
       currentLinkOpens: 0,
+      uniqueVisitorTrackingVersion: 1,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -58,34 +59,29 @@ async function seed() {
     console.log("Created Demo Owner and Demo Shop");
   }
 
-  const existingAdmin = await users.findOne({ role: 'SUPER_ADMIN' });
-  if (!existingAdmin) {
-    await users.insertOne({
-      name: 'Super Admin',
-      email: 'admin@luxestore.com',
-      mobile: '+91 98765 43210',
-      passwordHash: await bcrypt.hash('admin123', salt),
-      role: 'SUPER_ADMIN',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    console.log('Created default platform admin account: admin@luxestore.com / admin123');
-  } else {
+  const requestedAdminUsername = process.env.ADMIN_SEED_USERNAME?.trim();
+  const requestedAdminPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (requestedAdminUsername && requestedAdminPassword) {
+    const username = requestedAdminUsername.toLowerCase();
+    const now = new Date();
     await users.updateOne(
-      { _id: existingAdmin._id },
+      { username },
       {
         $set: {
-          name: 'Super Admin',
-          email: 'admin@luxestore.com',
-          mobile: '+91 98765 43210',
-          passwordHash: await bcrypt.hash('admin123', salt),
+          name: requestedAdminUsername,
+          username,
+          mobile: '0000000000',
+          passwordHash: await bcrypt.hash(requestedAdminPassword, salt),
           role: 'SUPER_ADMIN',
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: now,
+        },
+        $setOnInsert: { createdAt: now },
+      },
+      { upsert: true },
     );
-    console.log('Repaired existing platform admin account: admin@luxestore.com / admin123');
+    console.log('Platform admin account seeded securely.');
+  } else {
+    console.log('Skipped admin seed: provide ADMIN_SEED_USERNAME and ADMIN_SEED_PASSWORD.');
   }
 
   const settings = mongoose.connection.collection('platformsettings');

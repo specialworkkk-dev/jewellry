@@ -34,6 +34,7 @@ export interface IShop extends Document {
   // Link Limits
   maxLinkOpens: number;
   currentLinkOpens: number;
+  uniqueVisitorTrackingVersion?: number;
   
   isApproved: boolean;
   isActive: boolean;
@@ -72,6 +73,7 @@ const ShopSchema: Schema = new Schema(
     
     maxLinkOpens: { type: Number, default: 500 },
     currentLinkOpens: { type: Number, default: 0 },
+    uniqueVisitorTrackingVersion: { type: Number, default: 1 },
     
     isApproved: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

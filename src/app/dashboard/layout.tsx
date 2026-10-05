@@ -1,12 +1,10 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import Link from "next/link";
 import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink } from "lucide-react";
 import MobileSidebar from "@/components/admin/MobileSidebar";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
-import Shop from "@/models/Shop";
-import connectToDatabase from "@/lib/mongoose";
+import { getCurrentSession } from "@/lib/session";
+import { getOwnerShop } from "@/lib/owner-data";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import type { Metadata } from "next";
@@ -30,7 +28,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
 
   if (!session) {
     redirect("/login");
@@ -44,9 +42,7 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Fetch shop slug to generate the "View Shop" URL
-  await connectToDatabase();
-  const shop = await Shop.findById(session.user.shopId);
+  const shop = session.user.shopId ? await getOwnerShop(session.user.shopId) : null;
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/50">
@@ -64,21 +60,21 @@ export default async function DashboardLayout({
           LuxeStore SaaS
         </div>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
+          <Link prefetch={true} href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <LayoutDashboard className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Overview
           </Link>
-          <Link href="/dashboard/products" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
+          <Link prefetch={true} href="/dashboard/products" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <Package className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Products
           </Link>
-          <Link href="/dashboard/enquiries" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
+          <Link prefetch={true} href="/dashboard/enquiries" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <HelpCircle className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Enquiries
           </Link>
           
           <div className="pt-4 mt-4 border-t border-gray-100">
-            <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
+            <Link prefetch={true} href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
               <Settings className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
               Shop Settings
             </Link>

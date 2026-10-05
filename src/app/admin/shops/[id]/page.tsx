@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateShopLimits } from "./actions";
 import { isObjectId } from "@/lib/validation";
+import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 
 export default async function AdminShopEditPage({ params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
@@ -104,15 +105,17 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
               </div>
 
               <div className="space-y-2 pt-4 border-t border-dashed">
-                <label className="text-sm font-bold text-gray-900">Max Store Link Opens (Traffic Limit)</label>
+                <label className="text-sm font-bold text-gray-900">Maximum Unique Visitor IPs</label>
                 <input 
                   type="number" 
                   name="maxLinkOpens" 
+                  min={1}
+                  step={1}
                   defaultValue={shop.maxLinkOpens || 500} 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
                 />
-                <p className="text-xs text-gray-500">How many times this shop&apos;s public link can be opened. The next link after {shop.maxLinkOpens || 500} will be blocked.</p>
-                <p className="text-xs text-amber-600 font-medium">Currently used: {shop.currentLinkOpens || 0} opens.</p>
+                <p className="text-xs text-gray-500">The storefront accepts this many unique IP addresses. Refreshes and return visits from an admitted IP do not consume another slot.</p>
+                <p className="text-xs text-amber-600 font-medium">Currently admitted: {shop.currentLinkOpens || 0} unique IPs.</p>
               </div>
             </div>
 
@@ -130,9 +133,9 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
               </div>
               
               <div className="pt-6">
-                <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 px-4 rounded-md transition-colors">
+                <ActionSubmitButton pendingLabel="Saving configuration…" className="h-auto w-full bg-gray-900 px-4 py-3 text-white hover:bg-black">
                   Save Tenant Configuration
-                </button>
+                </ActionSubmitButton>
               </div>
             </div>
 

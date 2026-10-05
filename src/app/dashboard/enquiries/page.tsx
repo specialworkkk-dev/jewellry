@@ -1,18 +1,23 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Enquiry from "@/models/Enquiry";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, MessageSquare, Phone } from "lucide-react";
 import { markEnquiryContactedAction } from "./actions";
 import "@/models/Product";
+import { ActionSubmitButton } from "@/components/ui/action-submit-button";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function EnquiriesDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const enquiries = await Enquiry.find({ shopId }).sort({ createdAt: -1 }).populate('productId', 'name sku').lean();
+  const enquiries = await Enquiry.find({ shopId })
+    .select("customerName customerPhone message status productId createdAt")
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .populate("productId", "name sku")
+    .lean();
 
   return (
     <div className="space-y-6">
@@ -61,9 +66,9 @@ export default async function EnquiriesDashboardPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {enquiry.status === "NEW" ? (
                       <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())}>
-                        <Button type="submit" variant="outline" className="w-full min-h-11 border-green-200 text-green-700 hover:bg-green-50">
+                        <ActionSubmitButton pendingLabel="Updating…" variant="outline" className="w-full min-h-11 border-green-200 text-green-700 hover:bg-green-50">
                           <CheckCircle className="mr-1.5 h-4 w-4" /> Contacted
-                        </Button>
+                        </ActionSubmitButton>
                       </form>
                     ) : <div />}
                     <a href={`https://wa.me/${whatsappPhone}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-md border border-green-200 bg-green-50 px-3 text-sm font-medium text-green-700">
@@ -118,9 +123,9 @@ export default async function EnquiriesDashboardPage() {
                     <td className="px-6 py-4 text-right space-x-2">
                       {enquiry.status === 'NEW' && (
                         <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())} className="inline-block">
-                          <Button type="submit" variant="outline" size="sm" className="h-8 border-green-200 text-green-700 hover:bg-green-50">
+                          <ActionSubmitButton pendingLabel="Updating…" variant="outline" size="sm" className="h-8 border-green-200 text-green-700 hover:bg-green-50">
                             <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Contacted
-                          </Button>
+                          </ActionSubmitButton>
                         </form>
                       )}
                       <a href={`https://wa.me/${enquiry.customerPhone}`} target="_blank" rel="noreferrer">

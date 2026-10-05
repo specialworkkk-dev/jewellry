@@ -33,5 +33,6 @@ const AdvertisementSchema: Schema = new Schema(
 
 // Indexes
 AdvertisementSchema.index({ shopId: 1, isActive: 1 });
+AdvertisementSchema.index({ shopId: 1, createdAt: -1 });
 
 export default mongoose.models.Advertisement || mongoose.model<IAdvertisement>('Advertisement', AdvertisementSchema);

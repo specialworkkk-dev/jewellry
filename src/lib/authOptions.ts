@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import type { NextAuthOptions } from "next-auth";
+import { encode as encodeJwt } from "next-auth/jwt";
+
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -57,6 +60,18 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.shopId = user.shopId;
+        if (user.role === "SHOP_OWNER") {
+          token.ownerSessionExpiresAt = Math.floor(Date.now() / 1000) + SEVEN_DAYS_IN_SECONDS;
+        }
+      }
+      if (token.role === "SHOP_OWNER") {
+        const now = Math.floor(Date.now() / 1000);
+        if (typeof token.ownerSessionExpiresAt !== "number") {
+          token.ownerSessionExpiresAt = now + SEVEN_DAYS_IN_SECONDS;
+        }
+        if (token.ownerSessionExpiresAt <= now) {
+          throw new Error("Shop owner session expired");
+        }
       }
       return token;
     },
@@ -71,6 +86,17 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: SEVEN_DAYS_IN_SECONDS,
+    updateAge: 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: SEVEN_DAYS_IN_SECONDS,
+    async encode(params) {
+      const absoluteExpiry = params.token?.ownerSessionExpiresAt;
+      if (typeof absoluteExpiry !== "number") return encodeJwt(params);
+      const remainingSeconds = Math.max(1, absoluteExpiry - Math.floor(Date.now() / 1000));
+      return encodeJwt({ ...params, maxAge: remainingSeconds });
+    },
   },
   pages: {
     signIn: "/login", // We will build this page later

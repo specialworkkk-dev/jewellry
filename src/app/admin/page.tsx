@@ -7,12 +7,16 @@ import { Store, Users, CheckCircle, Clock } from "lucide-react";
 export default async function AdminDashboardPage() {
   await connectToDatabase();
 
-  const totalShops = await Shop.countDocuments();
-  const pendingShops = await Shop.countDocuments({ isApproved: false });
-  const totalUsers = await User.countDocuments();
-  
-  // Just fetching latest 5 shops as an example
-  const recentShops = await Shop.find().sort({ createdAt: -1 }).limit(5);
+  const [totalShops, pendingShops, totalUsers, recentShops] = await Promise.all([
+    Shop.countDocuments(),
+    Shop.countDocuments({ isApproved: false }),
+    User.countDocuments(),
+    Shop.find()
+      .select("name city state isApproved createdAt")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+  ]);
 
   return (
     <div className="space-y-6">

@@ -1,18 +1,21 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Post from "@/models/Post";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Plus, Image as ImageIcon, Video, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function SocialFeedDashboard() {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const posts = await Post.find({ shopId }).sort({ createdAt: -1 }).limit(20);
+  const posts = await Post.find({ shopId })
+    .select("caption mediaUrls mediaType likesCount createdAt")
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .lean();
 
   return (
     <div className="space-y-6">

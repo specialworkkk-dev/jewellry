@@ -7,6 +7,8 @@ import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { StoreImage } from "@/components/public/StoreImage";
 import { getPublicShopBySlug } from "@/lib/public-store";
+import { headers } from "next/headers";
+import { admitUniqueShopVisitor } from "@/lib/unique-shop-visitors";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -81,8 +83,14 @@ export default async function PublicShopLayout({
   }
 
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
-  
-  if (shop.currentLinkOpens >= (shop.maxLinkOpens || 500)) {
+  const maximumUniqueVisitors = shop.maxLinkOpens || 500;
+  const admission = await admitUniqueShopVisitor(
+    shop._id.toString(),
+    maximumUniqueVisitors,
+    await headers(),
+  );
+
+  if (!admission.allowed) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-orange-100">
@@ -91,7 +99,7 @@ export default async function PublicShopLayout({
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Store Link Limit Reached</h1>
           <p className="text-gray-500 mb-6">
-            This shop has reached its maximum allowed visitors ({shop.maxLinkOpens}). 
+            This shop has reached its maximum allowed unique visitors ({maximumUniqueVisitors}).
             If you are the shop owner, please contact admin to upgrade your limit.
           </p>
           <Link href="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">

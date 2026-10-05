@@ -63,6 +63,7 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setIsOpen(false)}
                       className={`group flex items-center px-2 py-3 text-base font-medium rounded-md ${
                         isActive ? "bg-amber-50 text-amber-600" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"

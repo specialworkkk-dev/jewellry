@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import Link from "next/link";
 import { Activity, AlertTriangle, LayoutDashboard, Store, Users, Settings } from "lucide-react";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
@@ -11,6 +9,7 @@ import { connection } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
 import type { InfrastructureAlert } from "@/lib/infrastructure-monitor";
+import { getCurrentSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,7 +30,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getCurrentSession();
   const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
   const activeRole = session?.user?.role ?? "";
 
@@ -65,19 +64,19 @@ export default async function AdminLayout({
           Admin Panel
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          <Link href="/admin" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+          <Link prefetch={true} href="/admin" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
           </Link>
-          <Link href="/admin/shops" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+          <Link prefetch={true} href="/admin/shops" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Store className="w-5 h-5" />
             Shops
           </Link>
-          <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+          <Link prefetch={true} href="/admin/users" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Users className="w-5 h-5" />
             Users
           </Link>
-          <Link href="/admin/infrastructure" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+          <Link prefetch={true} href="/admin/infrastructure" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Activity className="w-5 h-5" />
             Infrastructure
             {infrastructureAlerts.length > 0 && (
@@ -86,7 +85,7 @@ export default async function AdminLayout({
               </span>
             )}
           </Link>
-          <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
+          <Link prefetch={true} href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Settings className="w-5 h-5" />
             Settings
           </Link>
@@ -104,6 +103,7 @@ export default async function AdminLayout({
         <div className="p-4 md:p-8">
           {infrastructureAlerts.length > 0 && (
             <Link
+              prefetch={true}
               href="/admin/infrastructure"
               className={`mb-5 flex items-center justify-between gap-4 rounded-lg border p-3 text-sm ${criticalAlerts.length > 0 ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}
             >

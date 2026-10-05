@@ -19,5 +19,6 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: "SUPER_ADMIN" | "PLATFORM_ADMIN" | "SHOP_OWNER" | "CUSTOMER";
     shopId?: string | null;
+    ownerSessionExpiresAt?: number;
   }
 }

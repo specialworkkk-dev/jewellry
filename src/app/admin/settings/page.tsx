@@ -1,6 +1,7 @@
 import connectToDatabase from '@/lib/mongoose';
 import PlatformSettings from '@/models/PlatformSettings';
 import { updatePlatformSettings } from './actions';
+import { ActionSubmitButton } from '@/components/ui/action-submit-button';
 
 const defaultSettings = {
   platformName: 'LuxeStore SaaS',
@@ -61,7 +62,7 @@ export default async function AdminSettingsPage() {
         </div>
 
         <div className="flex justify-end">
-          <button type="submit" className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-md font-medium">Save Platform Settings</button>
+          <ActionSubmitButton pendingLabel="Saving settings…" className="h-auto bg-gray-900 px-5 py-2.5 text-white hover:bg-black">Save Platform Settings</ActionSubmitButton>
         </div>
       </form>
     </div>
