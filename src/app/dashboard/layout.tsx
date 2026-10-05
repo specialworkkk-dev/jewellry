@@ -9,6 +9,7 @@ import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
@@ -63,20 +64,24 @@ export default async function DashboardLayout({
           <Link prefetch={true} href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <LayoutDashboard className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Overview
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/dashboard/products" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <Package className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Products
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/dashboard/enquiries" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <HelpCircle className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Enquiries
+            <NavPendingIndicator />
           </Link>
           
           <div className="pt-4 mt-4 border-t border-gray-100">
             <Link prefetch={true} href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
               <Settings className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
               Shop Settings
+              <NavPendingIndicator />
             </Link>
           </div>
         </nav>

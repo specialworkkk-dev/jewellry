@@ -41,16 +41,22 @@ async function ownerShopId() {
   return session.user.shopId;
 }
 
-export async function toggleProductPublishedAction(productId: string) {
+export async function setProductPublishedAction(productId: string, isPublished: boolean) {
   const shopId = await ownerShopId();
   if (!isObjectId(productId)) throw new Error("Invalid product");
   await connectToDatabase();
-  const product = await Product.findOne({ _id: productId, shopId }).select("isPublished");
+  const [product, shop] = await Promise.all([
+    Product.findOneAndUpdate(
+      { _id: productId, shopId },
+      { $set: { isPublished } },
+      { returnDocument: "after", runValidators: true },
+    ).select("isPublished"),
+    Shop.findById(shopId).select("slug").lean(),
+  ]);
   if (!product) throw new Error("Product not found");
-  product.isPublished = !product.isPublished;
-  await product.save();
-  revalidatePath("/dashboard/products");
-  revalidatePath("/shop/[slug]", "page");
+  revalidatePath("/dashboard/products", "page");
+  revalidatePath("/dashboard", "page");
+  if (shop?.slug) revalidatePath(`/shop/${shop.slug}`, "layout");
 }
 
 export async function deleteProductAction(productId: string) {

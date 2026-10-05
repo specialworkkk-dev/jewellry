@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Activity, ExternalLink, LayoutDashboard, LogOut, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 
 export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "shop" | "admin"; shopSlug?: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +72,7 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
                     >
                       <Icon className={`mr-4 flex-shrink-0 h-6 w-6 ${isActive ? "text-amber-500" : "text-gray-400 group-hover:text-gray-500"}`} />
                       {item.label}
+                      <NavPendingIndicator />
                     </Link>
                   );
                 })}

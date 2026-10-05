@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, Edit } from "lucide-react";
 import Image from "next/image";
-import { deleteProductAction, toggleProductPublishedAction } from "./actions";
+import { deleteProductAction, setProductPublishedAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { getCurrentSession } from "@/lib/session";
@@ -71,7 +71,7 @@ export default async function ProductsListPage() {
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <form action={toggleProductPublishedAction.bind(null, product._id.toString())}>
+                  <form action={setProductPublishedAction.bind(null, product._id.toString(), !product.isPublished)}>
                     <ActionSubmitButton pendingLabel={product.isPublished ? "Saving Draft…" : "Publishing…"} variant="outline" className="w-full min-h-11">
                       <Edit className="mr-2 h-4 w-4" /> {product.isPublished ? "Make Draft" : "Publish"}
                     </ActionSubmitButton>
@@ -115,7 +115,7 @@ export default async function ProductsListPage() {
                       {product.priceType === 'FIXED_PRICE' ? `₹${product.price}` : product.priceType.replace(/_/g, ' ')}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <form action={toggleProductPublishedAction.bind(null, product._id.toString())} className="inline-block">
+                      <form action={setProductPublishedAction.bind(null, product._id.toString(), !product.isPublished)} className="inline-block">
                         <ActionSubmitButton pendingLabel="" variant="ghost" size="icon" title={product.isPublished ? "Unpublish" : "Publish"} className="h-8 w-8 text-gray-500 hover:text-blue-600">
                           <Edit className="w-4 h-4" />
                         </ActionSubmitButton>

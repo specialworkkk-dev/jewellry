@@ -10,6 +10,7 @@ import connectToDatabase from "@/lib/mongoose";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
 import type { InfrastructureAlert } from "@/lib/infrastructure-monitor";
 import { getCurrentSession } from "@/lib/session";
+import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
@@ -67,14 +68,17 @@ export default async function AdminLayout({
           <Link prefetch={true} href="/admin" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/admin/shops" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Store className="w-5 h-5" />
             Shops
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/admin/users" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Users className="w-5 h-5" />
             Users
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/admin/infrastructure" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Activity className="w-5 h-5" />
@@ -84,10 +88,12 @@ export default async function AdminLayout({
                 {infrastructureAlerts.length}
               </span>
             )}
+            <NavPendingIndicator />
           </Link>
           <Link prefetch={true} href="/admin/settings" className="flex items-center gap-3 px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
             <Settings className="w-5 h-5" />
             Settings
+            <NavPendingIndicator />
           </Link>
         </nav>
       </aside>
