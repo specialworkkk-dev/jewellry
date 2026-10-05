@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateShopLimits } from "./actions";
+import { isObjectId } from "@/lib/validation";
 
 export default async function AdminShopEditPage({ params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
   const resolvedParams = await params;
+  if (!isObjectId(resolvedParams.id)) notFound();
   const shop = await Shop.findById(resolvedParams.id).lean();
   
   if (!shop) {
@@ -76,7 +78,7 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                   defaultValue={shop.maxLinkOpens || 500} 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
                 />
-                <p className="text-xs text-gray-500">How many times this shop's public link can be opened. The {shop.currentLinkOpens || 0}th link will be blocked.</p>
+                <p className="text-xs text-gray-500">How many times this shop&apos;s public link can be opened. The next link after {shop.maxLinkOpens || 500} will be blocked.</p>
                 <p className="text-xs text-amber-600 font-medium">Currently used: {shop.currentLinkOpens || 0} opens.</p>
               </div>
             </div>

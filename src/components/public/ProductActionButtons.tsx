@@ -5,12 +5,25 @@ import { Heart, Share2, Check, MessageCircle, Globe, AtSign, Copy } from "lucide
 
 interface ProductActionButtonsProps {
   productName: string;
+  productId: string;
+  shopId: string;
+  initialLiked?: boolean;
+  initialLikesCount?: number;
 }
 
-export function ProductActionButtons({ productName }: ProductActionButtonsProps) {
-  const [isLiked, setIsLiked] = useState(false);
+export function ProductActionButtons({
+  productName,
+  productId,
+  shopId,
+  initialLiked = false,
+  initialLikesCount = 0,
+}: ProductActionButtonsProps) {
+  const [isLiked, setIsLiked] = useState(initialLiked);
+  const [likesCount, setLikesCount] = useState(initialLikesCount);
   const [copied, setCopied] = useState(false);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [likeError, setLikeError] = useState("");
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -57,21 +70,62 @@ export function ProductActionButtons({ productName }: ProductActionButtonsProps)
     }
   };
 
+  const handleLikeToggle = async () => {
+    if (isLiking) return;
+
+    const nextLiked = !isLiked;
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+
+    setIsLiked(nextLiked);
+    setLikesCount((count) => (nextLiked ? count + 1 : Math.max(0, count - 1)));
+    setIsLiking(true);
+    setLikeError("");
+
+    try {
+      const res = await fetch("/api/interactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetId: productId,
+          targetType: "PRODUCT",
+          interactionType: "LIKE",
+          shopId,
+        }),
+      });
+
+      const result = await res.json() as { error?: string; state?: boolean; likesCount?: number };
+      if (!res.ok) throw new Error(res.status === 401 ? "Sign in to like products" : result.error || "Like request failed");
+
+      if (typeof result.state === "boolean") setIsLiked(result.state);
+      if (typeof result.likesCount === "number") setLikesCount(result.likesCount);
+    } catch (error: unknown) {
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      setLikeError(error instanceof Error ? error.message : "Unable to update like");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2 relative">
       <button
         type="button"
         aria-label={isLiked ? "Unlike product" : "Like product"}
         aria-pressed={isLiked}
-        onClick={() => setIsLiked((prev) => !prev)}
+        onClick={handleLikeToggle}
+        disabled={isLiking}
         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
           isLiked
             ? 'bg-rose-100 text-rose-500'
             : 'bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-500'
-        }`}
+        } ${isLiking ? 'cursor-not-allowed opacity-70' : ''}`}
       >
         <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-current' : 'stroke-current'}`} />
       </button>
+      <span className="text-xs font-medium text-gray-500">{likesCount}</span>
+      {likeError && <span role="alert" className="absolute right-0 top-12 z-20 w-40 rounded-lg bg-slate-900 px-3 py-2 text-center text-xs text-white shadow-lg">{likeError}</span>}
 
       <button
         onClick={handleShare}

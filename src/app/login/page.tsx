@@ -40,7 +40,7 @@ export default function LoginPage() {
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred.");
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-xl shadow-amber-900/5 sm:rounded-2xl sm:px-10 border border-white">
-          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-lg text-sm">
                 {error}
@@ -86,11 +86,12 @@ export default function LoginPage() {
             )}
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor="login-username" className="block text-sm font-medium text-gray-700">
                 {t("login")}
               </label>
               <div className="mt-1">
                 <input
+                  id="login-username"
                   type="text"
                   required
                   value={usernameOrEmail}
@@ -103,16 +104,17 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1">
                 <input
+                  id="login-password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
+                  autoComplete="current-password"
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
                 />
               </div>

@@ -1,22 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
 import "./globals.css";
 
-const inter = Inter({ 
-  subsets: ["latin"], 
-  variable: "--font-inter" 
-});
-
-const playfair = Playfair_Display({ 
-  subsets: ["latin"], 
-  variable: "--font-playfair" 
-});
-
 export const metadata: Metadata = {
-  title: "Digital Storefront SaaS",
-  description: "Premium Jewellery E-commerce SaaS",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  title: {
+    default: "LuxeStore — Digital Jewellery Storefronts",
+    template: "%s | LuxeStore",
+  },
+  description: "Create and share a premium digital storefront for your jewellery business.",
   manifest: "/manifest.webmanifest",
 };
 
@@ -34,7 +27,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="LuxeStore" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased h-full flex flex-col min-h-screen`}>
+      <body className="font-sans antialiased h-full flex flex-col min-h-screen">
         {children}
         <PwaServiceWorker />
         <PwaInstallPrompt />

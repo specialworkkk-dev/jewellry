@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 export default function UserProfileDropdown({ name, email }: { name?: string | null; email?: string | null }) {
   const safeName = name || "User";
@@ -23,6 +23,8 @@ export default function UserProfileDropdown({ name, email }: { name?: string | n
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
+        aria-label="Open user menu"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
       >
@@ -40,6 +42,7 @@ export default function UserProfileDropdown({ name, email }: { name?: string | n
           
           <div className="py-1">
             <button
+              type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >

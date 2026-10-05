@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Metadata, ResolvingMetadata } from "next";
 import { ProductActionButtons } from "@/components/public/ProductActionButtons";
 import { EnquiryForm } from "@/components/public/EnquiryForm";
+import { StoreImage } from "@/components/public/StoreImage";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
@@ -16,12 +17,12 @@ export async function generateMetadata(
   await connectToDatabase();
   
   const { slug, id } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true });
+  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
   if (!shop) return { title: "Not Found" };
 
   try {
-    const product = await Product.findById(id);
-    if (!product || !product.isPublished) return { title: "Not Found" };
+    const product = await Product.findOne({ _id: id, shopId: shop._id, isPublished: true });
+    if (!product) return { title: "Not Found" };
 
     const previousImages = (await parent).openGraph?.images || [];
     const images = product.images?.[0] ? [product.images[0], ...previousImages] : previousImages;
@@ -32,14 +33,14 @@ export async function generateMetadata(
       openGraph: {
         title: product.name,
         description: product.description || `Premium Jewellery at ${shop.name}`,
-        url: `https://example.com/shop/${shop.slug}/product/${product._id}`,
+        url: `/shop/${shop.slug}/product/${product._id}`,
         siteName: shop.name,
         images,
         locale: 'en_IN',
         type: 'website',
       },
     };
-  } catch (e) {
+  } catch {
     return { title: "Not Found" };
   }
 }
@@ -52,7 +53,7 @@ export default async function ProductDetailPage({
   await connectToDatabase();
   
   const { slug, id } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true });
+  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
   if (!shop) notFound();
 
   let product;
@@ -61,7 +62,7 @@ export default async function ProductDetailPage({
     if (!product || product.shopId.toString() !== shop._id.toString() || !product.isPublished) {
       notFound();
     }
-  } catch (e) {
+  } catch {
     notFound(); // Handle invalid ObjectId
   }
 
@@ -85,7 +86,7 @@ export default async function ProductDetailPage({
         <div className="flex flex-col gap-4">
           <div className="w-full aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden border">
             {product.images?.[0] ? (
-              <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+              <StoreImage src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">No Image Available</div>
             )}
@@ -95,7 +96,7 @@ export default async function ProductDetailPage({
             <div className="flex gap-4 overflow-x-auto pb-2">
               {product.images.map((img: string, idx: number) => (
                 <div key={idx} className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden border cursor-pointer hover:border-black transition-colors">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <StoreImage src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -106,7 +107,12 @@ export default async function ProductDetailPage({
         <div className="flex flex-col pt-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium tracking-widest text-amber-600 uppercase">{product.goldPurity || 'Premium'} Jewellery</p>
-            <ProductActionButtons productName={product.name} />
+            <ProductActionButtons
+              productName={product.name}
+              productId={product._id.toString()}
+              shopId={shop._id.toString()}
+              initialLikesCount={product.likesCount || 0}
+            />
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 mt-2">{product.name}</h1>

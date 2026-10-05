@@ -6,12 +6,14 @@ import "@/models/Category";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, Edit, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { deleteProductAction, toggleProductPublishedAction } from "./actions";
 
 export default async function ProductsListPage() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const shopId = (session?.user as any).shopId;
+  const shopId = session?.user.shopId;
   const products = await Product.find({ shopId }).sort({ createdAt: -1 }).populate('categoryId');
 
   return (
@@ -56,7 +58,7 @@ export default async function ProductsListPage() {
                     <td className="px-6 py-4 flex items-center gap-4">
                       <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border">
                         {product.images?.[0] && (
-                          <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                          <Image src={product.images[0]} alt={product.name} width={48} height={48} unoptimized className="w-full h-full object-cover" />
                         )}
                       </div>
                       <div className="font-medium text-gray-900">{product.name}</div>
@@ -71,12 +73,16 @@ export default async function ProductsListPage() {
                       {product.priceType === 'FIXED_PRICE' ? `₹${product.price}` : product.priceType.replace(/_/g, ' ')}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-blue-600">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <form action={toggleProductPublishedAction.bind(null, product._id.toString())} className="inline-block">
+                        <Button type="submit" variant="ghost" size="icon" title={product.isPublished ? "Unpublish" : "Publish"} className="h-8 w-8 text-gray-500 hover:text-blue-600">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </form>
+                      <form action={deleteProductAction.bind(null, product._id.toString())} className="inline-block">
+                        <Button type="submit" variant="ghost" size="icon" title="Delete product" className="h-8 w-8 text-gray-500 hover:text-red-600">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </form>
                     </td>
                   </tr>
                 ))}

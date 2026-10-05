@@ -89,7 +89,7 @@ export default function DemoStorePage() {
             </div>
 
             <div className="rounded-[2rem] border border-amber-100 bg-white p-3 shadow-xl shadow-amber-100/50">
-              <img
+              <StoreImage
                 src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80"
                 alt="Jewellery showcase"
                 className="w-full h-[520px] object-cover rounded-[1.5rem]"

@@ -5,12 +5,13 @@ import Post from "@/models/Post";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Plus, Image as ImageIcon, Video, Heart, MessageCircle } from "lucide-react";
+import Image from "next/image";
 
 export default async function SocialFeedDashboard() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const shopId = (session?.user as any).shopId;
+  const shopId = session?.user.shopId;
   const posts = await Post.find({ shopId }).sort({ createdAt: -1 }).limit(20);
 
   return (
@@ -59,7 +60,7 @@ export default async function SocialFeedDashboard() {
                 <Card key={post._id.toString()} className="overflow-hidden">
                   <div className="aspect-square bg-gray-100 relative">
                     {post.mediaUrls?.[0] ? (
-                      <img src={post.mediaUrls[0]} alt="Post" className="w-full h-full object-cover" />
+                      <Image src={post.mediaUrls[0]} alt="Post" fill sizes="(min-width: 640px) 50vw, 100vw" unoptimized className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">No Media</div>
                     )}

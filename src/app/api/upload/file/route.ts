@@ -1,53 +1,68 @@
-import { NextRequest, NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/authOptions";
+import { r2Client } from "@/lib/r2";
+import { errorMessage } from "@/lib/validation";
 
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
+const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const ALLOWED_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    const shopId = session?.user?.shopId;
+    if (session?.user?.role !== "SHOP_OWNER" || !shopId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const folder = formData.get("folder") as string || "uploads";
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    const bucket = process.env.R2_BUCKET_NAME;
+    const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, "");
+    if (!bucket || !publicBaseUrl) {
+      return NextResponse.json({ error: "Media storage is not configured" }, { status: 503 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
-    // Generate unique key
-    const uniqueId = Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9);
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
-    const key = `${folder}/${uniqueId}-${sanitizedName}`;
+    const formData = await req.formData();
+    const file = formData.get("file");
+    const requestedFolder = formData.get("folder");
+    const folder = typeof requestedFolder === "string" && ALLOWED_FOLDERS.has(requestedFolder)
+      ? requestedFolder
+      : "products";
 
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
-        Key: key,
-        Body: buffer,
-        ContentType: file.type,
-      })
-    );
+    if (!(file instanceof File) || file.size === 0) {
+      return NextResponse.json({ error: "Please choose a file" }, { status: 400 });
+    }
 
-    const publicUrl = `${process.env.NEXT_PUBLIC_R2_DEV_URL}/${key}`;
+    const isImage = ALLOWED_IMAGE_TYPES.has(file.type);
+    const isVideo = ALLOWED_VIDEO_TYPES.has(file.type);
+    if (!isImage && !isVideo) {
+      return NextResponse.json({ error: "Only JPEG, PNG, WebP, AVIF, MP4, WebM, and MOV files are allowed" }, { status: 415 });
+    }
 
-    return NextResponse.json({ publicUrl, key });
-  } catch (error: any) {
+    const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+    if (file.size > maxBytes) {
+      const maxMb = Math.round(maxBytes / 1024 / 1024);
+      return NextResponse.json({ error: `File must be smaller than ${maxMb} MB` }, { status: 413 });
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || (isImage ? "jpg" : "mp4");
+    const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
+
+    await r2Client.send(new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: Buffer.from(await file.arrayBuffer()),
+      ContentLength: file.size,
+      ContentType: file.type,
+      CacheControl: "public, max-age=31536000, immutable",
+    }));
+
+    return NextResponse.json({ publicUrl: `${publicBaseUrl}/${key}`, key });
+  } catch (error: unknown) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: error.message || "Upload failed" }, { status: 500 });
+    return NextResponse.json({ error: errorMessage(error, "Upload failed") }, { status: 500 });
   }
 }

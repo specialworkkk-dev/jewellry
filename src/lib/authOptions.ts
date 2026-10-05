@@ -2,8 +2,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
+import type { NextAuthOptions } from "next-auth";
 
-export const authOptions: any = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -31,18 +32,14 @@ export const authOptions: any = {
           ],
         });
 
-        if (!user || !user.passwordHash) {
-          throw new Error("User not found");
-        }
+        if (!user || !user.passwordHash) return null;
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.passwordHash
         );
 
-        if (!isPasswordValid) {
-          throw new Error("Invalid password");
-        }
+        if (!isPasswordValid) return null;
 
         return {
           id: user._id.toString(),
@@ -55,7 +52,7 @@ export const authOptions: any = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -63,9 +60,9 @@ export const authOptions: any = {
       }
       return token;
     },
-    async session({ session, token }: any) {
+    async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id;
+        session.user.id = token.id ?? token.sub ?? "";
         session.user.role = token.role;
         session.user.shopId = token.shopId;
       }
@@ -78,5 +75,5 @@ export const authOptions: any = {
   pages: {
     signIn: "/login", // We will build this page later
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_dev_only",
+  secret: process.env.NEXTAUTH_SECRET,
 };

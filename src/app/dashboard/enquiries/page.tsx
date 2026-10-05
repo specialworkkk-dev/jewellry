@@ -2,15 +2,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Enquiry from "@/models/Enquiry";
-import Product from "@/models/Product"; // Required for populate()
 import { Button } from "@/components/ui/button";
-import { CheckCircle, MessageSquare, Phone, XCircle } from "lucide-react";
+import { CheckCircle, MessageSquare, Phone } from "lucide-react";
+import { markEnquiryContactedAction } from "./actions";
+import "@/models/Product";
 
 export default async function EnquiriesDashboardPage() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const shopId = (session?.user as any).shopId;
+  const shopId = session?.user.shopId;
   const enquiries = await Enquiry.find({ shopId }).sort({ createdAt: -1 }).populate('productId', 'name sku').lean();
 
   return (
@@ -54,7 +55,7 @@ export default async function EnquiriesDashboardPage() {
                       <div className="max-w-xs truncate text-gray-700">{enquiry.message}</div>
                       {enquiry.productId && (
                         <div className="text-xs text-amber-600 mt-1 font-medium">
-                          Ref: {(enquiry.productId as any).name}
+                          Ref: {typeof enquiry.productId === "object" && "name" in enquiry.productId ? String(enquiry.productId.name) : "Product"}
                         </div>
                       )}
                     </td>
@@ -73,9 +74,11 @@ export default async function EnquiriesDashboardPage() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {enquiry.status === 'NEW' && (
-                        <Button variant="outline" size="sm" className="h-8 border-green-200 text-green-700 hover:bg-green-50">
-                          <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Contacted
-                        </Button>
+                        <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())} className="inline-block">
+                          <Button type="submit" variant="outline" size="sm" className="h-8 border-green-200 text-green-700 hover:bg-green-50">
+                            <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Contacted
+                          </Button>
+                        </form>
                       )}
                       <a href={`https://wa.me/${enquiry.customerPhone}`} target="_blank" rel="noreferrer">
                         <Button variant="outline" size="sm" className="h-8 bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20">

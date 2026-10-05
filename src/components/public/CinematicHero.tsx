@@ -1,5 +1,7 @@
 "use client";
 
+import { StoreImage } from "@/components/public/StoreImage";
+
 interface CinematicHeroProps {
   coverUrl?: string;
   shopName: string;
@@ -11,7 +13,7 @@ export function CinematicHero({ coverUrl, shopName, shortDescription }: Cinemati
     <div className="relative w-full h-[60vh] md:h-[75vh] lg:h-[85vh] overflow-hidden bg-gray-900 flex items-center justify-center">
       {/* Background Media */}
       {coverUrl ? (
-        <img
+        <StoreImage
           src={coverUrl}
           alt={shopName}
           className="absolute inset-0 w-full h-full object-cover animate-in fade-in zoom-in duration-1000"

@@ -5,13 +5,30 @@ import User from '@/models/User';
 import Shop from '@/models/Shop';
 import PlatformSettings from '@/models/PlatformSettings';
 import { generateUniqueShopSlug } from '@/lib/slugify';
+import { checkRateLimit, requestClientId } from '@/lib/rate-limit';
+import { isDuplicateKeyError, isRecord } from '@/lib/validation';
 
 export async function POST(req: Request) {
+  let createdUserId: string | undefined;
+  let createdShopId: string | undefined;
+
   try {
-    let body: any;
+    const rate = checkRateLimit(`register:${requestClientId(req)}`, 5, 60 * 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } },
+      );
+    }
+
+    let body: unknown;
     try {
       body = await req.json();
     } catch {
+      return NextResponse.json({ error: 'Invalid request payload.' }, { status: 400 });
+    }
+
+    if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload.' }, { status: 400 });
     }
 
@@ -89,8 +106,9 @@ export async function POST(req: Request) {
         passwordHash,
         role: 'SHOP_OWNER',
       }).save();
-    } catch (error: any) {
-      if (error?.code === 11000) {
+      createdUserId = savedUser._id.toString();
+    } catch (error: unknown) {
+      if (isDuplicateKeyError(error)) {
         return NextResponse.json({ error: 'This username or email is already in use. Please choose another.' }, { status: 409 });
       }
       throw error;
@@ -114,27 +132,32 @@ export async function POST(req: Request) {
           businessPhone: typeof businessPhone === 'string' ? businessPhone : '',
           isApproved: platformSettings ? platformSettings.allowAutoApproval !== false : true,
         }).save();
+        createdShopId = savedShop._id.toString();
         break;
-      } catch (error: any) {
-        if (error?.code !== 11000 || !error?.keyPattern || !error.keyPattern.slug) {
+      } catch (error: unknown) {
+        if (!isDuplicateKeyError(error)) {
           throw error;
         }
         shopSlugAttempt += 1;
         if (shopSlugAttempt >= 8) {
+          await User.findByIdAndDelete(savedUser._id);
           return NextResponse.json({ error: 'We could not create a unique shop URL. Please try a different shop name.' }, { status: 409 });
         }
       }
     }
 
     if (!savedShop) {
+      await User.findByIdAndDelete(savedUser._id);
       return NextResponse.json({ error: 'We could not create your shop due to a duplicate URL conflict. Please try a different shop name.' }, { status: 409 });
     }
 
     try {
       savedUser.shopId = savedShop._id;
       await savedUser.save();
-    } catch (error: any) {
-      if (error?.code === 11000) {
+    } catch (error: unknown) {
+      if (isDuplicateKeyError(error)) {
+        await Shop.findByIdAndDelete(savedShop._id);
+        await User.findByIdAndDelete(savedUser._id);
         return NextResponse.json({ error: 'This shop already belongs to an account. Please try again.' }, { status: 409 });
       }
       throw error;
@@ -144,8 +167,14 @@ export async function POST(req: Request) {
       { message: 'Shop created successfully', shopUrl: `/shop/${savedShop.slug}` },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration Error:', error);
+    if (createdShopId || createdUserId) {
+      await Promise.allSettled([
+        ...(createdShopId ? [Shop.deleteOne({ _id: createdShopId })] : []),
+        ...(createdUserId ? [User.deleteOne({ _id: createdUserId })] : []),
+      ]);
+    }
     return NextResponse.json({ error: 'Something went wrong while creating your shop. Please try again.' }, { status: 500 });
   }
 }

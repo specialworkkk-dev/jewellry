@@ -10,35 +10,25 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { GoldRateUpdater } from "@/components/admin/GoldRateUpdater";
+import Image from "next/image";
 
 export default async function DashboardOverviewPage() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const shopId = (session?.user as any).shopId;
+  const shopId = session?.user.shopId;
   const shop = await Shop.findById(shopId).lean();
 
-  async function updateGoldRate(arg1: any, arg2: any) {
+  async function updateGoldRate(rate22k: number | null, rate24k: number | null) {
     "use server";
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user.shopId) throw new Error("Unauthorized");
-    
-    let final22K = null;
-    let final24K = null;
+    const activeSession = await getServerSession(authOptions);
+    if (activeSession?.user.role !== "SHOP_OWNER" || !activeSession.user.shopId) throw new Error("Unauthorized");
 
-    // Handle Next.js HMR bug where old client code sends FormData
-    if (arg1 && typeof arg1.get === 'function') {
-      const r22 = arg1.get("rate22k")?.toString();
-      const r24 = arg1.get("rate24k")?.toString();
-      final22K = r22 ? parseInt(r22) : null;
-      final24K = r24 ? parseInt(r24) : null;
-    } else {
-      final22K = arg1 ? parseInt(arg1.toString()) : null;
-      final24K = arg2 ? parseInt(arg2.toString()) : null;
-    }
+    const final22K = typeof rate22k === "number" && Number.isFinite(rate22k) && rate22k > 0 ? Math.round(rate22k) : null;
+    const final24K = typeof rate24k === "number" && Number.isFinite(rate24k) && rate24k > 0 ? Math.round(rate24k) : null;
 
     await connectToDatabase();
-    await Shop.findByIdAndUpdate(session.user.shopId, {
+    await Shop.findByIdAndUpdate(activeSession.user.shopId, {
       $set: {
         goldRate22K: final22K,
         goldRate24K: final24K,
@@ -46,8 +36,8 @@ export default async function DashboardOverviewPage() {
     }, { strict: false });
     
     // Revalidate public storefront to instantly show the new banner
-    const currentShop = await Shop.findById(session.user.shopId).lean();
-    revalidatePath(`/shop/${currentShop.slug}`, "layout");
+    const currentShop = await Shop.findById(activeSession.user.shopId).select("slug").lean();
+    if (currentShop) revalidatePath(`/shop/${currentShop.slug}`, "layout");
     revalidatePath("/dashboard");
   }
 
@@ -164,7 +154,7 @@ export default async function DashboardOverviewPage() {
                 {topProducts.map(prod => (
                   <div key={prod._id.toString()} className="flex items-center gap-3 pb-2 border-b last:border-0">
                     <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden">
-                      {prod.images?.[0] && <img src={prod.images[0]} alt="" className="w-full h-full object-cover" />}
+                      {prod.images?.[0] && <Image src={prod.images[0]} alt={prod.name} width={40} height={40} unoptimized className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-sm text-gray-900 line-clamp-1">{prod.name}</p>

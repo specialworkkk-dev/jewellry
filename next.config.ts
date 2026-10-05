@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  experimental: {
+    // The CLI checker cannot be spawned reliably in some restricted build runners.
+    // This uses the same project-local TypeScript compiler API instead.
+    useTypeScriptCli: false,
+    webpackBuildWorker: false,
+  },
   images: {
     remotePatterns: [
       {
@@ -16,6 +23,19 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com', // Google OAuth Avatars
       }
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
   },
 };
 

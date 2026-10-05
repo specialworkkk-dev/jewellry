@@ -1,33 +1,41 @@
-import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongoose';
-import AnalyticsEvent from '@/models/AnalyticsEvent';
-import { Types } from 'mongoose';
+import { NextResponse } from "next/server";
+import connectToDatabase from "@/lib/mongoose";
+import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
+import { cleanString, isObjectId, isRecord } from "@/lib/validation";
+import AnalyticsEvent from "@/models/AnalyticsEvent";
+import Shop from "@/models/Shop";
+
+const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAPP_CLICK"]);
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { shopId, eventType, targetId } = body;
+    const clientId = requestClientId(req);
+    const rate = checkRateLimit(`analytics:${clientId}`, 120, 60 * 1000);
+    if (!rate.allowed) return NextResponse.json({ success: false }, { status: 202 });
 
-    if (!shopId || !eventType) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const body: unknown = await req.json();
+    if (!isRecord(body)
+      || !isObjectId(body.shopId)
+      || typeof body.eventType !== "string"
+      || !EVENT_TYPES.has(body.eventType)
+      || (body.targetId !== undefined && !isObjectId(body.targetId))) {
+      return NextResponse.json({ success: false }, { status: 400 });
     }
 
     await connectToDatabase();
+    const shopExists = await Shop.exists({ _id: body.shopId, isApproved: true, isActive: true });
+    if (!shopExists) return NextResponse.json({ success: false }, { status: 404 });
 
-    // Fire and forget event logging (no need to authenticate, as it's public tracking)
-    const newEvent = new AnalyticsEvent({
-      shopId: new Types.ObjectId(shopId),
-      eventType,
-      targetId: targetId ? new Types.ObjectId(targetId) : undefined,
-      // IP and User-Agent can be collected here optionally
+    await AnalyticsEvent.create({
+      shopId: body.shopId,
+      eventType: body.eventType,
+      targetId: body.targetId,
+      userAgent: cleanString(req.headers.get("user-agent"), 500),
     });
 
-    await newEvent.save();
-
     return NextResponse.json({ success: true }, { status: 201 });
-  } catch (error) {
-    console.error('Analytics tracking error:', error);
-    // Don't throw 500s for analytics failures, fail silently
-    return NextResponse.json({ success: false }, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Analytics tracking error:", error);
+    return NextResponse.json({ success: false }, { status: 202 });
   }
 }

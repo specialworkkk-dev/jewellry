@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isObjectId } from "@/lib/validation";
 
 const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
   const parsed = Number(value ?? fallback);
@@ -19,6 +20,7 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   if (!session || !allowedAdminRoles.has(activeRole)) {
     throw new Error("Unauthorized");
   }
+  if (!isObjectId(shopId)) throw new Error("Invalid shop");
   
   await connectToDatabase();
   
@@ -30,7 +32,8 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
     isActive: formData.get("isActive") === "true",
   };
 
-  await Shop.findByIdAndUpdate(shopId, { $set: updates });
+  const result = await Shop.updateOne({ _id: shopId }, { $set: updates });
+  if (result.matchedCount === 0) throw new Error("Shop not found");
   revalidatePath("/admin/shops");
   redirect("/admin/shops");
 }

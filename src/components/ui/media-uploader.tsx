@@ -16,6 +16,14 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/webm", "video/quicktime"]);
+    const maxBytes = file.type.startsWith("image/") ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+    if (!allowedTypes.has(file.type) || file.size > maxBytes) {
+      setError(`Choose a supported ${file.type.startsWith("video/") ? "video under 50 MB" : "image under 10 MB"}.`);
+      e.target.value = "";
+      return;
+    }
+
     setIsUploading(true);
     setError(null);
 
@@ -30,17 +38,17 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json() as { error?: string };
         throw new Error(data.error || "Failed to upload file");
       }
       
-      const { publicUrl, key } = await res.json();
+      const { publicUrl, key } = await res.json() as { publicUrl: string; key: string };
 
       // Callback with the final URL
       onUploadSuccess(publicUrl, key);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Upload failed");
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
     }
@@ -53,7 +61,7 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         id={`upload-${folder}`}
         className="hidden"
         onChange={handleFileChange}
-        accept="image/*,video/*"
+        accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime"
         disabled={isUploading}
       />
       <Button

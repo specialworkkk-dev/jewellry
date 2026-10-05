@@ -2,26 +2,33 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Package, Image as ImageIcon, Settings, Megaphone, HelpCircle, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-export default function MobileSidebar() {
+export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admin" }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  const links = [
+  const shopLinks = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
     { href: "/dashboard/products", icon: Package, label: "Products" },
     { href: "/dashboard/enquiries", icon: HelpCircle, label: "Enquiries" },
     { href: "/dashboard/settings", icon: Settings, label: "Shop Settings" },
   ];
+  const adminLinks = [
+    { href: "/admin", icon: LayoutDashboard, label: "Overview" },
+    { href: "/admin/shops", icon: Store, label: "Shops" },
+    { href: "/admin/users", icon: Users, label: "Users" },
+    { href: "/admin/settings", icon: Settings, label: "Settings" },
+  ];
+  const links = mode === "admin" ? adminLinks : shopLinks;
 
   return (
     <div className="md:hidden">
       {/* Mobile Top Header */}
       <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100">
-        <span className="font-bold text-lg text-gray-900">Shop Owner Panel</span>
-        <button onClick={() => setIsOpen(true)} className="p-2 -mr-2 text-gray-600 hover:text-black">
+        <span className="font-bold text-lg text-gray-900">{mode === "admin" ? "Admin Panel" : "Shop Owner Panel"}</span>
+        <button type="button" aria-label="Open navigation" onClick={() => setIsOpen(true)} className="p-2 -mr-2 text-gray-600 hover:text-black">
           <Menu className="w-6 h-6" />
         </button>
       </div>
@@ -33,6 +40,8 @@ export default function MobileSidebar() {
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
+                type="button"
+                aria-label="Close navigation"
                 className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 onClick={() => setIsOpen(false)}
               >

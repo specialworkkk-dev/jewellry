@@ -142,7 +142,7 @@ function applyLocaleText(locale: LocaleCode, previousLocale?: LocaleCode) {
       continue;
     }
 
-    let value = node.textContent ?? "";
+    const value = node.textContent ?? "";
     let updated = value;
 
     Object.entries(previousMap).forEach(([source, target]) => {

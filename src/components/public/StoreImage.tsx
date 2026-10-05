@@ -19,6 +19,9 @@ export function StoreImage({
   const [currentSrc, setCurrentSrc] = useState(src || fallback);
 
   return (
+    // This wrapper intentionally uses a native image so it can swap to an inline
+    // data-URL fallback when a tenant-provided remote image fails at runtime.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={currentSrc}
       alt={alt}

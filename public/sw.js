@@ -1,4 +1,4 @@
-const CACHE_NAME = "luxestore-v1";
+const CACHE_NAME = "luxestore-v3";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {
@@ -29,12 +29,19 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
+  const isPrivatePath = url.pathname.startsWith("/api/")
+    || url.pathname.startsWith("/admin")
+    || url.pathname.startsWith("/dashboard")
+    || url.pathname.startsWith("/login")
+    || url.pathname.startsWith("/register");
 
-  if (!isSameOrigin) {
+  if (!isSameOrigin || isPrivatePath) {
     return;
   }
 
   if (request.mode === "navigate") {
+    const isPublicPage = url.pathname === "/" || url.pathname.startsWith("/shop/");
+    if (!isPublicPage) return;
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -46,6 +53,9 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
+
+  const cacheableDestinations = new Set(["image", "style", "script", "font"]);
+  if (!cacheableDestinations.has(request.destination)) return;
 
   event.respondWith(
     caches.match(request).then((cached) => {

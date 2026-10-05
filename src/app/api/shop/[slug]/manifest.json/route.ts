@@ -3,14 +3,14 @@ import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
 
 export async function GET(
-  req: Request,
+  _req: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectToDatabase();
     
     const { slug } = await context.params;
-    const shop = await Shop.findOne({ slug, isApproved: true });
+    const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
     
     if (!shop) {
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
@@ -26,12 +26,12 @@ export async function GET(
       theme_color: "#111827", // Gray-900 to match the dark hero section
       icons: [
         {
-          src: shop.logoUrl || "/default-icon-192.png",
+          src: shop.logoUrl || "/icon-192.png",
           sizes: "192x192",
           type: "image/png"
         },
         {
-          src: shop.logoUrl || "/default-icon-512.png",
+          src: shop.logoUrl || "/icon-512.png",
           sizes: "512x512",
           type: "image/png"
         }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
+import { StoreImage } from "@/components/public/StoreImage";
 
 interface Story {
   _id: string;
@@ -23,6 +24,22 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
 
   const currentStory = stories[currentIndex];
 
+  const handleNext = useCallback(() => {
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      setProgress(0);
+    } else {
+      onClose();
+    }
+  }, [currentIndex, onClose, stories.length]);
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+      setProgress(0);
+    }
+  };
+
   useEffect(() => {
     if (stories.length === 0) return;
     
@@ -38,23 +55,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
     }, 50);
 
     return () => clearInterval(timer);
-  }, [currentIndex, stories.length]);
-
-  const handleNext = () => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setProgress(0);
-    } else {
-      onClose();
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-      setProgress(0);
-    }
-  };
+  }, [handleNext, stories.length]);
 
   if (stories.length === 0) return null;
 
@@ -85,7 +86,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
           {/* Header */}
           <div className="absolute top-6 inset-x-0 z-20 flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
-              <img src={shopLogo} alt={shopName} className="w-8 h-8 rounded-full border border-white/20" />
+              <StoreImage src={shopLogo} alt={shopName} className="w-8 h-8 rounded-full border border-white/20" />
               <span className="text-white font-medium text-sm drop-shadow-md">{shopName}</span>
             </div>
             <button onClick={onClose} className="text-white p-1 hover:bg-white/10 rounded-full">
@@ -98,7 +99,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
             {currentStory.mediaType === "VIDEO" ? (
               <video src={currentStory.mediaUrl} autoPlay playsInline className="w-full h-full object-cover" />
             ) : (
-              <img src={currentStory.mediaUrl} alt="" className="w-full h-full object-cover" />
+              <StoreImage src={currentStory.mediaUrl} alt={`${shopName} story`} className="w-full h-full object-cover" />
             )}
             
             {/* Click zones for navigation */}

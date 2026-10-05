@@ -28,14 +28,15 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-bold text-amber-900 flex items-center gap-2">
           <Coins className="w-4 h-4 text-amber-600" />
-          Update Today's Gold Rate
+          Update Today&apos;s Gold Rate
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1 w-full space-y-1">
-            <label className="text-xs font-medium text-amber-800">22K Gold (per gram)</label>
+            <label htmlFor="gold-rate-22k" className="text-xs font-medium text-amber-800">22K Gold (per gram)</label>
             <input 
+              id="gold-rate-22k"
               type="number" 
               value={rate22K}
               onChange={(e) => setRate22K(e.target.value)}
@@ -44,8 +45,9 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
             />
           </div>
           <div className="flex-1 w-full space-y-1">
-            <label className="text-xs font-medium text-amber-800">24K Gold (per gram)</label>
+            <label htmlFor="gold-rate-24k" className="text-xs font-medium text-amber-800">24K Gold (per gram)</label>
             <input 
+              id="gold-rate-24k"
               type="number" 
               value={rate24K}
               onChange={(e) => setRate24K(e.target.value)}

@@ -33,9 +33,11 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const { t } = useLocale();
 
   useEffect(() => {
-    if (shop?.slug) {
+    if (!shop?.slug) return;
+    const timeout = window.setTimeout(() => {
       setPublicShopUrl(`${window.location.origin}/shop/${shop.slug}`);
-    }
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [shop?.slug]);
 
   const readableShopUrl = publicShopUrl ? publicShopUrl.replace(/^https?:\/\//, "") : "";

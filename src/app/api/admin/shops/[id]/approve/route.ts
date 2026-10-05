@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
+import { isObjectId } from '@/lib/validation';
 
 export async function POST(
   req: Request,
@@ -21,6 +22,9 @@ export async function POST(
     await connectToDatabase();
 
     const { id } = await context.params;
+    if (!isObjectId(id)) {
+      return NextResponse.json({ error: 'Invalid shop' }, { status: 400 });
+    }
     const shop = await Shop.findById(id);
     
     if (!shop) {

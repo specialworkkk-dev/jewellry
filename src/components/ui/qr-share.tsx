@@ -19,7 +19,7 @@ export function QrShare({ url, shopName }: QrShareProps) {
       .toDataURL("image/png")
       .replace("image/png", "image/octet-stream");
       
-    let downloadLink = document.createElement("a");
+    const downloadLink = document.createElement("a");
     downloadLink.href = pngUrl;
     downloadLink.download = `${shopName.replace(/\s+/g, "_").toLowerCase()}_qr.png`;
     document.body.appendChild(downloadLink);
@@ -38,7 +38,7 @@ export function QrShare({ url, shopName }: QrShareProps) {
           fgColor={"#000000"}
           level={"Q"}
           imageSettings={{
-            src: "/jewellery-icon.png", // A fallback icon if logo isn't passed
+            src: "/icon-192.png",
             x: undefined,
             y: undefined,
             height: 40,

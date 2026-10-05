@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/authOptions";
 import Link from "next/link";
 import { LayoutDashboard, Store, Users, Settings } from "lucide-react";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
+import MobileSidebar from "@/components/admin/MobileSidebar";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({
   children,
@@ -23,6 +26,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
+      <MobileSidebar mode="admin" />
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex flex-col hidden md:flex">
         <div className="h-16 flex items-center px-6 border-b border-gray-100 font-bold text-xl text-gray-800">
@@ -50,7 +54,7 @@ export default async function AdminLayout({
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col">
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center px-6 justify-between">
+        <header className="h-16 bg-white border-b border-gray-100 hidden md:flex items-center px-6 justify-between">
           <h2 className="font-medium text-gray-600">Jewellery SaaS Platform</h2>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <UserProfileDropdown name={displayName} email={displayEmail} />

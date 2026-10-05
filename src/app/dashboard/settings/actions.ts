@@ -5,27 +5,30 @@ import Shop from "@/models/Shop";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
+import { cleanString, safeExternalUrl } from "@/lib/validation";
 
 export async function updateShopSettings(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized");
+  if (session?.user?.role !== "SHOP_OWNER" || !session.user.shopId) {
+    throw new Error("Unauthorized");
+  }
 
   await connectToDatabase();
-  const shopId = (session.user as any).shopId;
+  const shopId = session.user.shopId;
   const shop = await Shop.findById(shopId).lean();
 
   const updates = {
-    shortDescription: formData.get("shortDescription")?.toString() || "",
-    whatsappNumber: formData.get("whatsappNumber")?.toString() || "",
-    instagramUrl: formData.get("instagramUrl")?.toString() || "",
-    facebookUrl: formData.get("facebookUrl")?.toString() || "",
-    websiteUrl: formData.get("websiteUrl")?.toString() || "",
-    logoUrl: formData.get("logoUrl")?.toString() || "",
-    coverUrl: formData.get("coverUrl")?.toString() || "",
-    address: formData.get("address")?.toString() || "",
-    city: formData.get("city")?.toString() || "",
-    state: formData.get("state")?.toString() || "",
-    pincode: formData.get("pincode")?.toString() || "",
+    shortDescription: cleanString(formData.get("shortDescription"), 500),
+    whatsappNumber: cleanString(formData.get("whatsappNumber"), 24).replace(/[^\d+]/g, ""),
+    instagramUrl: safeExternalUrl(formData.get("instagramUrl")),
+    facebookUrl: safeExternalUrl(formData.get("facebookUrl")),
+    websiteUrl: safeExternalUrl(formData.get("websiteUrl")),
+    logoUrl: safeExternalUrl(formData.get("logoUrl")),
+    coverUrl: safeExternalUrl(formData.get("coverUrl")),
+    address: cleanString(formData.get("address"), 300),
+    city: cleanString(formData.get("city"), 100),
+    state: cleanString(formData.get("state"), 100),
+    pincode: cleanString(formData.get("pincode"), 20),
   };
 
   await Shop.findByIdAndUpdate(shopId, { $set: updates });

@@ -2,15 +2,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import Advertisement from "@/models/Advertisement";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
-import { Plus, Tag, TrendingUp, Presentation, MoreVertical } from "lucide-react";
+import { Tag, TrendingUp, Presentation } from "lucide-react";
+import Image from "next/image";
 
 export default async function MarketingDashboardPage() {
   const session = await getServerSession(authOptions);
   await connectToDatabase();
 
-  const shopId = (session?.user as any).shopId;
+  const shopId = session?.user.shopId;
   const ads = await Advertisement.find({ shopId }).sort({ createdAt: -1 });
 
   return (
@@ -51,7 +52,7 @@ export default async function MarketingDashboardPage() {
               <CardContent className="p-12 text-center flex flex-col items-center">
                 <Tag className="w-10 h-10 text-gray-300 mb-3" />
                 <h3 className="font-medium text-gray-900">No active promotions</h3>
-                <p className="text-sm text-gray-500 mt-1 mb-4">You don't have any banners running on your store.</p>
+                <p className="text-sm text-gray-500 mt-1 mb-4">You don&apos;t have any banners running on your store.</p>
               </CardContent>
             </Card>
           ) : (
@@ -60,7 +61,7 @@ export default async function MarketingDashboardPage() {
                 <CardContent className="p-0 flex flex-col sm:flex-row">
                   {ad.imageUrl && (
                     <div className="sm:w-1/3 bg-gray-100 relative">
-                      <img src={ad.imageUrl} alt="" className="w-full h-full object-cover absolute inset-0" />
+                      <Image src={ad.imageUrl} alt={ad.title} fill sizes="(min-width: 640px) 33vw, 100vw" unoptimized className="object-cover" />
                     </div>
                   )}
                   <div className="p-5 flex-1 flex flex-col justify-between">

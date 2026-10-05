@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   await connectToDatabase();
-  const shop = await Shop.findOne({ slug, isApproved: true }).lean();
+  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true }).lean();
 
   if (!shop) {
     return {
@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: shop.name,
       statusBarStyle: 'default',
     },
+    alternates: { canonical: `/shop/${shop.slug}` },
     openGraph: {
       title: shop.name,
       description: shop.shortDescription || `Shop by ${shop.name}`,

@@ -15,7 +15,7 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    username: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     mobile: { type: String, required: true },
     passwordHash: { type: String, required: true },
@@ -30,6 +30,12 @@ const UserSchema: Schema = new Schema(
 );
 
 // Indexes
+// Older platform-admin accounts may not have a username. Enforce uniqueness for
+// every current/new account without making those legacy records collide on null.
+UserSchema.index(
+  { username: 1 },
+  { unique: true, partialFilterExpression: { username: { $type: 'string' } } },
+);
 UserSchema.index({ shopId: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

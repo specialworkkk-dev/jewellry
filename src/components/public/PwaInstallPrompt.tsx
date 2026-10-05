@@ -1,9 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Share, Smartphone } from "lucide-react";
+import { Download, Share, Smartphone, X } from "lucide-react";
 
 const INSTALL_STORAGE_KEY = "luxestore-pwa-installed";
+const INSTALL_DISMISSED_KEY = "luxestore-pwa-dismissed-at";
+const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
 
 function isIOSDevice() {
   if (typeof navigator === "undefined") return false;
@@ -13,11 +24,11 @@ function isIOSDevice() {
 
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as any).standalone);
+  return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as NavigatorWithStandalone).standalone);
 }
 
 export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
@@ -25,19 +36,9 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const installed = localStorage.getItem(INSTALL_STORAGE_KEY) === "true" || isStandaloneMode();
-    if (installed) {
-      setIsVisible(false);
-      return;
-    }
-
-    const ios = isIOSDevice();
-    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setIsIOS(ios);
-
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      setDeferredPrompt(event);
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
       setIsVisible(true);
     };
 
@@ -49,19 +50,24 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    if (ios || mobile) {
-      setIsVisible(true);
-    }
+    const initializePrompt = window.setTimeout(() => {
+      const installed = localStorage.getItem(INSTALL_STORAGE_KEY) === "true" || isStandaloneMode();
+      const dismissedAt = Number(localStorage.getItem(INSTALL_DISMISSED_KEY) || 0);
+      const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_DURATION_MS;
+      if (installed || recentlyDismissed) return;
 
-    if (deferredPrompt) {
-      setIsVisible(true);
-    }
+      const ios = isIOSDevice();
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsIOS(ios);
+      setIsVisible(ios || mobile);
+    }, 0);
 
     return () => {
+      window.clearTimeout(initializePrompt);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, [deferredPrompt]);
+  }, []);
 
   const markInstalled = () => {
     localStorage.setItem(INSTALL_STORAGE_KEY, "true");
@@ -85,6 +91,11 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
     }
 
     setShowManualSteps(true);
+  };
+
+  const dismissPrompt = () => {
+    localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now()));
+    setIsVisible(false);
   };
 
   if (!isVisible) return null;
@@ -127,6 +138,14 @@ export function PwaInstallPrompt({ shopName }: { shopName?: string }) {
           </div>
 
           <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={dismissPrompt}
+              aria-label="Dismiss install prompt"
+              className="self-end rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={handleInstallClick}

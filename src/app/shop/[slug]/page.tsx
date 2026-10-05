@@ -11,6 +11,7 @@ import { StoreImage } from "@/components/public/StoreImage";
 import Category from "@/models/Category";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
+import { Types } from "mongoose";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -25,14 +26,17 @@ export default async function PublicShopPage({
   
   const { slug } = await params;
   const { category: activeCategory } = await searchParams;
-  const shop = await Shop.findOne({ slug, isApproved: true });
+  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
   if (!shop) notFound();
 
   // Fetch all categories for this shop
   const categories = await Category.find({ $or: [{ shopId: shop._id }, { isSystemDefault: true }] });
 
   // Build the product query
-  const query: any = { shopId: shop._id, isPublished: true };
+  const query: { shopId: Types.ObjectId; isPublished: boolean; categoryId?: Types.ObjectId } = {
+    shopId: shop._id,
+    isPublished: true,
+  };
   if (activeCategory && activeCategory !== "all") {
     const categoryDoc = categories.find(c => c.slug === activeCategory);
     if (categoryDoc) {
@@ -105,10 +109,10 @@ export default async function PublicShopPage({
                   </div>
                   <div className="mt-4 flex flex-col">
                     <h3 className="text-sm text-gray-700 font-medium line-clamp-1">
-                      <a href={`/shop/${shop.slug}/product/${product._id}`}>
+                      <Link href={`/shop/${shop.slug}/product/${product._id}`}>
                         <span aria-hidden="true" className="absolute inset-0" />
                         {product.name}
-                      </a>
+                      </Link>
                     </h3>
                     <p className="mt-1 text-sm text-gray-500">{product.goldPurity} Gold</p>
                     <p className="mt-2 text-sm font-medium text-gray-900">

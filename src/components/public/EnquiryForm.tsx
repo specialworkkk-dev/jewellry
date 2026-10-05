@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { submitEnquiry } from "@/app/shop/[slug]/product/[id]/actions";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
 export function EnquiryForm({ shopId, productId }: { shopId: string, productId: string }) {
@@ -16,16 +15,30 @@ export function EnquiryForm({ shopId, productId }: { shopId: string, productId: 
 
     const form = e.currentTarget;
     const formData = new FormData(form);
-    const res = await submitEnquiry(shopId, productId, formData);
-    
-    if (res.error) {
-      setError(res.error);
-    } else {
+
+    try {
+      const response = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId,
+          productId,
+          customerName: formData.get("name"),
+          customerPhone: formData.get("phone"),
+          message: formData.get("message"),
+          source: "WEBSITE_FORM",
+        }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Unable to send enquiry");
+
       setSuccess(true);
       form.reset();
+    } catch (submitError: unknown) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to send enquiry");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   }
 
   if (success) {
@@ -48,21 +61,21 @@ export function EnquiryForm({ shopId, productId }: { shopId: string, productId: 
       {error && <p className="text-red-600 text-sm">{error}</p>}
       
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Your Name</label>
-        <input name="name" type="text" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="John Doe" />
+        <label htmlFor="enquiry-name" className="text-sm font-medium text-gray-700 block mb-1">Your Name</label>
+        <input id="enquiry-name" name="name" type="text" minLength={2} maxLength={100} autoComplete="name" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="John Doe" />
       </div>
       
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Phone Number</label>
-        <input name="phone" type="tel" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="+91 9876543210" />
+        <label htmlFor="enquiry-phone" className="text-sm font-medium text-gray-700 block mb-1">Phone Number</label>
+        <input id="enquiry-phone" name="phone" type="tel" minLength={8} maxLength={24} autoComplete="tel" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="+91 9876543210" />
       </div>
       
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1">Message</label>
-        <textarea name="message" rows={3} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="Hi, I'm interested in this piece..."></textarea>
+        <label htmlFor="enquiry-message" className="text-sm font-medium text-gray-700 block mb-1">Message</label>
+        <textarea id="enquiry-message" name="message" rows={3} minLength={3} maxLength={2000} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="Hi, I'm interested in this piece..."></textarea>
       </div>
 
-      <button type="submit" disabled={loading} className="w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-lg flex items-center justify-center transition-colors">
+      <button type="submit" disabled={loading} className="w-full bg-gray-900 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 text-white font-medium py-3 rounded-lg flex items-center justify-center transition-colors">
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Enquiry Now"}
       </button>
     </form>
