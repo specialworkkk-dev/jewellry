@@ -125,6 +125,7 @@
   html {
     @apply font-sans;
     font-size: 16px;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
@@ -140,5 +141,23 @@
   }
   button, a {
     -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .storefront-content {
+    content-visibility: auto;
+    contain-intrinsic-size: 900px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

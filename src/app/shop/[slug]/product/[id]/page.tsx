@@ -73,7 +73,7 @@ export default async function ProductDetailPage({
   const waUrl = normalizedPhone ? `https://wa.me/${normalizedPhone}?text=${waMessage}` : "#";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
       <StorefrontAnalytics shopId={shop._id.toString()} eventType="PRODUCT_VIEW" targetId={product._id.toString()} />
       
       {/* Breadcrumb / Back button */}
@@ -87,9 +87,9 @@ export default async function ProductDetailPage({
         
         {/* Left: Image Gallery */}
         <div className="flex flex-col gap-4">
-          <div className="w-full aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden border">
+          <div className="w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
             {product.images?.[0] ? (
-              <StoreImage src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+              <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 1023px) 100vw, 50vw" preload className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">No Image Available</div>
             )}
@@ -99,7 +99,7 @@ export default async function ProductDetailPage({
             <div className="flex gap-4 overflow-x-auto pb-2">
               {product.images.map((img: string, idx: number) => (
                 <div key={idx} className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden border cursor-pointer hover:border-black transition-colors">
-                  <StoreImage src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover" />
+                  <StoreImage src={img} alt={`${product.name} view ${idx + 1}`} sizes="80px" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

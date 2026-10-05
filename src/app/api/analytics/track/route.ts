@@ -24,8 +24,14 @@ export async function POST(req: Request) {
     }
 
     await connectToDatabase();
-    const shopExists = await Shop.exists({ _id: body.shopId, isApproved: true, isActive: true });
-    if (!shopExists) return NextResponse.json({ success: false }, { status: 404 });
+    const shop = await Shop.findOne({ _id: body.shopId, isApproved: true, isActive: true })
+      .select("_id currentLinkOpens maxLinkOpens")
+      .lean();
+    if (!shop) return NextResponse.json({ success: false }, { status: 404 });
+
+    if (body.eventType === "SHOP_VIEW" && shop.currentLinkOpens < (shop.maxLinkOpens || 500)) {
+      await Shop.updateOne({ _id: shop._id }, { $inc: { currentLinkOpens: 1 } });
+    }
 
     if (body.eventType === "PRODUCT_VIEW") {
       if (!body.targetId) return NextResponse.json({ success: false }, { status: 400 });

@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 
+const configuredMediaPattern = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_R2_DEV_URL
+      ? new URL(`${process.env.NEXT_PUBLIC_R2_DEV_URL.replace(/\/$/, "")}/**`)
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
@@ -9,7 +19,9 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: false,
   },
   images: {
+    minimumCacheTTL: 86400,
     remotePatterns: [
+      ...(configuredMediaPattern ? [configuredMediaPattern] : []),
       {
         protocol: 'https',
         hostname: 'pub-*.r2.dev', // Cloudflare R2 Public URLs
@@ -21,6 +33,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com', // Google OAuth Avatars
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       }
     ],
   },

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
@@ -8,6 +7,7 @@ import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
+import { StoreImage } from "@/components/public/StoreImage";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -60,7 +60,9 @@ export default async function PublicShopLayout({
   
   // Fetch the shop by slug
   const { slug } = await params;
-  const shop = await Shop.findOne({ slug, isApproved: true }).lean();
+  const shop = await Shop.findOne({ slug, isApproved: true })
+    .select("name slug logoUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens isActive")
+    .lean();
   
   if (!shop) {
     notFound();
@@ -85,9 +87,6 @@ export default async function PublicShopLayout({
     );
   }
 
-  // Increment Link Opens
-  await Shop.updateOne({ _id: shop._id }, { $inc: { currentLinkOpens: 1 } });
-
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
   
   if (shop.currentLinkOpens >= (shop.maxLinkOpens || 500)) {
@@ -111,7 +110,7 @@ export default async function PublicShopLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#fbf8f3]">
       <PwaInstallPrompt
         appId={`shop-${shop.slug}`}
         appName={shop.name}
@@ -120,11 +119,11 @@ export default async function PublicShopLayout({
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (
-        <div className="bg-amber-100 border-b border-amber-200 py-2 px-4 text-center">
-          <p className="text-sm font-medium text-amber-900 flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
+        <div className="border-b border-amber-300/30 bg-stone-950 px-4 py-2 text-center text-amber-100">
+          <p className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold sm:gap-4 sm:text-sm">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              Live Gold Rates:
+              <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+              Today&apos;s Gold Rates
             </span>
             {shop.goldRate22K && <span>22K: ₹{shop.goldRate22K.toLocaleString('en-IN')}/g</span>}
             {shop.goldRate22K && shop.goldRate24K && <span className="hidden sm:inline text-amber-300">|</span>}
@@ -134,21 +133,21 @@ export default async function PublicShopLayout({
       )}
       
       {/* Public Shop Header */}
-      <header className="bg-white border-b sm:sticky sm:top-0 z-50">
+      <header className="z-50 border-b border-stone-200/80 bg-white/95 backdrop-blur-md sm:sticky sm:top-0">
         <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
             {/* Logo & Name */}
             <div className="flex items-center gap-4 self-start sm:self-auto w-full sm:w-auto">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center flex-shrink-0">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-200 bg-amber-50 shadow-sm sm:h-14 sm:w-14">
                 {shop.logoUrl ? (
-                  <Image src={shop.logoUrl} alt={shop.name} width={64} height={64} className="w-full h-full object-cover" unoptimized />
+                  <StoreImage src={shop.logoUrl} alt={shop.name} sizes="56px" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-xl font-serif text-gray-400">{shop.name.charAt(0)}</span>
                 )}
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-serif font-semibold text-gray-900 line-clamp-1">{shop.name}</h1>
+                <h1 className="line-clamp-1 text-lg font-serif font-semibold text-stone-900 sm:text-xl">{shop.name}</h1>
                 <div className="flex flex-col gap-1 mt-1">
                   {(shop.address || shop.city || shop.state) && (
                     <p className="text-sm text-gray-500 flex items-start gap-1">
@@ -209,9 +208,10 @@ export default async function PublicShopLayout({
       </main>
       
       {/* Footer */}
-      <footer className="bg-white border-t py-8 text-center text-sm text-gray-500">
-        <p>&copy; {new Date().getFullYear()} {shop.name}. All rights reserved.</p>
-        <p className="mt-1 text-xs">Powered by Digital Storefront SaaS</p>
+      <footer className="border-t border-white/10 bg-stone-950 px-4 py-10 text-center text-sm text-white/60">
+        <p className="font-serif text-lg text-white">{shop.name}</p>
+        <p className="mt-2">&copy; {new Date().getFullYear()} All rights reserved.</p>
+        <p className="mt-1 text-xs text-white/35">Powered by LuxeStore</p>
       </footer>
 
     </div>

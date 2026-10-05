@@ -10,7 +10,7 @@ import { StoreImage } from "@/components/public/StoreImage";
 
 import Category from "@/models/Category";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Gem, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Types } from "mongoose";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 
@@ -27,11 +27,15 @@ export default async function PublicShopPage({
   
   const { slug } = await params;
   const { category: activeCategory } = await searchParams;
-  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true });
+  const shop = await Shop.findOne({ slug, isApproved: true, isActive: true })
+    .select("name slug coverUrl shortDescription whatsappNumber")
+    .lean();
   if (!shop) notFound();
 
   // Fetch all categories for this shop
-  const categories = await Category.find({ $or: [{ shopId: shop._id }, { isSystemDefault: true }] });
+  const categories = await Category.find({ $or: [{ shopId: shop._id }, { isSystemDefault: true }] })
+    .select("name slug")
+    .lean();
 
   // Build the product query
   const query: { shopId: Types.ObjectId; isPublished: boolean; categoryId?: Types.ObjectId } = {
@@ -48,10 +52,13 @@ export default async function PublicShopPage({
   // Fetch products
   const products = await Product.find(query)
     .sort({ createdAt: -1 })
-    .limit(20);
+    .limit(20)
+    .select("name sku images goldPurity priceType price originalPrice isNewArrival isBestseller isBridalCollection")
+    .lean();
+  const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
 
   return (
-    <div>
+    <div className="bg-[#fbf8f3] text-stone-900">
       <StorefrontAnalytics shopId={shop._id.toString()} eventType="SHOP_VIEW" />
       <CinematicHero 
         coverUrl={shop.coverUrl} 
@@ -59,17 +66,37 @@ export default async function PublicShopPage({
         shortDescription={shop.shortDescription} 
       />
 
-      {/* 2. RECENT PRODUCTS GRID */}
+      <section className="relative z-10 -mt-5 px-4 sm:-mt-8 sm:px-6">
+        <div className="mx-auto grid max-w-5xl grid-cols-3 overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-xl shadow-stone-900/5">
+          <div className="flex flex-col items-center justify-center gap-1 border-r border-amber-100 px-2 py-4 text-center sm:flex-row sm:gap-2 sm:py-5">
+            <ShieldCheck className="h-5 w-5 text-amber-600" />
+            <span className="text-[11px] font-semibold sm:text-sm">Trusted quality</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-1 border-r border-amber-100 px-2 py-4 text-center sm:flex-row sm:gap-2 sm:py-5">
+            <Gem className="h-5 w-5 text-amber-600" />
+            <span className="text-[11px] font-semibold sm:text-sm">Fine craftsmanship</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-1 px-2 py-4 text-center sm:flex-row sm:gap-2 sm:py-5">
+            <MessageCircle className="h-5 w-5 text-amber-600" />
+            <span className="text-[11px] font-semibold sm:text-sm">Direct assistance</span>
+          </div>
+        </div>
+      </section>
 
-      <div id="collection" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 scroll-mt-20">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <h3 className="text-2xl font-serif font-medium text-gray-900">Latest Collection</h3>
+      <section id="collection" className="storefront-content mx-auto max-w-6xl scroll-mt-20 px-4 pb-16 pt-16 sm:px-6 sm:pt-24 lg:px-8">
+        <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-700">
+              <Sparkles className="h-3.5 w-3.5" /> Handpicked for you
+            </p>
+            <h2 className="mt-2 text-3xl font-serif font-semibold tracking-tight text-stone-900 sm:text-4xl">Latest collection</h2>
+            <p className="mt-2 text-sm text-stone-500">Explore {products.length} design{products.length === 1 ? "" : "s"} from our showroom.</p>
+          </div>
           
-          {/* Category Tabs */}
-          <div className="flex overflow-x-auto w-full sm:w-auto space-x-2 pb-2 sm:pb-0 scrollbar-hide">
+          <div className="flex w-full gap-2 overflow-x-auto pb-2 sm:w-auto sm:pb-0 scrollbar-hide">
             <Link 
               href={`/shop/${shop.slug}#collection`}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${!activeCategory || activeCategory === "all" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              className={`min-h-10 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${!activeCategory || activeCategory === "all" ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-amber-300"}`}
             >
               All Items
             </Link>
@@ -77,7 +104,7 @@ export default async function PublicShopPage({
               <Link 
                 key={cat._id.toString()}
                 href={`/shop/${shop.slug}?category=${cat.slug}#collection`}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.slug ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                className={`min-h-10 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${activeCategory === cat.slug ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-amber-300"}`}
               >
                 {cat.name}
               </Link>
@@ -86,54 +113,86 @@ export default async function PublicShopPage({
         </div>
         
         {products.length === 0 ? (
-          <div className="py-20 text-center text-gray-500">
-            No products published yet. Check back later!
+          <div className="rounded-3xl border border-dashed border-amber-200 bg-white py-20 text-center text-stone-500">
+            <Gem className="mx-auto mb-4 h-10 w-10 text-amber-400" />
+            New designs are being prepared. Please check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => {
-              const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
               const message = encodeURIComponent(`Hi! I'm interested in ${product.name}. Please share more details.`);
               const enquiryUrl = ownerWhatsApp ? `https://wa.me/${ownerWhatsApp}?text=${message}` : "#";
 
               return (
-                <article key={product._id.toString()} className="group min-w-0">
-                  <Link href={`/shop/${shop.slug}/product/${product._id}`} className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                  <div className="aspect-[4/5] w-full overflow-hidden rounded-lg bg-gray-100">
+                <article key={product._id.toString()} className="group min-w-0 overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
+                  <Link href={`/shop/${shop.slug}/product/${product._id}`} className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
+                  <div className="aspect-[4/5] w-full overflow-hidden bg-stone-100">
                     {product.images?.[0] ? (
                       <StoreImage
                         src={product.images[0]}
                         alt={product.name}
+                        sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
                         className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-gray-300">No Image</div>
                     )}
                   </div>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/45 to-transparent opacity-70" />
+                  <div className="absolute left-2 top-2 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
+                    {product.isNewArrival && <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-stone-800 backdrop-blur-sm">New</span>}
+                    {product.isBestseller && <span className="rounded-full bg-amber-400/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-stone-900">Bestseller</span>}
+                    {product.isBridalCollection && <span className="rounded-full bg-rose-100/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-800">Bridal</span>}
+                  </div>
+                  <span className="absolute bottom-3 right-3 hidden h-9 w-9 items-center justify-center rounded-full bg-white text-stone-900 shadow-md transition group-hover:flex">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
                   </Link>
-                  <div className="mt-4 flex flex-col">
-                    <h3 className="text-sm text-gray-700 font-medium line-clamp-1">
+                  <div className="flex flex-col p-3 sm:p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 sm:text-xs">{product.goldPurity ? `${product.goldPurity} gold` : "Fine jewellery"}</p>
+                    <h3 className="mt-1 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-stone-900 sm:text-base">
                       <Link href={`/shop/${shop.slug}/product/${product._id}`} className="hover:text-amber-700">{product.name}</Link>
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">{product.goldPurity} Gold</p>
-                    <p className="mt-2 text-sm font-medium text-gray-900">
-                      {product.priceType === 'FIXED_PRICE' ? `₹${product.price?.toLocaleString('en-IN')}` : 'Price on Request'}
+                    <p className="mt-2 text-sm font-bold text-stone-900 sm:text-base">
+                      {product.priceType === "FIXED_PRICE" && product.price
+                        ? `₹${product.price.toLocaleString("en-IN")}`
+                        : product.priceType === "STARTING_FROM" && product.price
+                          ? `From ₹${product.price.toLocaleString("en-IN")}`
+                          : "Price on request"}
                     </p>
-                    <a
+                    {ownerWhatsApp ? <a
                       href={enquiryUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-3 py-2 text-xs font-medium text-white hover:bg-[#1ebf59] transition-colors"
+                      className="mt-3 inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-[#168c48] px-2 py-2 text-xs font-bold text-white transition-colors hover:bg-[#11763c] sm:gap-2 sm:px-3"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" /> Enquire
-                    </a>
+                      <MessageCircle className="h-3.5 w-3.5" /> Ask on WhatsApp
+                    </a> : (
+                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-xs font-bold text-white">
+                        View details
+                      </Link>
+                    )}
                   </div>
                 </article>
               );
             })}
           </div>
         )}
-      </div>
+        {ownerWhatsApp && (
+          <div className="mt-14 overflow-hidden rounded-3xl bg-stone-900 px-5 py-8 text-white shadow-xl sm:px-10 sm:py-10">
+            <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+              <div>
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-300"><BadgeCheck className="h-4 w-4" /> Personal assistance</p>
+                <h3 className="mt-2 text-2xl font-serif font-semibold sm:text-3xl">Need help choosing the right piece?</h3>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-white/65">Speak directly with {shop.name} for price, availability and product details.</p>
+              </div>
+              <a href={`https://wa.me/${ownerWhatsApp}?text=${encodeURIComponent(`Hi ${shop.name}, I would like help choosing jewellery.`)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-sm font-bold text-stone-950 hover:bg-amber-300">
+                <MessageCircle className="h-4 w-4" /> Chat now
+              </a>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
