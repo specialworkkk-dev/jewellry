@@ -5,9 +5,10 @@ import Product from "@/models/Product";
 import "@/models/Category";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Edit, Trash2 } from "lucide-react";
+import { Plus, Package, Edit } from "lucide-react";
 import Image from "next/image";
 import { deleteProductAction, toggleProductPublishedAction } from "./actions";
+import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
 
 export default async function ProductsListPage() {
   const session = await getServerSession(authOptions);
@@ -72,9 +73,7 @@ export default async function ProductsListPage() {
                     </Button>
                   </form>
                   <form action={deleteProductAction.bind(null, product._id.toString())}>
-                    <Button type="submit" variant="outline" className="w-full min-h-11 border-red-200 text-red-700 hover:bg-red-50">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </Button>
+                    <ConfirmDeleteProductButton />
                   </form>
                 </div>
               </article>
@@ -118,9 +117,7 @@ export default async function ProductsListPage() {
                         </Button>
                       </form>
                       <form action={deleteProductAction.bind(null, product._id.toString())} className="inline-block">
-                        <Button type="submit" variant="ghost" size="icon" title="Delete product" className="h-8 w-8 text-gray-500 hover:text-red-600">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ConfirmDeleteProductButton compact />
                       </form>
                     </td>
                   </tr>
