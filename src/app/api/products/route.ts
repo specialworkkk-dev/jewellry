@@ -17,6 +17,17 @@ function optionalNumber(value: unknown) {
   return Number.isFinite(number) && number >= 0 ? number : undefined;
 }
 
+function startOfTodayInIndia() {
+  const indiaOffsetMs = 330 * 60 * 1000;
+  const nowInIndia = new Date(Date.now() + indiaOffsetMs);
+  const indiaMidnightAsUtc = Date.UTC(
+    nowInIndia.getUTCFullYear(),
+    nowInIndia.getUTCMonth(),
+    nowInIndia.getUTCDate(),
+  );
+  return new Date(indiaMidnightAsUtc - indiaOffsetMs);
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -78,6 +89,28 @@ export async function POST(req: Request) {
     const videos = Array.isArray(body.videos)
       ? body.videos.slice(0, 4).map(safeExternalUrl).filter(Boolean)
       : [];
+    if (videos.length > 0) {
+      if (shop.videoUploadsEnabled !== true) {
+        return NextResponse.json({ error: 'Video uploads are not enabled for this shop' }, { status: 403 });
+      }
+      const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, '');
+      const expectedPrefix = publicBaseUrl ? `${publicBaseUrl}/shops/${shopId}/products/` : '';
+      if (!expectedPrefix || videos.some((url) => !url.startsWith(expectedPrefix))) {
+        return NextResponse.json({ error: 'Invalid product video source' }, { status: 400 });
+      }
+      const maxVideosPerDay = Math.min(20, Math.max(1, Number(shop.maxVideosPerDay ?? 2)));
+      const [dailyUsage] = await Product.aggregate<{ count: number }>([
+        { $match: { shopId: new Types.ObjectId(shopId), createdAt: { $gte: startOfTodayInIndia() } } },
+        { $project: { count: { $size: { $ifNull: ['$videos', []] } } } },
+        { $group: { _id: null, count: { $sum: '$count' } } },
+      ]);
+      const usedToday = dailyUsage?.count ?? 0;
+      if (usedToday + videos.length > maxVideosPerDay) {
+        return NextResponse.json({
+          error: `Daily video limit reached. This shop can publish ${maxVideosPerDay} video${maxVideosPerDay === 1 ? '' : 's'} per day.`,
+        }, { status: 403 });
+      }
+    }
     const priceType = typeof body.priceType === 'string' && PRICE_TYPES.has(body.priceType)
       ? body.priceType
       : 'PRICE_ON_REQUEST';

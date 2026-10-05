@@ -24,6 +24,8 @@ export interface IShop extends Document {
   maxProducts: number;
   maxPhotosPerDay: number;
   maxVideosPerDay: number;
+  videoUploadsEnabled: boolean;
+  maxVideoDurationSeconds: number;
   
   // Daily Gold Rates
   goldRate22K?: number;
@@ -62,6 +64,8 @@ const ShopSchema: Schema = new Schema(
     maxProducts: { type: Number, default: 50 },
     maxPhotosPerDay: { type: Number, default: 30 },
     maxVideosPerDay: { type: Number, default: 2 },
+    videoUploadsEnabled: { type: Boolean, default: false },
+    maxVideoDurationSeconds: { type: Number, default: 30, min: 5, max: 120 },
     
     goldRate22K: { type: Number },
     goldRate24K: { type: Number },

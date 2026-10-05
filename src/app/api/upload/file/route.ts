@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/authOptions";
 import { r2Client } from "@/lib/r2";
 import { errorMessage } from "@/lib/validation";
+import connectToDatabase from "@/lib/mongoose";
+import Shop from "@/models/Shop";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -28,6 +30,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get("file");
     const requestedFolder = formData.get("folder");
+    const durationSeconds = Number(formData.get("durationSeconds"));
     const folder = typeof requestedFolder === "string" && ALLOWED_FOLDERS.has(requestedFolder)
       ? requestedFolder
       : "products";
@@ -40,6 +43,22 @@ export async function POST(req: Request) {
     const isVideo = ALLOWED_VIDEO_TYPES.has(file.type);
     if (!isImage && !isVideo) {
       return NextResponse.json({ error: "Only JPEG, PNG, WebP, AVIF, MP4, WebM, and MOV files are allowed" }, { status: 415 });
+    }
+    if (isVideo && (folder === "logos" || folder === "covers")) {
+      return NextResponse.json({ error: "Videos are not allowed in this section" }, { status: 400 });
+    }
+    if (isVideo) {
+      await connectToDatabase();
+      const shop = await Shop.findById(shopId)
+        .select("videoUploadsEnabled maxVideoDurationSeconds isActive")
+        .lean();
+      if (!shop?.isActive || shop.videoUploadsEnabled !== true) {
+        return NextResponse.json({ error: "Video uploads are not enabled for this shop" }, { status: 403 });
+      }
+      const maximumDuration = Math.min(120, Math.max(5, Number(shop.maxVideoDurationSeconds ?? 30)));
+      if (!Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > maximumDuration + 0.25) {
+        return NextResponse.json({ error: `Video must be ${maximumDuration} seconds or shorter` }, { status: 400 });
+      }
     }
 
     const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;

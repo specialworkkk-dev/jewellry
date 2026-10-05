@@ -13,6 +13,12 @@ const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback
   return Math.trunc(parsed);
 };
 
+const parseBoundedInt = (value: FormDataEntryValue | null | undefined, fallback: number, min: number, max: number) => {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.trunc(parsed)));
+};
+
 export async function updateShopLimits(shopId: string, formData: FormData) {
   const session = await getServerSession(authOptions);
   const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
@@ -27,7 +33,9 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   const updates = {
     maxProducts: parsePositiveInt(formData.get("maxProducts"), 50),
     maxPhotosPerDay: parsePositiveInt(formData.get("maxPhotosPerDay"), 30),
-    maxVideosPerDay: parsePositiveInt(formData.get("maxVideosPerDay"), 2),
+    maxVideosPerDay: parseBoundedInt(formData.get("maxVideosPerDay"), 2, 1, 20),
+    videoUploadsEnabled: formData.get("videoUploadsEnabled") === "true",
+    maxVideoDurationSeconds: parseBoundedInt(formData.get("maxVideoDurationSeconds"), 30, 5, 120),
     maxLinkOpens: parsePositiveInt(formData.get("maxLinkOpens"), 500),
     isActive: formData.get("isActive") === "true",
   };
@@ -35,5 +43,7 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   const result = await Shop.updateOne({ _id: shopId }, { $set: updates });
   if (result.matchedCount === 0) throw new Error("Shop not found");
   revalidatePath("/admin/shops");
+  revalidatePath(`/admin/shops/${shopId}`);
+  revalidatePath("/dashboard/products/create");
   redirect("/admin/shops");
 }

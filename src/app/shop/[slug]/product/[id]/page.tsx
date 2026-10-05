@@ -77,7 +77,7 @@ export default async function ProductDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 lg:gap-16">
         
         {/* Left: Image Gallery */}
-        <ProductGallery images={product.images || []} productName={product.name} />
+        <ProductGallery images={product.images || []} videos={product.videos || []} productName={product.name} />
 
         {/* Right: Product Details */}
         <div className="flex flex-col pt-2">

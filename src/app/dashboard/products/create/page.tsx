@@ -3,16 +3,22 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCategoriesAction } from "../actions";
+import { getCategoriesAction, getProductMediaPolicyAction } from "../actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import Link from "next/link";
-import { ArrowLeft, Loader2, X } from "lucide-react";
+import { ArrowLeft, Loader2, Video, X } from "lucide-react";
 
 interface CategoryOption {
   _id: string;
   name: string;
+}
+
+interface MediaPolicy {
+  videoUploadsEnabled: boolean;
+  maxVideoDurationSeconds: number;
+  maxVideosPerDay: number;
 }
 
 export default function CreateProductPage() {
@@ -33,15 +39,28 @@ export default function CreateProductPage() {
   const [priceType, setPriceType] = useState("FIXED_PRICE");
   const [price, setPrice] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [mediaPolicy, setMediaPolicy] = useState<MediaPolicy | null>(null);
   
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [categoryId, setCategoryId] = useState("");
 
   useEffect(() => {
-    getCategoriesAction().then((data: CategoryOption[]) => {
-      setCategories(data);
-      if (data.length > 0) setCategoryId(data[0]._id);
-    });
+    let cancelled = false;
+    const loadOptions = async () => {
+      try {
+        const data = await getCategoriesAction() as CategoryOption[];
+        const policy = await getProductMediaPolicyAction();
+        if (cancelled) return;
+        setCategories(data);
+        if (data.length > 0) setCategoryId(data[0]._id);
+        setMediaPolicy(policy);
+      } catch {
+        if (!cancelled) setError("Unable to load shop media permissions. Refresh and try again.");
+      }
+    };
+    void loadOptions();
+    return () => { cancelled = true; };
   }, []);
 
   const handleUploadSuccess = (publicUrl: string) => {
@@ -50,6 +69,14 @@ export default function CreateProductPage() {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoUploadSuccess = (publicUrl: string) => {
+    setVideos((prev) => prev.length >= 4 ? prev : [...prev, publicUrl]);
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +105,7 @@ export default function CreateProductPage() {
           diamondWeight: diamondWeight ? parseFloat(diamondWeight) : 0,
           stoneType,
           images,
+          videos,
           isPublished: true
         })
       });
@@ -295,6 +323,44 @@ export default function CreateProductPage() {
                 <MediaUploader folder="products" onUploadSuccess={handleUploadSuccess} />
               </div>
               
+            </CardContent>
+          </Card>
+
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Video className="h-5 w-5 text-violet-600" /> Product Videos</CardTitle>
+              <CardDescription>
+                {!mediaPolicy
+                  ? "Loading video permissions…"
+                  : mediaPolicy.videoUploadsEnabled
+                  ? `Add short product reels up to ${mediaPolicy.maxVideoDurationSeconds} seconds. Daily allowance: ${mediaPolicy.maxVideosPerDay}.`
+                  : "Video uploads are disabled for this shop. Contact the platform admin to enable them."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {videos.map((url, index) => (
+                <div key={`${url}-${index}`} className="relative overflow-hidden rounded-xl border bg-black">
+                  <video src={url} controls playsInline preload="metadata" className="aspect-video w-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => removeVideo(index)}
+                    aria-label={`Remove video ${index + 1}`}
+                    className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white shadow"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              {mediaPolicy?.videoUploadsEnabled && videos.length < 4 && (
+                <MediaUploader
+                  folder="products"
+                  mediaType="video"
+                  maxVideoDurationSeconds={mediaPolicy.maxVideoDurationSeconds}
+                  onUploadSuccess={handleVideoUploadSuccess}
+                />
+              )}
+              {videos.length >= 4 && <p className="text-sm text-gray-500">Maximum four videos per product.</p>}
             </CardContent>
           </Card>
           

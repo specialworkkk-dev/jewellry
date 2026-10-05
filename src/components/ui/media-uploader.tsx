@@ -2,11 +2,32 @@
 
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ImageUp, Loader2 } from "lucide-react";
+import { CheckCircle2, ImageUp, Loader2, Video } from "lucide-react";
 
 interface MediaUploaderProps {
   folder: "products" | "logos" | "covers" | "posts" | "stories";
   onUploadSuccess: (publicUrl: string, key: string) => void;
+  mediaType?: "image" | "video";
+  maxVideoDurationSeconds?: number;
+}
+
+function readVideoDuration(file: File) {
+  return new Promise<number>((resolve, reject) => {
+    const video = document.createElement("video");
+    const objectUrl = URL.createObjectURL(file);
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      URL.revokeObjectURL(objectUrl);
+      if (!Number.isFinite(duration) || duration <= 0) reject(new Error("Unable to read video duration."));
+      else resolve(duration);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("This video cannot be read. Please use MP4, WebM, or MOV."));
+    };
+    video.src = objectUrl;
+  });
 }
 
 async function optimizeLargePhoto(file: File) {
@@ -30,7 +51,7 @@ async function optimizeLargePhoto(file: File) {
   }
 }
 
-export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
+export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", maxVideoDurationSeconds = 30 }: MediaUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -40,10 +61,15 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
-    const maxBytes = 10 * 1024 * 1024;
+    const isVideo = mediaType === "video";
+    const allowedTypes = isVideo
+      ? new Set(["video/mp4", "video/webm", "video/quicktime"])
+      : new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+    const maxBytes = (isVideo ? 50 : 10) * 1024 * 1024;
     if (!allowedTypes.has(file.type) || file.size > maxBytes) {
-      setError("Choose a JPEG, PNG, WebP or AVIF photo under 10 MB.");
+      setError(isVideo
+        ? "Choose an MP4, WebM, or MOV video under 50 MB."
+        : "Choose a JPEG, PNG, WebP or AVIF photo under 10 MB.");
       e.target.value = "";
       return;
     }
@@ -53,17 +79,23 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
     setSuccess(false);
 
     try {
-      const uploadFile = await optimizeLargePhoto(file);
+      const durationSeconds = isVideo ? await readVideoDuration(file) : undefined;
+      if (durationSeconds && durationSeconds > maxVideoDurationSeconds + 0.25) {
+        throw new Error(`Video must be ${maxVideoDurationSeconds} seconds or shorter.`);
+      }
+      const uploadFile = isVideo ? file : await optimizeLargePhoto(file);
       let result: { publicUrl: string; key: string } | null = null;
 
       try {
         const prepareResponse = await fetch("/api/upload/url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: uploadFile.name, contentType: uploadFile.type, contentLength: uploadFile.size, folder }),
+          body: JSON.stringify({ filename: uploadFile.name, contentType: uploadFile.type, contentLength: uploadFile.size, folder, durationSeconds }),
         });
-        if (!prepareResponse.ok) throw new Error("Direct upload preparation failed");
-        const prepared = await prepareResponse.json() as { signedUrl: string; publicUrl: string; key: string };
+        const prepared = await prepareResponse.json() as { signedUrl?: string; publicUrl?: string; key?: string; error?: string };
+        if (!prepareResponse.ok || !prepared.signedUrl || !prepared.publicUrl || !prepared.key) {
+          throw new Error(prepared.error || "Direct upload preparation failed");
+        }
         const uploadResponse = await fetch(prepared.signedUrl, {
           method: "PUT",
           headers: { "Content-Type": uploadFile.type },
@@ -71,10 +103,12 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         });
         if (!uploadResponse.ok) throw new Error("Direct upload failed");
         result = { publicUrl: prepared.publicUrl, key: prepared.key };
-      } catch {
+      } catch (directUploadError) {
+        if (isVideo) throw directUploadError;
         const formData = new FormData();
         formData.append("file", uploadFile);
         formData.append("folder", folder);
+        if (durationSeconds) formData.append("durationSeconds", durationSeconds.toString());
         const fallbackResponse = await fetch("/api/upload/file", { method: "POST", body: formData });
         const fallbackData = await fallbackResponse.json() as { publicUrl?: string; key?: string; error?: string };
         if (!fallbackResponse.ok || !fallbackData.publicUrl || !fallbackData.key) {
@@ -101,7 +135,7 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         id={inputId}
         className="hidden"
         onChange={handleFileChange}
-        accept="image/jpeg,image/png,image/webp,image/avif"
+        accept={mediaType === "video" ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp,image/avif"}
         disabled={isUploading}
       />
       <Button
@@ -111,9 +145,9 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         className="min-h-11 gap-2"
         onClick={() => document.getElementById(inputId)?.click()}
       >
-        {isUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</> : <><ImageUp className="h-4 w-4" /> Choose Photo</>}
+        {isUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</> : mediaType === "video" ? <><Video className="h-4 w-4" /> Choose Video</> : <><ImageUp className="h-4 w-4" /> Choose Photo</>}
       </Button>
-      {success && <p role="status" className="flex items-center gap-1 text-sm font-medium text-green-700"><CheckCircle2 className="h-4 w-4" /> Uploaded. Save changes below.</p>}
+      {success && <p role="status" className="flex items-center gap-1 text-sm font-medium text-green-700"><CheckCircle2 className="h-4 w-4" /> Uploaded successfully.</p>}
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );

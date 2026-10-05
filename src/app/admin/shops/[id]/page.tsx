@@ -65,9 +65,42 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                 <input 
                   type="number" 
                   name="maxVideosPerDay" 
-                  defaultValue={shop.maxVideosPerDay || 2} 
+                  min={1}
+                  max={20}
+                  defaultValue={shop.maxVideosPerDay ?? 2}
                   className="w-full px-3 py-2 border rounded-md" 
                 />
+              </div>
+
+              <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-4">
+                <div>
+                  <h4 className="font-semibold text-violet-950">Product video access</h4>
+                  <p className="mt-1 text-xs text-violet-700">Control whether this shop can upload product reels and how long each reel may be.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-800">Video uploads</label>
+                  <select
+                    name="videoUploadsEnabled"
+                    defaultValue={shop.videoUploadsEnabled === true ? "true" : "false"}
+                    className="w-full rounded-md border bg-white px-3 py-2"
+                  >
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-800">Maximum duration (seconds)</label>
+                  <input
+                    type="number"
+                    name="maxVideoDurationSeconds"
+                    min={5}
+                    max={120}
+                    step={1}
+                    defaultValue={shop.maxVideoDurationSeconds ?? 30}
+                    className="w-full rounded-md border bg-white px-3 py-2"
+                  />
+                  <p className="text-xs text-violet-700">Recommended: 15–30 seconds. Allowed admin range: 5–120 seconds.</p>
+                </div>
               </div>
 
               <div className="space-y-2 pt-4 border-t border-dashed">
