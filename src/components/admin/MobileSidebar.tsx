@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
+import { Activity, LayoutDashboard, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admin" }) {
@@ -19,6 +19,7 @@ export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admi
     { href: "/admin", icon: LayoutDashboard, label: "Overview" },
     { href: "/admin/shops", icon: Store, label: "Shops" },
     { href: "/admin/users", icon: Users, label: "Users" },
+    { href: "/admin/infrastructure", icon: Activity, label: "Infrastructure" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ];
   const links = mode === "admin" ? adminLinks : shopLinks;
