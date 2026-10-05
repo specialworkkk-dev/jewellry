@@ -112,14 +112,17 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
 
             <div className="space-y-4">
               <label className="text-sm font-medium text-gray-700">Cover Banner</label>
-              <div className="w-full h-24 bg-gray-100 rounded-md border flex items-center justify-center overflow-hidden">
+              <div className="aspect-[16/7] w-full overflow-hidden rounded-xl border bg-gray-100 flex items-center justify-center">
                 {coverUrl ? (
                   <Image src={coverUrl} alt="Cover" width={640} height={96} className="w-full h-full object-cover" unoptimized />
                 ) : (
                   <span className="text-gray-400 text-xs">No Cover Image</span>
                 )}
               </div>
-              <MediaUploader folder="covers" onUploadSuccess={(publicUrl) => setCoverUrl(publicUrl)} />
+              <div>
+                <MediaUploader folder="covers" onUploadSuccess={(publicUrl) => setCoverUrl(publicUrl)} />
+                <p className="mt-2 text-xs text-gray-500">Recommended: wide landscape photo, at least 1200 × 525 pixels.</p>
+              </div>
             </div>
           </div>
         </CardContent>

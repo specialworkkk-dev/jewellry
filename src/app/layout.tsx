@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
+import { LocaleProvider } from "@/i18n/useLocale";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,8 +32,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#111827" />
       </head>
       <body className="font-sans antialiased h-full flex flex-col min-h-screen">
-        {children}
-        <PwaServiceWorker />
+        <LocaleProvider>
+          {children}
+          <PwaServiceWorker />
+        </LocaleProvider>
       </body>
     </html>
   );

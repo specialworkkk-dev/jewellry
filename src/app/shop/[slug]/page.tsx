@@ -12,6 +12,13 @@ import { ArrowUpRight, BadgeCheck, Gem, MessageCircle, ShieldCheck, Sparkles } f
 import { Types } from "mongoose";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 import { getPublicShopBySlug } from "@/lib/public-store";
+import { PwaInstallCard } from "@/components/public/PwaInstallCard";
+import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
+import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import Interaction from "@/models/Interaction";
+import { isObjectId } from "@/lib/validation";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -48,9 +55,21 @@ export default async function PublicShopPage({
   const products = await Product.find(query)
     .sort({ createdAt: -1 })
     .limit(20)
-    .select("name sku images goldPurity priceType price originalPrice isNewArrival isBestseller isBridalCollection")
+    .select("name sku images goldPurity priceType price originalPrice discountPercentage isNewArrival isBestseller isBridalCollection")
     .lean();
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
+  const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
+  const cookieVisitorId = cookieStore.get("luxestore_visitor_id")?.value;
+  const actorId = session?.user?.id || cookieVisitorId;
+  const savedProductIds = new Set<string>();
+  if (actorId && isObjectId(actorId) && products.length > 0) {
+    const ids = await Interaction.find({
+      userId: actorId,
+      targetId: { $in: products.map((product) => product._id) },
+      interactionType: "LIKE",
+    }).distinct("targetId");
+    ids.forEach((id) => savedProductIds.add(id.toString()));
+  }
 
   return (
     <div className="bg-[#fbf8f3] text-stone-900">
@@ -77,6 +96,8 @@ export default async function PublicShopPage({
           </div>
         </div>
       </section>
+
+      <PwaInstallCard appName={shop.name} />
 
       <section id="collection" className="storefront-content mx-auto max-w-6xl scroll-mt-20 px-4 pb-16 pt-16 sm:px-6 sm:pt-24 lg:px-8">
         <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
@@ -119,7 +140,8 @@ export default async function PublicShopPage({
               const enquiryUrl = ownerWhatsApp ? `https://wa.me/${ownerWhatsApp}?text=${message}` : "#";
 
               return (
-                <article key={product._id.toString()} className="group min-w-0 overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
+                <article key={product._id.toString()} className="group relative min-w-0 overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
+                  <ProductCardFavorite productId={product._id.toString()} shopId={shop._id.toString()} initialSaved={savedProductIds.has(product._id.toString())} />
                   <Link href={`/shop/${shop.slug}/product/${product._id}`} className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
                   <div className="aspect-[4/5] w-full overflow-hidden bg-stone-100">
                     {product.images?.[0] ? (
@@ -139,7 +161,7 @@ export default async function PublicShopPage({
                     {product.isBestseller && <span className="rounded-full bg-amber-400/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-stone-900">Bestseller</span>}
                     {product.isBridalCollection && <span className="rounded-full bg-rose-100/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-800">Bridal</span>}
                   </div>
-                  <span className="absolute bottom-3 right-3 hidden h-9 w-9 items-center justify-center rounded-full bg-white text-stone-900 shadow-md transition group-hover:flex">
+                  <span className="absolute bottom-3 right-3 hidden h-9 w-9 items-center justify-center rounded-full bg-white text-stone-900 shadow-md transition sm:group-hover:flex">
                     <ArrowUpRight className="h-4 w-4" />
                   </span>
                   </Link>
@@ -155,18 +177,22 @@ export default async function PublicShopPage({
                           ? `From ₹${product.price.toLocaleString("en-IN")}`
                           : "Price on request"}
                     </p>
-                    {ownerWhatsApp ? <a
-                      href={enquiryUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-[#168c48] px-2 py-2 text-xs font-bold text-white transition-colors hover:bg-[#11763c] sm:gap-2 sm:px-3"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" /> Ask on WhatsApp
-                    </a> : (
-                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-xs font-bold text-white">
-                        View details
-                      </Link>
+                    {product.originalPrice && product.price && product.originalPrice > product.price && (
+                      <p className="mt-0.5 flex items-center gap-2 text-xs text-stone-400">
+                        <span className="line-through">₹{product.originalPrice.toLocaleString("en-IN")}</span>
+                        {product.discountPercentage ? <span className="font-semibold text-emerald-700">{product.discountPercentage}% off</span> : null}
+                      </p>
                     )}
+                    <div className={`mt-3 grid gap-2 ${ownerWhatsApp ? "grid-cols-[1fr_42px]" : "grid-cols-1"}`}>
+                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-xs font-bold text-white hover:bg-stone-800">
+                        View design
+                      </Link>
+                      {ownerWhatsApp && (
+                        <a href={enquiryUrl} target="_blank" rel="noreferrer" aria-label={`Ask about ${product.name} on WhatsApp`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#168c48] text-white hover:bg-[#11763c]">
+                          <MessageCircle className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </article>
               );

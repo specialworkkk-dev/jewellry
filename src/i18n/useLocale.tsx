@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Languages } from "lucide-react";
 import { supportedLocales, translations, type LocaleCode, type TranslationKey } from "@/i18n/translations";
 
 const STORAGE_KEY = "jewelry-locale";
@@ -159,23 +160,32 @@ function applyLocaleText(locale: LocaleCode, previousLocale?: LocaleCode) {
   }
 }
 
-export function useLocale() {
-  const [locale, setLocale] = useState<LocaleCode>(() => {
-    if (typeof window === "undefined") {
-      return "en";
-    }
+interface LocaleContextValue {
+  locale: LocaleCode;
+  setLocale: (locale: LocaleCode) => void;
+  t: (key: TranslationKey) => string;
+}
 
-    const saved = window.localStorage.getItem(STORAGE_KEY) as LocaleCode | null;
-    return supportedLocales.some((item) => item.code === saved) ? saved ?? "en" : "en";
-  });
+const LocaleContext = createContext<LocaleContextValue | null>(null);
+
+export function LocaleProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocale] = useState<LocaleCode>("en");
+  const [isReady, setIsReady] = useState(false);
   const previousLocaleRef = useRef<LocaleCode | undefined>(undefined);
 
   useEffect(() => {
-    const previousLocale = previousLocaleRef.current;
+    const initialize = window.setTimeout(() => {
+      const saved = window.localStorage.getItem(STORAGE_KEY) as LocaleCode | null;
+      if (saved && supportedLocales.some((item) => item.code === saved)) setLocale(saved);
+      setIsReady(true);
+    }, 0);
+    return () => window.clearTimeout(initialize);
+  }, []);
 
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, locale);
-    }
+  useEffect(() => {
+    if (!isReady) return;
+    const previousLocale = previousLocaleRef.current;
+    window.localStorage.setItem(STORAGE_KEY, locale);
 
     const languageMap: Record<LocaleCode, string> = {
       en: "en",
@@ -184,29 +194,42 @@ export function useLocale() {
       marvadi: "mr",
     };
 
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = languageMap[locale] ?? "en";
-    }
+    document.documentElement.lang = languageMap[locale] ?? "en";
 
     applyLocaleText(locale, previousLocale);
     previousLocaleRef.current = locale;
-  }, [locale]);
+  }, [isReady, locale]);
 
-  const t = (key: TranslationKey) => translations[locale]?.[key] ?? translations.en[key];
+  const value = useMemo<LocaleContextValue>(() => ({
+    locale,
+    setLocale,
+    t: (key) => translations[locale]?.[key] ?? translations.en[key],
+  }), [locale]);
 
-  return { locale, setLocale, t };
+  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 
-export function LanguageSwitcher({ className = "" }: { className?: string }) {
+export function useLocale() {
+  const context = useContext(LocaleContext);
+  if (!context) throw new Error("useLocale must be used inside LocaleProvider");
+  return context;
+}
+
+export function LanguageSwitcher({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   const { locale, setLocale } = useLocale();
+  const activeLocale = supportedLocales.find((item) => item.code === locale) ?? supportedLocales[0];
+  const compactLabels: Record<LocaleCode, string> = { en: "EN", hi: "हिं", gu: "ગુ", marvadi: "मा" };
 
   return (
-    <label className={`inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm ${className}`}>
+    <label className={`relative inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-amber-300 ${className}`}>
       <span className="sr-only">Language</span>
+      <Languages className="h-4 w-4 text-amber-600" />
+      <span>{compact ? compactLabels[locale] : activeLocale.label}</span>
+      <ChevronDown className="h-4 w-4 text-gray-400" aria-hidden="true" />
       <select
         value={locale}
         onChange={(event) => setLocale(event.target.value as LocaleCode)}
-        className="bg-transparent pr-1 outline-none appearance-none text-sm font-medium text-gray-700"
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
         aria-label="Select language"
       >
         {supportedLocales.map((item) => (
