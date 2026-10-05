@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Eye, Heart, MessageSquare } from "lucide-react";
+import { ExternalLink, Package, Eye, Heart, MessageSquare, Plus } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 import Enquiry from "@/models/Enquiry";
@@ -11,6 +11,7 @@ import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { GoldRateUpdater } from "@/components/admin/GoldRateUpdater";
 import Image from "next/image";
+import Link from "next/link";
 
 export default async function DashboardOverviewPage() {
   const session = await getServerSession(authOptions);
@@ -58,7 +59,20 @@ export default async function DashboardOverviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Your Shop Today</h1>
+          <p className="mt-1 text-sm text-gray-500">Update rates, add jewellery and reply to customers.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Link href="/dashboard/products/create" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+            <Plus className="h-4 w-4" /> Add Product
+          </Link>
+          {shop?.slug && (
+            <Link href={`/shop/${shop.slug}`} target="_blank" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <ExternalLink className="h-4 w-4" /> View Shop
+            </Link>
+          )}
+        </div>
       </div>
       
       <GoldRateUpdater 
@@ -67,7 +81,7 @@ export default async function DashboardOverviewPage() {
         onSave={updateGoldRate} 
       />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Products</CardTitle>
@@ -75,7 +89,7 @@ export default async function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{totalProducts}</div>
-            <p className="text-xs text-gray-500 mt-1">Live catalog items</p>
+            <p className="text-xs text-gray-500 mt-1">Products</p>
           </CardContent>
         </Card>
         
@@ -87,7 +101,7 @@ export default async function DashboardOverviewPage() {
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{profileViews}</div>
             <p className="text-xs text-gray-500 mt-1 flex items-center">
-              Total lifetime views
+              Shop visits
             </p>
           </CardContent>
         </Card>
@@ -99,7 +113,7 @@ export default async function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{productLikes}</div>
-            <p className="text-xs text-gray-500 mt-1">Across all products</p>
+            <p className="text-xs text-gray-500 mt-1">Saved products</p>
           </CardContent>
         </Card>
         
@@ -110,7 +124,7 @@ export default async function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{newEnquiries}</div>
-            <p className="text-xs text-gray-500 mt-1">Require response</p>
+            <p className="text-xs text-gray-500 mt-1">Need a reply</p>
           </CardContent>
         </Card>
       </div>

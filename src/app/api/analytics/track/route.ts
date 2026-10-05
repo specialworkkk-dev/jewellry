@@ -4,6 +4,7 @@ import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 import { cleanString, isObjectId, isRecord } from "@/lib/validation";
 import AnalyticsEvent from "@/models/AnalyticsEvent";
 import Shop from "@/models/Shop";
+import Product from "@/models/Product";
 
 const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAPP_CLICK"]);
 
@@ -25,6 +26,15 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const shopExists = await Shop.exists({ _id: body.shopId, isApproved: true, isActive: true });
     if (!shopExists) return NextResponse.json({ success: false }, { status: 404 });
+
+    if (body.eventType === "PRODUCT_VIEW") {
+      if (!body.targetId) return NextResponse.json({ success: false }, { status: 400 });
+      const updated = await Product.updateOne(
+        { _id: body.targetId, shopId: body.shopId, isPublished: true },
+        { $inc: { viewsCount: 1 } },
+      );
+      if (updated.matchedCount === 0) return NextResponse.json({ success: false }, { status: 404 });
+    }
 
     await AnalyticsEvent.create({
       shopId: body.shopId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Share2, Check, MessageCircle, Globe, AtSign, Copy } from "lucide-react";
 
 interface ProductActionButtonsProps {
@@ -24,6 +24,28 @@ export function ProductActionButtons({
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [likeError, setLikeError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      targetId: productId,
+      targetType: "PRODUCT",
+      interactionType: "LIKE",
+    });
+
+    fetch(`/api/interactions?${params}`, { signal: controller.signal, cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const result = await response.json() as { state?: boolean; likesCount?: number };
+        if (typeof result.state === "boolean") setIsLiked(result.state);
+        if (typeof result.likesCount === "number") setLikesCount(result.likesCount);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name !== "AbortError") console.error("Unable to load saved state", error);
+      });
+
+    return () => controller.abort();
+  }, [productId]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -95,7 +117,7 @@ export function ProductActionButtons({
       });
 
       const result = await res.json() as { error?: string; state?: boolean; likesCount?: number };
-      if (!res.ok) throw new Error(res.status === 401 ? "Sign in to like products" : result.error || "Like request failed");
+      if (!res.ok) throw new Error(result.error || "Unable to save this product");
 
       if (typeof result.state === "boolean") setIsLiked(result.state);
       if (typeof result.likesCount === "number") setLikesCount(result.likesCount);
@@ -112,7 +134,7 @@ export function ProductActionButtons({
     <div className="flex items-center gap-2 relative">
       <button
         type="button"
-        aria-label={isLiked ? "Unlike product" : "Like product"}
+        aria-label={isLiked ? "Remove from saved products" : "Save product"}
         aria-pressed={isLiked}
         onClick={handleLikeToggle}
         disabled={isLiking}
@@ -124,7 +146,7 @@ export function ProductActionButtons({
       >
         <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-current' : 'stroke-current'}`} />
       </button>
-      <span className="text-xs font-medium text-gray-500">{likesCount}</span>
+      <span className="text-xs font-medium text-gray-500" aria-label={`${likesCount} saves`}>{likesCount}</span>
       {likeError && <span role="alert" className="absolute right-0 top-12 z-20 w-40 rounded-lg bg-slate-900 px-3 py-2 text-center text-xs text-white shadow-lg">{likeError}</span>}
 
       <button

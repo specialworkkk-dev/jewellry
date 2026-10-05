@@ -6,18 +6,22 @@ import { Coins, Loader2 } from "lucide-react";
 
 export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K?: number, initial24K?: number, onSave: (rate22k: number | null, rate24k: number | null) => Promise<void> }) {
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [rate22K, setRate22K] = useState(initial22K?.toString() || "");
   const [rate24K, setRate24K] = useState(initial24K?.toString() || "");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setMessage("");
     try {
       const parsed22 = rate22K ? parseInt(rate22K) : null;
       const parsed24 = rate24K ? parseInt(rate24K) : null;
       await onSave(parsed22, parsed24);
+      setMessage("Gold rates updated on your shop.");
     } catch (error) {
       console.error("Failed to update rates", error);
+      setMessage("Could not update rates. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,6 +67,7 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Banner"}
           </button>
         </form>
+        {message && <p role="status" className={`mt-3 text-sm font-medium ${message.startsWith("Could") ? "text-red-700" : "text-green-700"}`}>{message}</p>}
       </CardContent>
     </Card>
   );

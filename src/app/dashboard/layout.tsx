@@ -56,7 +56,7 @@ export default async function DashboardLayout({
         description="Install your owner dashboard to manage products and enquiries faster."
       />
       {/* Mobile Navigation (Client Component) */}
-      <MobileSidebar />
+      <MobileSidebar shopSlug={shop?.slug} />
 
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-white border-r flex flex-col hidden md:flex sticky top-0 h-screen">

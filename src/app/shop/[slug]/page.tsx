@@ -12,6 +12,7 @@ import Category from "@/models/Category";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { Types } from "mongoose";
+import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -51,6 +52,7 @@ export default async function PublicShopPage({
 
   return (
     <div>
+      <StorefrontAnalytics shopId={shop._id.toString()} eventType="SHOP_VIEW" />
       <CinematicHero 
         coverUrl={shop.coverUrl} 
         shopName={shop.name} 
@@ -95,7 +97,8 @@ export default async function PublicShopPage({
               const enquiryUrl = ownerWhatsApp ? `https://wa.me/${ownerWhatsApp}?text=${message}` : "#";
 
               return (
-                <div key={product._id.toString()} className="group relative">
+                <article key={product._id.toString()} className="group min-w-0">
+                  <Link href={`/shop/${shop.slug}/product/${product._id}`} className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
                   <div className="aspect-[4/5] w-full overflow-hidden rounded-lg bg-gray-100">
                     {product.images?.[0] ? (
                       <StoreImage
@@ -107,12 +110,10 @@ export default async function PublicShopPage({
                       <div className="h-full w-full flex items-center justify-center text-gray-300">No Image</div>
                     )}
                   </div>
+                  </Link>
                   <div className="mt-4 flex flex-col">
                     <h3 className="text-sm text-gray-700 font-medium line-clamp-1">
-                      <Link href={`/shop/${shop.slug}/product/${product._id}`}>
-                        <span aria-hidden="true" className="absolute inset-0" />
-                        {product.name}
-                      </Link>
+                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="hover:text-amber-700">{product.name}</Link>
                     </h3>
                     <p className="mt-1 text-sm text-gray-500">{product.goldPurity} Gold</p>
                     <p className="mt-2 text-sm font-medium text-gray-900">
@@ -127,7 +128,7 @@ export default async function PublicShopPage({
                       <MessageCircle className="w-3.5 h-3.5" /> Enquire
                     </a>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>

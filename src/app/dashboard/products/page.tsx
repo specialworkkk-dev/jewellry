@@ -18,13 +18,13 @@ export default async function ProductsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Products</h1>
           <p className="text-gray-500 mt-2">Manage your jewellery inventory and catalog.</p>
         </div>
-        <Link href="/dashboard/products/create">
-          <Button className="gap-2">
+        <Link href="/dashboard/products/create" className="w-full sm:w-auto">
+          <Button className="w-full gap-2 sm:w-auto min-h-11">
             <Plus className="w-4 h-4" /> Add Product
           </Button>
         </Link>
@@ -41,7 +41,46 @@ export default async function ProductsListPage() {
         </div>
       ) : (
         <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+          <div className="divide-y sm:hidden">
+            {products.map((product) => (
+              <article key={product._id.toString()} className="p-4">
+                <div className="flex gap-3">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-gray-100">
+                    {product.images?.[0] ? (
+                      <Image src={product.images[0]} alt={product.name} width={80} height={80} unoptimized className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-gray-400">No image</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="line-clamp-2 font-semibold text-gray-900">{product.name}</h2>
+                      <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${product.isPublished ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
+                        {product.isPublished ? "Live" : "Draft"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">SKU: {product.sku}</p>
+                    <p className="mt-2 text-sm font-medium text-gray-800">
+                      {product.priceType === "FIXED_PRICE" ? `₹${product.price?.toLocaleString("en-IN")}` : product.priceType.replace(/_/g, " ")}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <form action={toggleProductPublishedAction.bind(null, product._id.toString())}>
+                    <Button type="submit" variant="outline" className="w-full min-h-11">
+                      <Edit className="mr-2 h-4 w-4" /> {product.isPublished ? "Make Draft" : "Publish"}
+                    </Button>
+                  </form>
+                  <form action={deleteProductAction.bind(null, product._id.toString())}>
+                    <Button type="submit" variant="outline" className="w-full min-h-11 border-red-200 text-red-700 hover:bg-red-50">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                  </form>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[680px] text-sm text-left">
               <thead className="bg-gray-50 text-gray-600 font-medium border-b">
                 <tr>

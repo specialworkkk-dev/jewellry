@@ -134,8 +134,8 @@ export default async function PublicShopLayout({
       )}
       
       {/* Public Shop Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      <header className="bg-white border-b sm:sticky sm:top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
             {/* Logo & Name */}
@@ -159,10 +159,10 @@ export default async function PublicShopLayout({
                     </p>
                   )}
                   {(shop.businessPhone || shop.whatsappNumber) && (
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                    <a href={`tel:${(shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "")}`} className="text-sm text-gray-500 flex items-center gap-1 hover:text-gray-900">
                       <Phone className="w-3.5 h-3.5 flex-shrink-0" />
                       {shop.businessPhone || shop.whatsappNumber}
-                    </p>
+                    </a>
                   )}
                 </div>
               </div>
@@ -172,9 +172,11 @@ export default async function PublicShopLayout({
             <div className="flex items-center justify-between w-full sm:w-auto gap-4">
               <div className="flex gap-2 w-full sm:w-auto items-center">
                 <LanguageSwitcher />
-                <a href={whatsappNumber ? `https://wa.me/${whatsappNumber}` : "#"} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm">
-                  <Phone className="w-4 h-4" /> WhatsApp
-                </a>
+                {whatsappNumber && (
+                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm min-h-11">
+                    <Phone className="w-4 h-4" /> WhatsApp
+                  </a>
+                )}
                 <ShareButton title={shop.name} />
               </div>
               

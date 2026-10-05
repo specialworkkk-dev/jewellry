@@ -9,6 +9,7 @@ import { Metadata, ResolvingMetadata } from "next";
 import { ProductActionButtons } from "@/components/public/ProductActionButtons";
 import { EnquiryForm } from "@/components/public/EnquiryForm";
 import { StoreImage } from "@/components/public/StoreImage";
+import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
@@ -67,20 +68,22 @@ export default async function ProductDetailPage({
   }
 
   const normalizedPhone = (shop.whatsappNumber || "").replace(/\D/g, "");
+  const normalizedCallNumber = (shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "");
   const waMessage = encodeURIComponent(`Hi! I'm interested in this product: ${product.name} (SKU: ${product.sku}). Could you provide more details?`);
   const waUrl = normalizedPhone ? `https://wa.me/${normalizedPhone}?text=${waMessage}` : "#";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10">
+      <StorefrontAnalytics shopId={shop._id.toString()} eventType="PRODUCT_VIEW" targetId={product._id.toString()} />
       
       {/* Breadcrumb / Back button */}
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <Link href={`/shop/${shop.slug}`} className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to {shop.name}
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 lg:gap-16">
         
         {/* Left: Image Gallery */}
         <div className="flex flex-col gap-4">
@@ -126,13 +129,17 @@ export default async function ProductDetailPage({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <a href={waUrl} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebf59] text-white py-4 rounded-lg font-medium transition-colors shadow-sm">
-              <MessageCircle className="w-5 h-5" /> Enquire on WhatsApp
-            </a>
-            <a href={`tel:${shop.businessPhone}`} className="flex-1 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-lg font-medium transition-colors shadow-sm">
-              <Phone className="w-5 h-5" /> Call Store
-            </a>
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8">
+            {normalizedPhone && (
+              <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebf59] text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14">
+                <MessageCircle className="w-5 h-5" /> WhatsApp
+              </a>
+            )}
+            {normalizedCallNumber && (
+              <a href={`tel:${normalizedCallNumber}`} className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14">
+                <Phone className="w-5 h-5" /> Call Store
+              </a>
+            )}
           </div>
 
           {/* Details Grid */}

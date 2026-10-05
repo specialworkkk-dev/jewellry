@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Activity, LayoutDashboard, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
+import { Activity, ExternalLink, LayoutDashboard, LogOut, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
-export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admin" }) {
+export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "shop" | "admin"; shopSlug?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -57,7 +58,7 @@ export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admi
               <nav className="mt-5 px-2 space-y-1">
                 {links.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || (item.href !== "/dashboard" && item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
                   return (
                     <Link
                       key={item.href}
@@ -72,7 +73,27 @@ export default function MobileSidebar({ mode = "shop" }: { mode?: "shop" | "admi
                     </Link>
                   );
                 })}
+                {mode === "shop" && shopSlug && (
+                  <Link
+                    href={`/shop/${shopSlug}`}
+                    target="_blank"
+                    onClick={() => setIsOpen(false)}
+                    className="group flex items-center rounded-md px-2 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  >
+                    <ExternalLink className="mr-4 h-6 w-6 shrink-0 text-gray-400" />
+                    View My Shop
+                  </Link>
+                )}
               </nav>
+            </div>
+            <div className="border-t p-3">
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex w-full items-center rounded-md px-2 py-3 text-base font-medium text-red-700 hover:bg-red-50"
+              >
+                <LogOut className="mr-4 h-6 w-6" /> Sign out
+              </button>
             </div>
           </div>
         </div>

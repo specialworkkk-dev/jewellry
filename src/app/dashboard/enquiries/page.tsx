@@ -31,7 +31,50 @@ export default async function EnquiriesDashboardPage() {
             <p className="text-gray-500 mt-1">When customers ask about your products, they will appear here.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y sm:hidden">
+            {enquiries.map((enquiry) => {
+              const whatsappPhone = enquiry.customerPhone.replace(/\D/g, "");
+              return (
+                <article key={enquiry._id.toString()} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="font-semibold text-gray-900">{enquiry.customerName}</h2>
+                      <a href={`tel:${enquiry.customerPhone.replace(/[^\d+]/g, "")}`} className="mt-1 flex items-center gap-1 text-sm text-blue-700">
+                        <Phone className="h-3.5 w-3.5" /> {enquiry.customerPhone}
+                      </a>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium
+                      ${enquiry.status === "NEW" ? "bg-blue-100 text-blue-700" : ""}
+                      ${enquiry.status === "CONTACTED" ? "bg-orange-100 text-orange-700" : ""}
+                      ${enquiry.status === "CONVERTED" ? "bg-green-100 text-green-700" : ""}
+                      ${enquiry.status === "CLOSED" ? "bg-gray-100 text-gray-700" : ""}
+                    `}>{enquiry.status}</span>
+                  </div>
+                  <p className="rounded-lg bg-gray-50 p-3 text-sm leading-6 text-gray-700">{enquiry.message}</p>
+                  {enquiry.productId && (
+                    <p className="text-xs font-medium text-amber-700">
+                      Product: {typeof enquiry.productId === "object" && "name" in enquiry.productId ? String(enquiry.productId.name) : "Product"}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">Received {new Date(enquiry.createdAt).toLocaleDateString("en-IN")}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {enquiry.status === "NEW" ? (
+                      <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())}>
+                        <Button type="submit" variant="outline" className="w-full min-h-11 border-green-200 text-green-700 hover:bg-green-50">
+                          <CheckCircle className="mr-1.5 h-4 w-4" /> Contacted
+                        </Button>
+                      </form>
+                    ) : <div />}
+                    <a href={`https://wa.me/${whatsappPhone}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-md border border-green-200 bg-green-50 px-3 text-sm font-medium text-green-700">
+                      Reply on WhatsApp
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[760px] text-sm text-left">
               <thead className="bg-gray-50 text-gray-600 font-medium border-b">
                 <tr>
@@ -91,6 +134,7 @@ export default async function EnquiriesDashboardPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

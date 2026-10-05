@@ -16,10 +16,10 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/webm", "video/quicktime"]);
-    const maxBytes = file.type.startsWith("image/") ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+    const maxBytes = 10 * 1024 * 1024;
     if (!allowedTypes.has(file.type) || file.size > maxBytes) {
-      setError(`Choose a supported ${file.type.startsWith("video/") ? "video under 50 MB" : "image under 10 MB"}.`);
+      setError("Choose a JPEG, PNG, WebP or AVIF photo under 10 MB.");
       e.target.value = "";
       return;
     }
@@ -28,23 +28,30 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", folder);
-
-      const res = await fetch("/api/upload/file", {
+      const prepareResponse = await fetch("/api/upload/url", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          contentLength: file.size,
+          folder,
+        }),
       });
 
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
+      if (!prepareResponse.ok) {
+        const data = await prepareResponse.json() as { error?: string };
         throw new Error(data.error || "Failed to upload file");
       }
-      
-      const { publicUrl, key } = await res.json() as { publicUrl: string; key: string };
+      const { signedUrl, publicUrl, key } = await prepareResponse.json() as { signedUrl: string; publicUrl: string; key: string };
 
-      // Callback with the final URL
+      const uploadResponse = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadResponse.ok) throw new Error("Photo upload failed. Check your connection and try again.");
+
       onUploadSuccess(publicUrl, key);
     } catch (err: unknown) {
       console.error(err);
@@ -61,7 +68,7 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         id={`upload-${folder}`}
         className="hidden"
         onChange={handleFileChange}
-        accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime"
+        accept="image/jpeg,image/png,image/webp,image/avif"
         disabled={isUploading}
       />
       <Button
@@ -70,7 +77,7 @@ export function MediaUploader({ folder, onUploadSuccess }: MediaUploaderProps) {
         disabled={isUploading}
         onClick={() => document.getElementById(`upload-${folder}`)?.click()}
       >
-        {isUploading ? "Uploading..." : "Upload Media"}
+        {isUploading ? "Uploading photo..." : "Choose Photo"}
       </Button>
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

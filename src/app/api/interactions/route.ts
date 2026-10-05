@@ -1,8 +1,10 @@
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import { isDuplicateKeyError, isObjectId, isRecord } from "@/lib/validation";
+import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 import Interaction from "@/models/Interaction";
 import Post from "@/models/Post";
 import Product from "@/models/Product";
@@ -10,13 +12,66 @@ import Shop from "@/models/Shop";
 
 const TARGET_TYPES = new Set(["PRODUCT", "POST", "SHOP"]);
 const INTERACTION_TYPES = new Set(["LIKE", "FAVORITE", "FOLLOW"]);
+const VISITOR_COOKIE = "luxestore_visitor_id";
+const VISITOR_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
-export async function POST(req: Request) {
+function anonymousVisitorId(req: NextRequest) {
+  const existing = req.cookies.get(VISITOR_COOKIE)?.value;
+  return existing && isObjectId(existing) ? existing : new Types.ObjectId().toString();
+}
+
+function setVisitorCookie(response: NextResponse, visitorId: string) {
+  response.cookies.set(VISITOR_COOKIE, visitorId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: VISITOR_COOKIE_MAX_AGE,
+  });
+  return response;
+}
+
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Authentication required to interact" }, { status: 401 });
+    const targetId = req.nextUrl.searchParams.get("targetId");
+    const targetType = req.nextUrl.searchParams.get("targetType");
+    const interactionType = req.nextUrl.searchParams.get("interactionType") || "LIKE";
+    if (!targetId || !isObjectId(targetId)
+      || !targetType || !TARGET_TYPES.has(targetType)
+      || !INTERACTION_TYPES.has(interactionType)) {
+      return NextResponse.json({ error: "Invalid interaction" }, { status: 400 });
     }
+
+    await connectToDatabase();
+    const model = targetType === "PRODUCT" ? Product : targetType === "POST" ? Post : Shop;
+    const target = await model.findById(targetId).select(targetType === "SHOP" ? "_id" : "likesCount").lean();
+    if (!target) return NextResponse.json({ error: "Target not found" }, { status: 404 });
+
+    const session = await getServerSession(authOptions);
+    const cookieVisitorId = req.cookies.get(VISITOR_COOKIE)?.value;
+    const actorId = session?.user?.id || (cookieVisitorId && isObjectId(cookieVisitorId) ? cookieVisitorId : undefined);
+    const state = actorId
+      ? Boolean(await Interaction.exists({ userId: actorId, targetId, interactionType }))
+      : false;
+    const likesCount = "likesCount" in target ? Number(target.likesCount || 0) : undefined;
+
+    return NextResponse.json({ state, likesCount });
+  } catch (error: unknown) {
+    console.error("Read interaction error:", error);
+    return NextResponse.json({ error: "Unable to read interaction" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const rate = checkRateLimit(`interaction:${requestClientId(req)}`, 60, 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "Too many interactions. Please try again shortly." }, { status: 429 });
+    }
+
+    const session = await getServerSession(authOptions);
+    const visitorId = session?.user?.id ? undefined : anonymousVisitorId(req);
+    const actorId = session?.user?.id || visitorId;
 
     const body: unknown = await req.json();
     if (!isRecord(body)
@@ -55,7 +110,7 @@ export async function POST(req: Request) {
     }
 
     const identity = {
-      userId: session.user.id,
+      userId: actorId,
       targetId: body.targetId,
       interactionType: body.interactionType,
     };
@@ -69,14 +124,16 @@ export async function POST(req: Request) {
         const target = await model.findById(body.targetId).select("likesCount").lean();
         likesCount = target?.likesCount ?? 0;
       }
-      return NextResponse.json({ message: "Interaction removed", state: false, likesCount });
+      const response = NextResponse.json({ message: "Interaction removed", state: false, likesCount });
+      return visitorId ? setVisitorCookie(response, visitorId) : response;
     }
 
     try {
       await Interaction.create({ ...identity, shopId: shop._id, targetType: body.targetType });
     } catch (error: unknown) {
       if (!isDuplicateKeyError(error)) throw error;
-      return NextResponse.json({ message: "Interaction already exists", state: true });
+      const response = NextResponse.json({ message: "Interaction already exists", state: true });
+      return visitorId ? setVisitorCookie(response, visitorId) : response;
     }
 
     let likesCount: number | undefined;
@@ -86,7 +143,8 @@ export async function POST(req: Request) {
       const target = await model.findById(body.targetId).select("likesCount").lean();
       likesCount = target?.likesCount ?? 0;
     }
-    return NextResponse.json({ message: "Interaction added", state: true, likesCount });
+    const response = NextResponse.json({ message: "Interaction added", state: true, likesCount });
+    return visitorId ? setVisitorCookie(response, visitorId) : response;
   } catch (error: unknown) {
     console.error("Interaction error:", error);
     return NextResponse.json({ error: "Unable to update interaction" }, { status: 500 });
