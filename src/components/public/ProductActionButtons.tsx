@@ -60,14 +60,17 @@ export function ProductActionButtons({ productName }: ProductActionButtonsProps)
   return (
     <div className="flex items-center gap-2 relative">
       <button
-        onClick={() => setIsLiked(!isLiked)}
+        type="button"
+        aria-label={isLiked ? "Unlike product" : "Like product"}
+        aria-pressed={isLiked}
+        onClick={() => setIsLiked((prev) => !prev)}
         className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
           isLiked
             ? 'bg-rose-100 text-rose-500'
             : 'bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-500'
         }`}
       >
-        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-current' : 'stroke-current'}`} />
       </button>
 
       <button
