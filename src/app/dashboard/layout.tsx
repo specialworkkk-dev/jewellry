@@ -4,12 +4,14 @@ import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink } from "lu
 import MobileSidebar from "@/components/admin/MobileSidebar";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
 import { getCurrentSession } from "@/lib/session";
-import { getOwnerShop } from "@/lib/owner-data";
+import { getOwnerShop, getPlatformSupport } from "@/lib/owner-data";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
+import { PremiumRenewalNotice } from "@/components/shop/PremiumRenewalNotice";
+import { getPlanReminderStatus } from "@/lib/plan";
 
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
@@ -43,7 +45,14 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const shop = session.user.shopId ? await getOwnerShop(session.user.shopId) : null;
+  const [shop, platformSupport] = await Promise.all([
+    session.user.shopId ? getOwnerShop(session.user.shopId) : null,
+    getPlatformSupport(),
+  ]);
+  const planPrice = Math.max(0, Number(shop?.planPrice ?? 0));
+  const planEndsAt = shop?.planEndsAt ? new Date(shop.planEndsAt) : null;
+  const planReminder = getPlanReminderStatus(planEndsAt);
+  const showRenewalNotice = planPrice > 0 && Boolean(planEndsAt) && planReminder.withinReminderWindow;
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/50">
@@ -94,6 +103,9 @@ export default async function DashboardLayout({
             Welcome back, {session.user.name}
           </div>
           <div className="flex items-center gap-4 flex-shrink-0">
+             <span className={`rounded-full px-3 py-1 text-xs font-bold ${planPrice > 0 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600"}`}>
+               {planPrice > 0 ? "Premium" : "Free plan"}
+             </span>
              <LanguageSwitcher />
              {shop && (
                <Link href={`/shop/${shop.slug}`} target="_blank" className="flex items-center gap-2 text-sm text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
@@ -104,6 +116,18 @@ export default async function DashboardLayout({
           </div>
         </header>
         <div className="p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
+          {showRenewalNotice && shop && planEndsAt && (
+            <PremiumRenewalNotice
+              shopId={shop._id.toString()}
+              shopName={shop.name}
+              planPrice={planPrice}
+              planEndsAt={planEndsAt.toISOString()}
+              daysRemaining={planReminder.daysRemaining}
+              expired={planReminder.expired}
+              supportPhone={platformSupport?.supportPhone}
+              supportEmail={platformSupport?.supportEmail}
+            />
+          )}
           {children}
         </div>
       </main>

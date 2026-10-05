@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { updateShopLimits } from "./actions";
 import { isObjectId } from "@/lib/validation";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
+import { ShopPlanFields } from "@/components/admin/ShopPlanFields";
 
 export default async function AdminShopEditPage({ params }: { params: Promise<{ id: string }> }) {
   await connectToDatabase();
@@ -122,6 +123,11 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
             {/* Access Control */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Access Control</h3>
+
+              <ShopPlanFields
+                initialPrice={Number(shop.planPrice ?? 0)}
+                initialEndDate={shop.planEndsAt ? new Date(shop.planEndsAt).toISOString().slice(0, 10) : ""}
+              />
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Account Status</label>

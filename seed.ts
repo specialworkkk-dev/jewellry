@@ -49,6 +49,7 @@ async function seed() {
       maxProducts: 50,
       maxPhotosPerDay: 30,
       maxVideosPerDay: 2,
+      planPrice: 0,
       maxLinkOpens: 500,
       currentLinkOpens: 0,
       uniqueVisitorTrackingVersion: 1,

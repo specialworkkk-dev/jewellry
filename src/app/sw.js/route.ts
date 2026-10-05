@@ -1,30 +1,40 @@
-const CACHE_NAME = "luxestore-v3";
+export const dynamic = "force-dynamic";
+
+const deploymentVersion = (
+  process.env.VERCEL_DEPLOYMENT_ID
+  || process.env.VERCEL_GIT_COMMIT_SHA
+  || process.env.NEXT_DEPLOYMENT_ID
+  || "local-development"
+).slice(0, 40);
+
+function serviceWorkerSource(version: string) {
+  return `
+const CACHE_PREFIX = "luxestore-";
+const CACHE_NAME = CACHE_PREFIX + ${JSON.stringify(version)};
 const APP_SHELL = ["/", "/manifest.webmanifest", "/favicon.ico"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
@@ -35,18 +45,19 @@ self.addEventListener("fetch", (event) => {
     || url.pathname.startsWith("/login")
     || url.pathname.startsWith("/register");
 
-  if (!isSameOrigin || isPrivatePath) {
-    return;
-  }
+  if (!isSameOrigin || isPrivatePath) return;
 
   if (request.mode === "navigate") {
     const isPublicPage = url.pathname === "/" || url.pathname.startsWith("/shop/");
     if (!isPublicPage) return;
+
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
+          }
           return response;
         })
         .catch(() => caches.match(request).then((cached) => cached || caches.match("/")))
@@ -61,9 +72,9 @@ self.addEventListener("fetch", (event) => {
     caches.match(request).then((cached) => {
       const networkFetch = fetch(request)
         .then((response) => {
-          if (response && response.ok) {
+          if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
           }
           return response;
         })
@@ -73,3 +84,16 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+`;
+}
+
+export function GET() {
+  return new Response(serviceWorkerSource(deploymentVersion), {
+    headers: {
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self'",
+      "Service-Worker-Allowed": "/",
+    },
+  });
+}

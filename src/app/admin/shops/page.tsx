@@ -6,7 +6,7 @@ import { ExternalLink } from "lucide-react";
 export default async function AdminShopsPage() {
   await connectToDatabase();
   const shops = await Shop.find()
-    .select("name slug isActive createdAt")
+    .select("name slug isActive planPrice planEndsAt createdAt")
     .sort({ createdAt: -1 })
     .limit(500)
     .lean();
@@ -22,6 +22,7 @@ export default async function AdminShopsPage() {
               <tr>
                 <th className="px-6 py-4">Shop Name</th>
                 <th className="px-6 py-4">Slug</th>
+                <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -31,6 +32,16 @@ export default async function AdminShopsPage() {
                 <tr key={shop._id.toString()} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{shop.name}</td>
                   <td className="px-6 py-4 text-gray-500">{shop.slug}</td>
+                  <td className="px-6 py-4">
+                    {(shop.planPrice ?? 0) > 0 ? (
+                      <div>
+                        <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">Premium · ₹{Number(shop.planPrice).toLocaleString("en-IN")}</span>
+                        {shop.planEndsAt && <p className="mt-1.5 text-xs text-gray-500">Ends {new Date(shop.planEndsAt).toLocaleDateString("en-IN")}</p>}
+                      </div>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Free</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${shop.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                       {shop.isActive ? 'Active' : 'Inactive'}
@@ -48,7 +59,7 @@ export default async function AdminShopsPage() {
               ))}
               {shops.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                     No shops registered yet.
                   </td>
                 </tr>

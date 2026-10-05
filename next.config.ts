@@ -12,6 +12,11 @@ const configuredMediaPattern = (() => {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Vercel exposes a unique ID for every release, including a redeploy of the
+  // same commit. Next.js uses it to refresh clients running an older build.
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID
+    || process.env.VERCEL_GIT_COMMIT_SHA
+    || process.env.NEXT_DEPLOYMENT_ID,
   experimental: {
     // The CLI checker cannot be spawned reliably in some restricted build runners.
     // This uses the same project-local TypeScript compiler API instead.
@@ -49,6 +54,15 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+          { key: "Service-Worker-Allowed", value: "/" },
         ],
       },
     ];
