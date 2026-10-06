@@ -168,6 +168,14 @@ async function main() {
     const loginResumePath = loginResumeLocation
       ? new URL(loginResumeLocation, BASE_URL).pathname
       : null;
+    const homeAfterReopen = await fetch(`${BASE_URL}/?source=pwa`, {
+      redirect: "manual",
+      headers: { cookie: cookieHeader(jar) },
+    });
+    const homeResumeLocation = homeAfterReopen.headers.get("location");
+    const homeResumePath = homeResumeLocation
+      ? new URL(homeResumeLocation, BASE_URL).pathname
+      : null;
 
     const result = {
       loginStatus: loginResponse.status,
@@ -180,6 +188,11 @@ async function main() {
       loginResumesDashboard:
         [302, 303, 307, 308].includes(loginAfterReopen.status) &&
         loginResumePath === "/dashboard",
+      homeResumeStatus: homeAfterReopen.status,
+      homeResumePath,
+      homeResumesDashboard:
+        [302, 303, 307, 308].includes(homeAfterReopen.status) &&
+        homeResumePath === "/dashboard",
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
       httpOnlyCookie: /HttpOnly/i.test(sessionCookie),
@@ -191,6 +204,7 @@ async function main() {
       !result.sessionAfterReopen ||
       result.dashboardAfterReopen !== 200 ||
       !result.loginResumesDashboard ||
+      !result.homeResumesDashboard ||
       !result.persistentCookie ||
       result.serverErrors.length
     ) {
