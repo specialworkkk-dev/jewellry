@@ -8,7 +8,7 @@ import "@/models/Category";
 export const getPublicShopBySlug = cache(async (slug: string) => {
   await connectToDatabase();
   return Shop.findOne({ slug, isApproved: true })
-    .select("name slug logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens isActive")
+    .select("name slug logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
     .lean();
 });
 

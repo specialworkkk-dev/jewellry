@@ -8,6 +8,7 @@ import Product from "@/models/Product";
 import Shop from "@/models/Shop";
 import { revalidatePath } from "next/cache";
 import { isObjectId } from "@/lib/validation";
+import { scheduleShopEvent } from "@/lib/realtime";
 
 export async function getCategoriesAction() {
   const session = await getServerSession(authOptions);
@@ -57,13 +58,16 @@ export async function setProductPublishedAction(productId: string, isPublished: 
   revalidatePath("/dashboard/products", "page");
   revalidatePath("/dashboard", "page");
   if (shop?.slug) revalidatePath(`/shop/${shop.slug}`, "layout");
+  scheduleShopEvent(shopId, "product.updated", "both", productId);
 }
 
 export async function deleteProductAction(productId: string) {
   const shopId = await ownerShopId();
   if (!isObjectId(productId)) throw new Error("Invalid product");
   await connectToDatabase();
-  await Product.deleteOne({ _id: productId, shopId });
+  const deleted = await Product.deleteOne({ _id: productId, shopId });
+  if (deleted.deletedCount === 0) throw new Error("Product not found");
   revalidatePath("/dashboard/products");
   revalidatePath("/shop/[slug]", "page");
+  scheduleShopEvent(shopId, "product.deleted", "both", productId);
 }

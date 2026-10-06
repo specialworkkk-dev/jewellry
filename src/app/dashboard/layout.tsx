@@ -12,6 +12,7 @@ import { connection } from "next/server";
 import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 import { PremiumRenewalNotice } from "@/components/shop/PremiumRenewalNotice";
 import { getPlanReminderStatus } from "@/lib/plan";
+import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
 
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
@@ -56,6 +57,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/50">
+      {shop && process.env.ABLY_API_KEY?.trim() && (
+        <ShopRealtimeSync shopId={shop._id.toString()} audience="owner" />
+      )}
       <PwaInstallPrompt
         appId="owner"
         appName="LuxeStore Owner"

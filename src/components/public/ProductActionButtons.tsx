@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Heart, Share2, Check, MessageCircle, Globe, AtSign, Copy } from "lucide-react";
 
 interface ProductActionButtonsProps {
@@ -24,28 +24,6 @@ export function ProductActionButtons({
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [likeError, setLikeError] = useState("");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({
-      targetId: productId,
-      targetType: "PRODUCT",
-      interactionType: "LIKE",
-    });
-
-    fetch(`/api/interactions?${params}`, { signal: controller.signal, cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const result = await response.json() as { state?: boolean; likesCount?: number };
-        if (typeof result.state === "boolean") setIsLiked(result.state);
-        if (typeof result.likesCount === "number") setLikesCount(result.likesCount);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof Error && error.name !== "AbortError") console.error("Unable to load saved state", error);
-      });
-
-    return () => controller.abort();
-  }, [productId]);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -150,8 +128,11 @@ export function ProductActionButtons({
       {likeError && <span role="alert" className="absolute right-0 top-12 z-20 w-40 rounded-lg bg-slate-900 px-3 py-2 text-center text-xs text-white shadow-lg">{likeError}</span>}
 
       <button
+        type="button"
         onClick={handleShare}
         title="Share Product"
+        aria-label="Share product"
+        aria-expanded={isShareMenuOpen}
         className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
       >
         {copied ? <Check className="w-5 h-5 text-green-600" /> : <Share2 className="w-5 h-5" />}

@@ -9,6 +9,7 @@ import { StoreImage } from "@/components/public/StoreImage";
 import { getPublicShopBySlug } from "@/lib/public-store";
 import { headers } from "next/headers";
 import { admitUniqueShopVisitor } from "@/lib/unique-shop-visitors";
+import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -88,6 +89,7 @@ export default async function PublicShopLayout({
     shop._id.toString(),
     maximumUniqueVisitors,
     await headers(),
+    shop.uniqueVisitorTrackingVersion,
   );
 
   if (!admission.allowed) {
@@ -112,6 +114,9 @@ export default async function PublicShopLayout({
 
   return (
     <div className="min-h-screen bg-[#fbf8f3]">
+      {process.env.ABLY_API_KEY?.trim() && (
+        <ShopRealtimeSync shopId={shop._id.toString()} audience="customer" />
+      )}
       <PwaInstallPrompt
         appId={`shop-${shop.slug}`}
         appName={shop.name}

@@ -10,6 +10,7 @@ const TRACKING_VERSION = 1;
 
 function clientIp(requestHeaders: Headers) {
   return requestHeaders.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    || requestHeaders.get("cf-connecting-ip")
     || requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim()
     || requestHeaders.get("x-real-ip")
     || "unknown";
@@ -21,7 +22,12 @@ function hashIp(ip: string) {
   return createHmac("sha256", secret).update(ip).digest("hex");
 }
 
-export async function admitUniqueShopVisitor(shopId: string, maximumVisitors: number, requestHeaders: Headers) {
+export async function admitUniqueShopVisitor(
+  shopId: string,
+  maximumVisitors: number,
+  requestHeaders: Headers,
+  trackingVersion?: number,
+) {
   const normalizedLimit = Math.max(1, Math.trunc(maximumVisitors));
   const objectId = new Types.ObjectId(shopId);
   const ipHash = hashIp(clientIp(requestHeaders));
@@ -29,16 +35,17 @@ export async function admitUniqueShopVisitor(shopId: string, maximumVisitors: nu
 
   // Existing counters represented total page opens. Reset each shop exactly once
   // when it first moves to unique-IP tracking.
-  await Shop.updateOne(
-    { _id: objectId, uniqueVisitorTrackingVersion: { $ne: TRACKING_VERSION } },
-    { $set: { currentLinkOpens: 0, uniqueVisitorTrackingVersion: TRACKING_VERSION } },
-  );
+  if (trackingVersion !== TRACKING_VERSION) {
+    await Shop.updateOne(
+      { _id: objectId, uniqueVisitorTrackingVersion: { $ne: TRACKING_VERSION } },
+      { $set: { currentLinkOpens: 0, uniqueVisitorTrackingVersion: TRACKING_VERSION } },
+    );
+  }
 
-  const returningVisitor = await ShopVisitor.updateOne(
-    { shopId: objectId, ipHash },
-    { $set: { lastSeenAt: now } },
-  );
-  if (returningVisitor.matchedCount > 0) return { allowed: true, returning: true };
+  // Admission is lifetime-based, so returning visitors need only a read. Avoiding
+  // a write on every page open keeps the free MongoDB operation budget healthy.
+  const returningVisitor = await ShopVisitor.exists({ shopId: objectId, ipHash });
+  if (returningVisitor) return { allowed: true, returning: true };
 
   const reserved = await Shop.findOneAndUpdate(
     { _id: objectId, currentLinkOpens: { $lt: normalizedLimit } },

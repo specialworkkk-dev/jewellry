@@ -54,7 +54,7 @@ export default async function PublicShopPage({
   // Fetch products
   const products = await Product.find(query)
     .sort({ createdAt: -1 })
-    .limit(20)
+    .limit(50)
     .select("name sku images goldPurity priceType price originalPrice discountPercentage isNewArrival isBestseller isBridalCollection")
     .lean();
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);

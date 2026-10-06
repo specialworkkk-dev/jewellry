@@ -7,6 +7,11 @@ import { EnquiryForm } from "@/components/public/EnquiryForm";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 import { getPublicProductById, getPublicShopBySlug } from "@/lib/public-store";
 import { ProductGallery } from "@/components/public/ProductGallery";
+import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+import Interaction from "@/models/Interaction";
+import { isObjectId } from "@/lib/validation";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
@@ -62,6 +67,17 @@ export default async function ProductDetailPage({
   const normalizedCallNumber = (shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "");
   const waMessage = encodeURIComponent(`Hi! I'm interested in this product: ${product.name} (SKU: ${product.sku}). Could you provide more details?`);
   const waUrl = normalizedPhone ? `https://wa.me/${normalizedPhone}?text=${waMessage}` : "#";
+  const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
+  const cookieVisitorId = cookieStore.get("luxestore_visitor_id")?.value;
+  const actorId = session?.user?.id || cookieVisitorId;
+  const initiallyLiked = actorId && isObjectId(actorId)
+    ? Boolean(await Interaction.exists({ userId: actorId, targetId: product._id, interactionType: "LIKE" }))
+    : false;
+  const priceLabel = product.priceType === "FIXED_PRICE" && product.price
+    ? `₹${product.price.toLocaleString("en-IN")}`
+    : product.priceType === "STARTING_FROM" && product.price
+      ? `From ₹${product.price.toLocaleString("en-IN")}`
+      : "Price on Request";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
@@ -87,6 +103,7 @@ export default async function ProductDetailPage({
               productName={product.name}
               productId={product._id.toString()}
               shopId={shop._id.toString()}
+              initialLiked={initiallyLiked}
               initialLikesCount={product.likesCount || 0}
             />
           </div>
@@ -96,8 +113,14 @@ export default async function ProductDetailPage({
 
           <div className="mt-6 border-b pb-6">
             <h2 className="text-2xl font-medium text-gray-900">
-              {product.priceType === 'FIXED_PRICE' ? `₹${product.price?.toLocaleString('en-IN')}` : 'Price on Request'}
+              {priceLabel}
             </h2>
+            {product.originalPrice && product.price && product.originalPrice > product.price && (
+              <p className="mt-1 flex items-center gap-2 text-sm">
+                <span className="text-gray-400 line-through">₹{product.originalPrice.toLocaleString("en-IN")}</span>
+                {product.discountPercentage ? <span className="font-semibold text-emerald-700">{product.discountPercentage}% off</span> : null}
+              </p>
+            )}
             <p className="text-sm text-gray-500 mt-1">Inclusive of all taxes. Gold rates subject to daily change.</p>
           </div>
 

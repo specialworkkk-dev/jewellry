@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Realtime customer and owner updates
+
+Realtime catalogue, shop-setting, gold-rate, enquiry, and favourite updates use
+Ably with short-lived, capability-scoped tokens. Add the server-side key locally
+and to the Vercel Production environment:
+
+```bash
+ABLY_API_KEY=your-app-id.your-key-id:your-key-secret
+```
+
+The key must have publish and token-request capabilities. Never prefix it with
+`NEXT_PUBLIC_` or expose it in browser code. Customer tokens can only subscribe
+to that shop's public channel; authenticated owners can only subscribe to their
+own owner channel. If the key or provider is unavailable, database operations
+continue normally and connected clients fall back to conservative refreshes.

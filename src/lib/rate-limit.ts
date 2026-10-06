@@ -11,7 +11,8 @@ export function requestClientId(request: Request): string {
   const vercelIp = request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
   const forwardedIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = request.headers.get("x-real-ip");
-  return vercelIp || forwardedIp || realIp || "unknown";
+  const cloudflareIp = request.headers.get("cf-connecting-ip");
+  return vercelIp || cloudflareIp || forwardedIp || realIp || "unknown";
 }
 
 export function checkRateLimit(key: string, limit: number, windowMs: number) {

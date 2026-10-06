@@ -26,5 +26,11 @@ const AnalyticsEventSchema: Schema = new Schema(
 
 // Indexes for fast dashboard aggregations
 AnalyticsEventSchema.index({ shopId: 1, eventType: 1, createdAt: -1 });
+// Keep the free/shared database from growing forever. Dashboard analytics are a
+// rolling 90-day view; business records such as enquiries are never affected.
+AnalyticsEventSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 90 * 24 * 60 * 60, name: "analytics_90_day_retention" },
+);
 
 export default mongoose.models.AnalyticsEvent || mongoose.model<IAnalyticsEvent>('AnalyticsEvent', AnalyticsEventSchema);

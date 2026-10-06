@@ -9,6 +9,7 @@ import Interaction from "@/models/Interaction";
 import Post from "@/models/Post";
 import Product from "@/models/Product";
 import Shop from "@/models/Shop";
+import { scheduleShopEvent } from "@/lib/realtime";
 
 const TARGET_TYPES = new Set(["PRODUCT", "POST", "SHOP"]);
 const INTERACTION_TYPES = new Set(["LIKE", "FAVORITE", "FOLLOW"]);
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
         const target = await model.findById(body.targetId).select("likesCount").lean();
         likesCount = target?.likesCount ?? 0;
       }
+      scheduleShopEvent(body.shopId, "interaction.updated", "owner", body.targetId);
       const response = NextResponse.json({ message: "Interaction removed", state: false, likesCount });
       return visitorId ? setVisitorCookie(response, visitorId) : response;
     }
@@ -143,6 +145,7 @@ export async function POST(req: NextRequest) {
       const target = await model.findById(body.targetId).select("likesCount").lean();
       likesCount = target?.likesCount ?? 0;
     }
+    scheduleShopEvent(body.shopId, "interaction.updated", "owner", body.targetId);
     const response = NextResponse.json({ message: "Interaction added", state: true, likesCount });
     return visitorId ? setVisitorCookie(response, visitorId) : response;
   } catch (error: unknown) {

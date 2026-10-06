@@ -5,6 +5,7 @@ import { cleanString, isObjectId, isRecord } from "@/lib/validation";
 import Enquiry from "@/models/Enquiry";
 import Product from "@/models/Product";
 import Shop from "@/models/Shop";
+import { scheduleShopEvent } from "@/lib/realtime";
 
 export async function POST(req: Request) {
   try {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
       productId = product._id;
     }
 
-    await Enquiry.create({
+    const enquiry = await Enquiry.create({
       shopId: shop._id,
       productId,
       customerName,
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
       message,
       source: body.source === "WHATSAPP_CLICK" ? "WHATSAPP_CLICK" : "WEBSITE_FORM",
     });
+    scheduleShopEvent(shop._id.toString(), "enquiry.created", "owner", enquiry._id.toString());
 
     return NextResponse.json({ message: "Enquiry submitted successfully" }, { status: 201 });
   } catch (error: unknown) {

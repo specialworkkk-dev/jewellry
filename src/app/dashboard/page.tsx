@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCurrentSession } from "@/lib/session";
 import { getOwnerShop } from "@/lib/owner-data";
+import { scheduleShopEvent } from "@/lib/realtime";
 
 export default async function DashboardOverviewPage() {
   const session = await getCurrentSession();
@@ -40,6 +41,7 @@ export default async function DashboardOverviewPage() {
     const currentShop = await Shop.findById(activeSession.user.shopId).select("slug").lean();
     if (currentShop) revalidatePath(`/shop/${currentShop.slug}`, "layout");
     revalidatePath("/dashboard");
+    scheduleShopEvent(activeSession.user.shopId, "shop.gold-rate.updated", "both");
   }
 
   await connectToDatabase();
@@ -106,7 +108,7 @@ export default async function DashboardOverviewPage() {
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{profileViews}</div>
             <p className="text-xs text-gray-500 mt-1 flex items-center">
-              Shop visits
+              Shop visits · last 90 days
             </p>
           </CardContent>
         </Card>
