@@ -16,7 +16,10 @@ export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const shop = await getPublicShopBySlug(slug);
+  const [shop, requestHeaders] = await Promise.all([
+    getPublicShopBySlug(slug),
+    headers(),
+  ]);
 
   if (!shop || shop.isActive === false) {
     return {
@@ -25,9 +28,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
+  const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || requestHeaders.get("host")?.trim();
+  const forwardedProtocol = requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol = forwardedProtocol || (host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https");
+  const origin = host
+    ? `${protocol}://${host}`
+    : (process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
+  const storefrontUrl = `${origin}/shop/${shop.slug}`;
+  const shareImageUrl = `${storefrontUrl}/opengraph-image`;
+
   return {
-    title: shop.name,
-    description: shop.shortDescription || `Visit ${shop.name} and explore our latest collection.`,
+    metadataBase: new URL(origin),
+    title: `${shop.name} — Premium Jewellery Collection`,
+    description: shop.shortDescription || `Discover the latest premium jewellery collection from ${shop.name}.`,
     applicationName: shop.name,
     manifest: `/api/shop/${shop.slug}/manifest.json`,
     icons: {
@@ -42,11 +56,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: shop.name,
       statusBarStyle: 'default',
     },
-    alternates: { canonical: `/shop/${shop.slug}` },
+    alternates: { canonical: storefrontUrl },
     openGraph: {
-      title: shop.name,
-      description: shop.shortDescription || `Shop by ${shop.name}`,
+      type: "website",
+      url: storefrontUrl,
+      title: `${shop.name} — Premium Jewellery Collection`,
+      description: shop.shortDescription || `Discover the latest premium jewellery collection from ${shop.name}.`,
       siteName: shop.name,
+      images: [{
+        url: shareImageUrl,
+        width: 1200,
+        height: 630,
+        alt: `${shop.name} premium jewellery collection`,
+      }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${shop.name} — Premium Jewellery Collection`,
+      description: shop.shortDescription || `Discover the latest premium jewellery collection from ${shop.name}.`,
+      images: [shareImageUrl],
     },
   };
 }
@@ -206,7 +234,10 @@ export default async function PublicShopLayout({
                     <Phone className="w-4 h-4" /> WhatsApp
                   </a>
                 )}
-                <ShareButton title={shop.name} />
+                <ShareButton
+                  title={`${shop.name} — Premium Jewellery Collection`}
+                  text={`You are invited to explore ${shop.name}'s latest jewellery collection. Discover beautiful designs, live gold rates and enquire directly on WhatsApp.`}
+                />
               </div>
               
               <div className="flex items-center gap-3 text-gray-400">

@@ -44,7 +44,12 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   }, [shop?.slug]);
 
   const readableShopUrl = publicShopUrl ? publicShopUrl.replace(/^https?:\/\//, "") : "";
-  const shopShareText = publicShopUrl ? `Visit my jewellery shop: ${publicShopUrl}` : "Visit my jewellery shop";
+  const invitationTitle = `${shop?.name || "Our Jewellery Store"} — Premium Jewellery Collection`;
+  const invitationBody = shop?.shortDescription
+    || "Discover our latest jewellery designs, live gold rates and curated collections.";
+  const shopShareText = publicShopUrl
+    ? `✨ *${invitationTitle}*\n\n${invitationBody}\n\nExplore our collection and enquire directly on WhatsApp.\n\n💛 View the digital showroom:\n${publicShopUrl}`
+    : `${invitationTitle}\n\n${invitationBody}`;
 
   const whatsappShareUrl = shop?.whatsappNumber
     ? `https://wa.me/${shop.whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(shopShareText)}`
@@ -65,8 +70,8 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
     if (!publicShopUrl) return;
 
     const sharePayload = {
-      title: "My Jewellery Shop",
-      text: shopShareText,
+      title: invitationTitle,
+      text: `${invitationBody}\n\nExplore our collection and enquire directly on WhatsApp.`,
       url: publicShopUrl,
     };
 
@@ -148,6 +153,31 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
           <CardDescription>{t("publicStoreLinkDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="relative isolate overflow-hidden rounded-2xl bg-stone-950 p-5 text-white shadow-xl sm:p-6">
+            {coverUrl && (
+              <Image src={coverUrl} alt="" fill sizes="(max-width: 768px) 100vw, 800px" className="-z-20 object-cover opacity-30" unoptimized />
+            )}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-stone-950 via-stone-950/90 to-amber-950/45" />
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-amber-400 bg-stone-900 text-lg font-bold text-amber-300">
+                {logoUrl ? (
+                  <Image src={logoUrl} alt="" width={56} height={56} className="h-full w-full object-cover" unoptimized />
+                ) : (
+                  (shop?.name || "L").charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-300">Your customer share preview</p>
+                <h3 className="mt-1 truncate font-serif text-xl font-semibold sm:text-2xl">{shop?.name || "Your Jewellery Store"}</h3>
+                <p className="mt-1 line-clamp-2 text-sm leading-5 text-stone-300">{invitationBody}</p>
+              </div>
+            </div>
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+              <span className="truncate text-xs text-stone-400">{readableShopUrl || t("shopUrlPlaceholder")}</span>
+              <span className="shrink-0 rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold text-stone-950">Explore collection</span>
+            </div>
+          </div>
+
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
               <div className="min-w-0 flex-1">

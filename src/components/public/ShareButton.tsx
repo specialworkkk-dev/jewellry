@@ -12,8 +12,10 @@ export function ShareButton({ title, text }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = text || "Check out this amazing jewellery store!";
+  const shareUrl = typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}`
+    : "";
+  const shareText = text || "Discover this premium jewellery collection, curated especially for you.";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,7 +41,7 @@ export function ShareButton({ title, text }: ShareButtonProps) {
 
   const openShare = (target: "whatsapp" | "facebook" | "instagram") => {
     const encodedUrl = encodeURIComponent(shareUrl);
-    const encodedText = encodeURIComponent(`${title || "Jewellery Store"}: ${shareText}`);
+    const encodedText = encodeURIComponent(`✨ ${title || "Premium Jewellery Store"}\n\n${shareText}\n\nView the collection:`);
 
     const urls = {
       whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
