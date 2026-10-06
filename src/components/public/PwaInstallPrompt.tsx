@@ -5,6 +5,7 @@ import { Download, Share, Smartphone, X, Zap } from "lucide-react";
 import type { BeforeInstallPromptEvent } from "@/lib/pwa-install";
 import {
   clearCapturedInstallPrompt,
+  getPwaBrowserEnvironment,
   getCapturedInstallPrompt,
   PWA_APP_INSTALLED_EVENT,
   PWA_INSTALL_READY_EVENT,
@@ -14,12 +15,6 @@ const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
-}
-
-function isIOSDevice() {
-  if (typeof navigator === "undefined") return false;
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
 function isStandaloneMode() {
@@ -46,6 +41,8 @@ export function PwaInstallPrompt({
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isChrome, setIsChrome] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
   const storageSuffix = appId.replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
   const installStorageKey = `luxestore-pwa-${storageSuffix}-installed`;
@@ -54,6 +51,7 @@ export function PwaInstallPrompt({
   useEffect(() => {
     if (typeof window === "undefined") return;
     let revealTimer: number | undefined;
+    let installSignalTimer: number | undefined;
 
     const promptIsSuppressed = () => {
       const installed = localStorage.getItem(installStorageKey) === "true" || isStandaloneMode();
@@ -70,6 +68,7 @@ export function PwaInstallPrompt({
 
     const handleBeforeInstallPrompt = () => {
       setDeferredPrompt(getCapturedInstallPrompt() || null);
+      if (installSignalTimer) window.clearTimeout(installSignalTimer);
       revealPrompt();
     };
 
@@ -87,16 +86,27 @@ export function PwaInstallPrompt({
       const capturedPrompt = getCapturedInstallPrompt();
       if (capturedPrompt) setDeferredPrompt(capturedPrompt);
 
-      const ios = isIOSDevice();
-      const android = /Android/i.test(navigator.userAgent);
+      const environment = getPwaBrowserEnvironment();
+      const { isIOS: ios, isAndroid: android } = environment;
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       setIsIOS(ios);
       setIsAndroid(android);
-      if (capturedPrompt || ios || mobile) revealPrompt();
+      setIsChrome(environment.isChrome);
+      setIsInAppBrowser(environment.isInAppBrowser);
+
+      if (capturedPrompt || ios || environment.isInAppBrowser) {
+        revealPrompt();
+      } else if (mobile) {
+        // Chrome may need the manifest, service worker and page paint before it
+        // emits beforeinstallprompt. Do not show a dead Install button while it
+        // is still deciding whether the page is installable.
+        installSignalTimer = window.setTimeout(revealPrompt, 12_000);
+      }
     }, 0);
 
     return () => {
       window.clearTimeout(initializePrompt);
+      if (installSignalTimer) window.clearTimeout(installSignalTimer);
       if (revealTimer) window.clearTimeout(revealTimer);
       window.removeEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
       window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
@@ -176,14 +186,20 @@ export function PwaInstallPrompt({
                     <li>Select “Add to Home Screen”.</li>
                     <li>Tap “Add” to install it.</li>
                   </ol>
-                ) : (
+                ) : isInAppBrowser ? (
                   <ol className="list-decimal space-y-1 pl-4">
                     <li>Open this page in the full Chrome browser.</li>
                     <li>Tap Chrome&apos;s three-dot menu.</li>
                     <li>Select <strong>Install app</strong> (not “Create shortcut”).</li>
                   </ol>
+                ) : (
+                  <ol className="list-decimal space-y-1 pl-4">
+                    <li>Tap the browser&apos;s three-dot menu.</li>
+                    <li>Select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                    <li>Confirm by tapping <strong>Install</strong>.</li>
+                  </ol>
                 )}
-                {isAndroid && !deferredPrompt && (
+                {isAndroid && !isChrome && !deferredPrompt && (
                   <button
                     type="button"
                     onClick={openInChrome}
@@ -211,7 +227,7 @@ export function PwaInstallPrompt({
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700"
             >
               <Download className="mr-1.5 h-3.5 w-3.5" />
-              {isIOS ? "Show steps" : deferredPrompt ? "Install now" : "Install"}
+              {isIOS ? "Show steps" : deferredPrompt ? "Install now" : "How to install"}
             </button>
             {!showManualSteps && (
               <button

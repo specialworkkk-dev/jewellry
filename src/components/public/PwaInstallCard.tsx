@@ -5,6 +5,7 @@ import { CheckCircle2, Download, LoaderCircle, Share, Smartphone, X, Zap } from 
 import type { BeforeInstallPromptEvent } from "@/lib/pwa-install";
 import {
   clearCapturedInstallPrompt,
+  getPwaBrowserEnvironment,
   getCapturedInstallPrompt,
   PWA_APP_INSTALLED_EVENT,
   PWA_INSTALL_READY_EVENT,
@@ -21,22 +22,31 @@ export function PwaInstallCard({ appName }: { appName: string }) {
   const [hidden, setHidden] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isChrome, setIsChrome] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [checkedInstallState, setCheckedInstallState] = useState(false);
+  const [installSignalSettled, setInstallSignalSettled] = useState(false);
 
   useEffect(() => {
     const initialize = window.setTimeout(() => {
+      const environment = getPwaBrowserEnvironment();
+      const capturedPrompt = getCapturedInstallPrompt() || null;
       setHidden(isStandalone());
-      setIsAndroid(/Android/i.test(navigator.userAgent));
-      setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent)
-        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
-      setPrompt(getCapturedInstallPrompt() || null);
+      setIsAndroid(environment.isAndroid);
+      setIsIOS(environment.isIOS);
+      setIsChrome(environment.isChrome);
+      setIsInAppBrowser(environment.isInAppBrowser);
+      setPrompt(capturedPrompt);
+      if (capturedPrompt || environment.isIOS || environment.isInAppBrowser) setInstallSignalSettled(true);
       setCheckedInstallState(true);
     }, 0);
+    const signalTimeout = window.setTimeout(() => setInstallSignalSettled(true), 12_000);
     const handlePrompt = () => {
       setPrompt(getCapturedInstallPrompt() || null);
       setHidden(false);
       setCheckedInstallState(true);
+      setInstallSignalSettled(true);
     };
     const handleInstalled = () => {
       setHidden(true);
@@ -46,6 +56,7 @@ export function PwaInstallCard({ appName }: { appName: string }) {
     window.addEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
     return () => {
       window.clearTimeout(initialize);
+      window.clearTimeout(signalTimeout);
       window.removeEventListener(PWA_INSTALL_READY_EVENT, handlePrompt);
       window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
     };
@@ -100,9 +111,9 @@ export function PwaInstallCard({ appName }: { appName: string }) {
               <p className="mt-1 text-sm leading-6 text-stone-600">Install this shop for one-tap access to new jewellery, gold rates and WhatsApp enquiries.</p>
             </div>
           </div>
-          <button type="button" onClick={install} disabled={installing} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/15 transition hover:-translate-y-0.5 hover:bg-stone-800 disabled:cursor-wait disabled:opacity-70">
-            {installing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : prompt ? <Download className="h-4 w-4" /> : <Share className="h-4 w-4" />}
-            {installing ? "Opening…" : prompt ? "Install in one tap" : isIOS ? "Add to iPhone" : "Install shop"}
+          <button type="button" onClick={install} disabled={installing || !installSignalSettled} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/15 transition hover:-translate-y-0.5 hover:bg-stone-800 disabled:cursor-wait disabled:opacity-70">
+            {installing || !installSignalSettled ? <LoaderCircle className="h-4 w-4 animate-spin" /> : prompt ? <Download className="h-4 w-4" /> : <Share className="h-4 w-4" />}
+            {installing ? "Opening…" : !installSignalSettled ? "Getting ready…" : prompt ? "Install in one tap" : isIOS ? "Add to iPhone" : "How to install"}
           </button>
         </div>
         {showSteps && (
@@ -110,8 +121,10 @@ export function PwaInstallCard({ appName }: { appName: string }) {
             <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> {isIOS ? "Install from Safari" : "Install from your browser"}</p>
             <p className="mt-1">{isIOS
               ? <>Tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>. Apple does not allow websites to skip these confirmation steps.</>
-              : <>Open this page in Chrome, tap the three-dot menu and choose <strong>Install app</strong>. Do not choose “Create shortcut”.</>}</p>
-            {isAndroid && !prompt && (
+              : isInAppBrowser
+                ? <>Open this page in Chrome, tap the three-dot menu and choose <strong>Install app</strong>.</>
+                : <>Tap the browser&apos;s three-dot menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</>}</p>
+            {isAndroid && !isChrome && !prompt && (
               <button type="button" onClick={openInChrome} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-stone-900 px-5 py-2 text-xs font-bold text-white">
                 Open in Chrome to install
               </button>

@@ -35,6 +35,13 @@ export default function RootLayout({
           {`(function(){
             if(window.__luxestorePwaCaptureReady)return;
             window.__luxestorePwaCaptureReady=true;
+            var match=location.pathname.match(/^\\/shop\\/([^\\/?#]+)/);
+            if(match){
+              var manifest=document.createElement("link");
+              manifest.rel="manifest";
+              manifest.href="/api/shop/"+encodeURIComponent(match[1])+"/manifest.json";
+              document.head.insertBefore(manifest,document.head.firstChild);
+            }
             window.addEventListener("beforeinstallprompt",function(event){
               event.preventDefault();
               window.__luxestoreInstallPrompt=event;
