@@ -8,6 +8,40 @@ import { isDuplicateKeyError } from "@/lib/validation";
 import connectToDatabase from "@/lib/mongoose";
 
 const TRACKING_VERSION = 1;
+const ADMISSION_CACHE_TTL_MS = 10 * 60 * 1000;
+const ADMISSION_CACHE_MAX_ENTRIES = 10_000;
+
+type AdmissionResult = { allowed: boolean; returning: boolean };
+type AdmissionCacheEntry = {
+  expiresAt: number;
+  result: Promise<AdmissionResult>;
+};
+
+const globalWithAdmissionCache = globalThis as typeof globalThis & {
+  shopAdmissionCache?: Map<string, AdmissionCacheEntry>;
+};
+const admissionCache = globalWithAdmissionCache.shopAdmissionCache
+  ?? (globalWithAdmissionCache.shopAdmissionCache = new Map());
+
+function cachedAdmission(key: string) {
+  const entry = admissionCache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    admissionCache.delete(key);
+    return null;
+  }
+  return entry.result;
+}
+
+function rememberAdmission(key: string, result: Promise<AdmissionResult>) {
+  if (admissionCache.size >= ADMISSION_CACHE_MAX_ENTRIES) {
+    const oldestKey = admissionCache.keys().next().value;
+    if (oldestKey) admissionCache.delete(oldestKey);
+  }
+  admissionCache.set(key, { expiresAt: Date.now() + ADMISSION_CACHE_TTL_MS, result });
+  result.catch(() => admissionCache.delete(key));
+  return result;
+}
 
 function clientIp(requestHeaders: Headers) {
   return requestHeaders.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
@@ -29,12 +63,30 @@ export async function admitUniqueShopVisitor(
   requestHeaders: Headers,
   trackingVersion?: number,
 ) {
+  const normalizedLimit = Math.max(1, Math.trunc(maximumVisitors));
+  const ipHash = hashIp(clientIp(requestHeaders));
+  const cacheKey = `${shopId}:${trackingVersion ?? 0}:${normalizedLimit}:${ipHash}`;
+  const warmAdmission = cachedAdmission(cacheKey);
+  if (warmAdmission) return warmAdmission;
+
+  return rememberAdmission(cacheKey, admitUncachedVisitor(
+    shopId,
+    normalizedLimit,
+    ipHash,
+    trackingVersion,
+  ));
+}
+
+async function admitUncachedVisitor(
+  shopId: string,
+  normalizedLimit: number,
+  ipHash: string,
+  trackingVersion?: number,
+): Promise<AdmissionResult> {
   // Public shop data may come from Next's cross-request cache on a fresh
   // serverless instance, so this uncached visitor query must own its connection.
   await connectToDatabase();
-  const normalizedLimit = Math.max(1, Math.trunc(maximumVisitors));
   const objectId = new Types.ObjectId(shopId);
-  const ipHash = hashIp(clientIp(requestHeaders));
   const now = new Date();
 
   // Existing counters represented total page opens. Reset each shop exactly once

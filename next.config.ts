@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: false,
   },
   images: {
-    minimumCacheTTL: 86400,
+    // Uploaded media uses immutable object keys, so optimized variants can stay
+    // at the edge for a month without serving stale replacements.
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       ...(configuredMediaPattern ? [configuredMediaPattern] : []),
       {

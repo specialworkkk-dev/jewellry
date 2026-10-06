@@ -31,6 +31,13 @@ async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      // Keep serverless instances economical while still allowing parallel page,
+      // analytics and interaction queries during traffic bursts.
+      maxPoolSize: 50,
+      minPoolSize: 0,
+      maxIdleTimeMS: 60_000,
+      serverSelectionTimeoutMS: 5_000,
+      socketTimeoutMS: 15_000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((connection) => {

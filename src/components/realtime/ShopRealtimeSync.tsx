@@ -17,6 +17,8 @@ export function ShopRealtimeSync({
     let disposed = false;
     let closeRealtime: (() => void) | undefined;
     let fallbackTimer: ReturnType<typeof setInterval> | undefined;
+    let idleHandle: number | undefined;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
 
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
@@ -70,10 +72,22 @@ export function ShopRealtimeSync({
       }
     };
 
-    void connect();
+    const startWhenInteractive = () => {
+      if ("requestIdleCallback" in window) {
+        idleHandle = window.requestIdleCallback(() => void connect(), { timeout: 2_000 });
+      } else {
+        startupTimer = setTimeout(() => void connect(), 250);
+      }
+    };
+
+    startWhenInteractive();
 
     return () => {
       disposed = true;
+      if (idleHandle !== undefined && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (startupTimer) clearTimeout(startupTimer);
       closeRealtime?.();
       stopFallback();
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
