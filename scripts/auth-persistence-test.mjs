@@ -160,6 +160,10 @@ async function main() {
       redirect: "manual",
       headers: { cookie: cookieHeader(jar) },
     });
+    const loginAfterReopen = await fetch(`${BASE_URL}/login`, {
+      redirect: "manual",
+      headers: { cookie: cookieHeader(jar) },
+    });
 
     const result = {
       loginStatus: loginResponse.status,
@@ -167,6 +171,9 @@ async function main() {
       dashboardBeforeClose: dashboardBeforeClose.status,
       sessionAfterReopen: afterReopen?.user?.role === "SHOP_OWNER",
       dashboardAfterReopen: dashboardAfterReopen.status,
+      loginResumesDashboard:
+        loginAfterReopen.status === 307 &&
+        loginAfterReopen.headers.get("location") === "/dashboard",
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
       httpOnlyCookie: /HttpOnly/i.test(sessionCookie),
@@ -174,7 +181,13 @@ async function main() {
       serverErrors: `${firstServer.errors()}\n${secondServer.errors()}`.trim().split("\n").filter(Boolean),
     };
     console.log(JSON.stringify(result, null, 2));
-    if (!result.sessionAfterReopen || result.dashboardAfterReopen !== 200 || !result.persistentCookie || result.serverErrors.length) {
+    if (
+      !result.sessionAfterReopen ||
+      result.dashboardAfterReopen !== 200 ||
+      !result.loginResumesDashboard ||
+      !result.persistentCookie ||
+      result.serverErrors.length
+    ) {
       process.exitCode = 1;
     }
   } finally {
