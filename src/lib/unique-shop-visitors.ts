@@ -5,6 +5,7 @@ import { Types } from "mongoose";
 import Shop from "@/models/Shop";
 import ShopVisitor from "@/models/ShopVisitor";
 import { isDuplicateKeyError } from "@/lib/validation";
+import connectToDatabase from "@/lib/mongoose";
 
 const TRACKING_VERSION = 1;
 
@@ -28,6 +29,9 @@ export async function admitUniqueShopVisitor(
   requestHeaders: Headers,
   trackingVersion?: number,
 ) {
+  // Public shop data may come from Next's cross-request cache on a fresh
+  // serverless instance, so this uncached visitor query must own its connection.
+  await connectToDatabase();
   const normalizedLimit = Math.max(1, Math.trunc(maximumVisitors));
   const objectId = new Types.ObjectId(shopId);
   const ipHash = hashIp(clientIp(requestHeaders));

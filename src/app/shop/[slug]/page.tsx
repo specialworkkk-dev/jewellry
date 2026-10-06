@@ -11,12 +11,10 @@ import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 import { getPublicCatalogue, getPublicShopBySlug } from "@/lib/public-store";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
-import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import Interaction from "@/models/Interaction";
-import { isObjectId } from "@/lib/validation";
 import { calculateDiscountedAmount, discountLabel } from "@/lib/product-pricing";
+import { getPublicActorId } from "@/lib/public-actor";
+import connectToDatabase from "@/lib/mongoose";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -34,11 +32,10 @@ export default async function PublicShopPage({
 
   const { categories, products } = await getPublicCatalogue(shop._id.toString(), activeCategory);
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
-  const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
-  const cookieVisitorId = cookieStore.get("luxestore_visitor_id")?.value;
-  const actorId = session?.user?.id || cookieVisitorId;
+  const actorId = await getPublicActorId();
   const savedProductIds = new Set<string>();
-  if (actorId && isObjectId(actorId) && products.length > 0) {
+  if (actorId && products.length > 0) {
+    await connectToDatabase();
     const ids = await Interaction.find({
       userId: actorId,
       targetId: { $in: products.map((product) => product._id) },

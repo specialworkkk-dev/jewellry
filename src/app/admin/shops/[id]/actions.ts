@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isObjectId } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 
 const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
   const parsed = Number(value ?? fallback);
@@ -75,6 +76,7 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   revalidatePath(`/admin/shops/${shopId}`);
   revalidatePath("/dashboard/products/create");
   revalidatePath("/dashboard", "layout");
+  invalidatePublicStoreCache();
   scheduleShopEvent(shopId, "shop.status.updated", "both");
   redirect("/admin/shops");
 }

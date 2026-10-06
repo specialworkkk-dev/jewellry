@@ -7,12 +7,10 @@ import { EnquiryForm } from "@/components/public/EnquiryForm";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 import { getPublicProductById, getPublicShopBySlug } from "@/lib/public-store";
 import { ProductGallery } from "@/components/public/ProductGallery";
-import { cookies } from "next/headers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import Interaction from "@/models/Interaction";
-import { isObjectId } from "@/lib/validation";
 import { calculateDiscountedAmount, discountLabel } from "@/lib/product-pricing";
+import { getPublicActorId } from "@/lib/public-actor";
+import connectToDatabase from "@/lib/mongoose";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
@@ -68,10 +66,9 @@ export default async function ProductDetailPage({
   const normalizedCallNumber = (shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "");
   const waMessage = encodeURIComponent(`Hi! I'm interested in this product: ${product.name} (SKU: ${product.sku}). Could you provide more details?`);
   const waUrl = normalizedPhone ? `https://wa.me/${normalizedPhone}?text=${waMessage}` : "#";
-  const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
-  const cookieVisitorId = cookieStore.get("luxestore_visitor_id")?.value;
-  const actorId = session?.user?.id || cookieVisitorId;
-  const initiallyLiked = actorId && isObjectId(actorId)
+  const actorId = await getPublicActorId();
+  if (actorId) await connectToDatabase();
+  const initiallyLiked = actorId
     ? Boolean(await Interaction.exists({ userId: actorId, targetId: product._id, interactionType: "LIKE" }))
     : false;
   const priceLabel = product.priceType === "FIXED_PRICE" && product.price !== undefined

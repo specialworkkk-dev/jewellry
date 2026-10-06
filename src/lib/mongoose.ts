@@ -20,8 +20,12 @@ const cached: MongooseCache = globalWithMongoose.mongooseCache
   ?? (globalWithMongoose.mongooseCache = { conn: null, promise: null });
 
 async function connectToDatabase() {
-  if (cached.conn) {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
+  }
+  if (mongoose.connection.readyState === 0) {
+    cached.conn = null;
+    cached.promise = null;
   }
 
   if (!cached.promise) {
@@ -33,8 +37,15 @@ async function connectToDatabase() {
       return connection;
     });
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    // Allow a later serverless invocation to retry after a transient connection failure.
+    cached.promise = null;
+    cached.conn = null;
+    throw error;
+  }
 }
 
 export default connectToDatabase;

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
 import { isObjectId } from '@/lib/validation';
+import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
 
 export async function POST(
   req: Request,
@@ -33,6 +34,7 @@ export async function POST(
 
     shop.isApproved = true;
     await shop.save();
+    invalidatePublicStoreCache();
 
     return NextResponse.json({ message: 'Shop approved successfully' });
   } catch (error) {
