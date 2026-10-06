@@ -139,6 +139,25 @@ export const ownerPhrases = {
   "Choose a JPEG, PNG, WebP or AVIF photo under 10 MB.": { hi: "10 MB से कम की JPEG, PNG, WebP या AVIF फोटो चुनें।", gu: "10 MBથી નાની JPEG, PNG, WebP અથવા AVIF ફોટો પસંદ કરો.", marvadi: "10 MB सूं छोटी JPEG, PNG, WebP या AVIF फोटो चुनो।" },
   "Upload failed": { hi: "अपलोड विफल", gu: "અપલોડ નિષ્ફળ", marvadi: "अपलोड विफल" },
 
+  "Customer Notifications": { hi: "ग्राहक नोटिफिकेशन", gu: "ગ્રાહક સૂચનાઓ", marvadi: "ग्राहक नोटिफिकेशन" },
+  "Choose automatic, shop-specific alerts. Customers receive them only after opting in.": { hi: "अपने स्टोर के ऑटोमैटिक अलर्ट चुनें। ग्राहक अनुमति देने के बाद ही इन्हें पाएंगे।", gu: "તમારા સ્ટોર માટે આપમેળે સૂચનાઓ પસંદ કરો. ગ્રાહકો સંમતિ આપ્યા પછી જ તે મેળવશે.", marvadi: "आपरा स्टोर रा ऑटोमैटिक अलर्ट चुनो। ग्राहक अनुमति देण पाछै ही इन्हें पावसी।" },
+  "Enable automatic customer notifications": { hi: "ऑटोमैटिक ग्राहक नोटिफिकेशन चालू करें", gu: "આપમેળે ગ્રાહક સૂચનાઓ ચાલુ કરો", marvadi: "ऑटोमैटिक ग्राहक नोटिफिकेशन चालू करो" },
+  "Turn this off to pause every automatic alert for this shop.": { hi: "इस स्टोर के सभी ऑटोमैटिक अलर्ट रोकने के लिए इसे बंद करें।", gu: "આ સ્ટોરની બધી આપમેળે સૂચનાઓ રોકવા માટે આ બંધ કરો.", marvadi: "ई स्टोर रा सगळा ऑटोमैटिक अलर्ट रोकण खातर इणने बंद करो।" },
+  "Send this notification automatically": { hi: "यह नोटिफिकेशन अपने आप भेजें", gu: "આ સૂચના આપમેળે મોકલો", marvadi: "ई नोटिफिकेशन आपे-आप भेजो" },
+  "Template": { hi: "टेम्पलेट", gu: "ટેમ્પલેટ", marvadi: "टेम्पलेट" },
+  "Custom title (optional)": { hi: "अपना शीर्षक (वैकल्पिक)", gu: "તમારું શીર્ષક (વૈકલ્પિક)", marvadi: "आपरो शीर्षक (वैकल्पिक)" },
+  "Custom message (optional)": { hi: "अपना संदेश (वैकल्पिक)", gu: "તમારો સંદેશ (વૈકલ્પિક)", marvadi: "आपरो संदेश (वैकल्पिक)" },
+  "Customer preview": { hi: "ग्राहक प्रीव्यू", gu: "ગ્રાહક પૂર્વદર્શન", marvadi: "ग्राहक प्रीव्यू" },
+  "Save Notification Settings": { hi: "नोटिफिकेशन सेटिंग सेव करें", gu: "સૂચના સેટિંગ્સ સેવ કરો", marvadi: "नोटिफिकेशन सेटिंग सेव करो" },
+  "Saving notifications…": { hi: "नोटिफिकेशन सेव हो रहे हैं…", gu: "સૂચનાઓ સેવ થઈ રહી છે…", marvadi: "नोटिफिकेशन सेव हो रिया है…" },
+  "New product created": { hi: "नया प्रोडक्ट बनाया गया", gu: "નવી પ્રોડક્ટ બનાવાઈ", marvadi: "नयो प्रोडक्ट बनायो" },
+  "Draft product published": { hi: "ड्राफ्ट प्रोडक्ट प्रकाशित हुआ", gu: "ડ્રાફ્ટ પ્રોડક્ટ પ્રકાશિત થઈ", marvadi: "ड्राफ्ट प्रोडक्ट प्रकाशित हुओ" },
+  "Product photos/details updated": { hi: "प्रोडक्ट फोटो/विवरण अपडेट", gu: "પ્રોડક્ટ ફોટા/વિગતો અપડેટ", marvadi: "प्रोडक्ट फोटो/विवरण अपडेट" },
+  "New catalogue photo/post": { hi: "नई कैटलॉग फोटो/पोस्ट", gu: "નવો કેટલોગ ફોટો/પોસ્ટ", marvadi: "नई कैटलॉग फोटो/पोस्ट" },
+  "New story": { hi: "नई स्टोरी", gu: "નવી સ્ટોરી", marvadi: "नई स्टोरी" },
+  "Gold rate updated": { hi: "गोल्ड रेट अपडेट", gu: "ગોલ્ડ રેટ અપડેટ", marvadi: "गोल्ड रेट अपडेट" },
+  "Store banner/details updated": { hi: "स्टोर बैनर/विवरण अपडेट", gu: "સ્ટોર બેનર/વિગતો અપડેટ", marvadi: "स्टोर बैनर/विवरण अपडेट" },
+
   "Your Premium plan has expired": { hi: "आपका प्रीमियम प्लान समाप्त हो गया", gu: "તમારો પ્રીમિયમ પ્લાન સમાપ્ત થયો", marvadi: "थारो प्रीमियम प्लान खत्म हो गयो" },
   "Premium expires tomorrow": { hi: "प्रीमियम कल समाप्त होगा", gu: "પ્રીમિયમ કાલે સમાપ્ત થશે", marvadi: "प्रीमियम काल खत्म होसी" },
   "Valid until": { hi: "मान्य तिथि", gu: "માન્ય તારીખ", marvadi: "मान्य तारीख" },
@@ -159,4 +178,3 @@ export const ownerPhrases = {
   "Create your first post": { hi: "अपनी पहली पोस्ट बनाएं", gu: "તમારી પ્રથમ પોસ્ટ બનાવો", marvadi: "आपरी पहली पोस्ट बनाओ" },
   "No Media": { hi: "कोई मीडिया नहीं", gu: "કોઈ મીડિયા નથી", marvadi: "कोई मीडिया कोनी" },
 } satisfies Record<string, OwnerPhrase>;
-

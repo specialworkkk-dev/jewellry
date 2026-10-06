@@ -6,6 +6,7 @@ import Post from '@/models/Post';
 import { Types } from 'mongoose';
 import Product from '@/models/Product';
 import { cleanString, isObjectId, isRecord, safeExternalUrl } from '@/lib/validation';
+import { scheduleShopPushNotification } from '@/lib/push-notifications';
 
 export async function POST(req: Request) {
   try {
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
     });
 
     await newPost.save();
+    scheduleShopPushNotification(shopId, 'post.created');
 
     return NextResponse.json({ message: 'Post created successfully', post: newPost }, { status: 201 });
   } catch (error: unknown) {

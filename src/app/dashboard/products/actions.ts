@@ -9,6 +9,7 @@ import Shop from "@/models/Shop";
 import { revalidatePath } from "next/cache";
 import { isObjectId } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { scheduleShopPushNotification } from "@/lib/push-notifications";
 
 export async function getCategoriesAction() {
   const session = await getServerSession(authOptions);
@@ -51,7 +52,7 @@ export async function setProductPublishedAction(productId: string, isPublished: 
       { _id: productId, shopId },
       { $set: { isPublished } },
       { returnDocument: "after", runValidators: true },
-    ).select("isPublished"),
+    ).select("isPublished name"),
     Shop.findById(shopId).select("slug").lean(),
   ]);
   if (!product) throw new Error("Product not found");
@@ -59,6 +60,12 @@ export async function setProductPublishedAction(productId: string, isPublished: 
   revalidatePath("/dashboard", "page");
   if (shop?.slug) revalidatePath(`/shop/${shop.slug}`, "layout");
   scheduleShopEvent(shopId, "product.updated", "both", productId);
+  if (isPublished) {
+    scheduleShopPushNotification(shopId, "product.published", {
+      entityId: productId,
+      productName: product.name,
+    });
+  }
 }
 
 export async function deleteProductAction(productId: string) {

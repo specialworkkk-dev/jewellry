@@ -15,6 +15,7 @@ import Link from "next/link";
 import { getCurrentSession } from "@/lib/session";
 import { getOwnerShop } from "@/lib/owner-data";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { scheduleShopPushNotification } from "@/lib/push-notifications";
 
 export default async function DashboardOverviewPage() {
   const session = await getCurrentSession();
@@ -42,6 +43,7 @@ export default async function DashboardOverviewPage() {
     if (currentShop) revalidatePath(`/shop/${currentShop.slug}`, "layout");
     revalidatePath("/dashboard");
     scheduleShopEvent(activeSession.user.shopId, "shop.gold-rate.updated", "both");
+    scheduleShopPushNotification(activeSession.user.shopId, "gold-rate.updated");
   }
 
   await connectToDatabase();

@@ -5,6 +5,7 @@ import connectToDatabase from '@/lib/mongoose';
 import Story from '@/models/Story';
 import { Types } from 'mongoose';
 import { isRecord, safeExternalUrl } from '@/lib/validation';
+import { scheduleShopPushNotification } from '@/lib/push-notifications';
 
 export async function POST(req: Request) {
   try {
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
     });
 
     await newStory.save();
+    scheduleShopPushNotification(shopId, 'story.created');
 
     return NextResponse.json({ message: 'Story published successfully', story: newStory }, { status: 201 });
   } catch (error: unknown) {

@@ -50,3 +50,29 @@ The key must have publish and token-request capabilities. Never prefix it with
 to that shop's public channel; authenticated owners can only subscribe to their
 own owner channel. If the key or provider is unavailable, database operations
 continue normally and connected clients fall back to conservative refreshes.
+
+## Shop-specific customer push notifications
+
+Customers can explicitly opt in to browser notifications for an individual
+shop. Successful product publication, catalogue posts, stories, gold-rate
+updates, and storefront-image updates can then notify only that shop's
+subscribers. Owners can enable or disable each event and choose or customize
+one of 50 reusable notification templates under Dashboard → Settings.
+
+Generate a VAPID key pair once:
+
+```bash
+npm run generate:vapid
+```
+
+Add these values to `.env.local` and the Vercel Production environment, then
+redeploy:
+
+```bash
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=generated_public_key
+VAPID_PRIVATE_KEY=generated_private_key
+VAPID_SUBJECT=mailto:support@your-domain.example
+```
+
+The public key is intentionally available to browsers. The private key must
+remain server-side and must never use a `NEXT_PUBLIC_` prefix.

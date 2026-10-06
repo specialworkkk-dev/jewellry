@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { cleanString, safeExternalUrl } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { scheduleShopPushNotification } from "@/lib/push-notifications";
 
 export async function updateShopSettings(formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -40,4 +41,8 @@ export async function updateShopSettings(formData: FormData) {
   }
   revalidatePath("/shop/[slug]", "page");
   scheduleShopEvent(shopId, "shop.settings.updated", "both");
+  const customerVisibleMediaChanged = shop?.logoUrl !== updates.logoUrl || shop?.coverUrl !== updates.coverUrl;
+  if (customerVisibleMediaChanged) {
+    scheduleShopPushNotification(shopId, "shop.updated");
+  }
 }

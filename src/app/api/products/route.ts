@@ -8,6 +8,7 @@ import { Types } from 'mongoose';
 import Category from '@/models/Category';
 import { cleanString, isDuplicateKeyError, isObjectId, isRecord, safeExternalUrl } from '@/lib/validation';
 import { scheduleShopEvent } from '@/lib/realtime';
+import { scheduleShopPushNotification } from '@/lib/push-notifications';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
@@ -145,6 +146,12 @@ export async function POST(req: Request) {
 
     await newProduct.save();
     scheduleShopEvent(shopId, 'product.created', newProduct.isPublished ? 'both' : 'owner', newProduct._id.toString());
+    if (newProduct.isPublished) {
+      scheduleShopPushNotification(shopId, 'product.created', {
+        entityId: newProduct._id.toString(),
+        productName: newProduct.name,
+      });
+    }
 
     return NextResponse.json({ message: 'Product created successfully', product: newProduct }, { status: 201 });
   } catch (error: unknown) {

@@ -10,6 +10,7 @@ import { getPublicShopBySlug } from "@/lib/public-store";
 import { headers } from "next/headers";
 import { admitUniqueShopVisitor } from "@/lib/unique-shop-visitors";
 import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
+import { ShopNotificationButton } from "@/components/public/ShopNotificationButton";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -84,6 +85,7 @@ export default async function PublicShopLayout({
   }
 
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
+  const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
   const maximumUniqueVisitors = shop.maxLinkOpens || 500;
   const admission = await admitUniqueShopVisitor(
     shop._id.toString(),
@@ -175,8 +177,15 @@ export default async function PublicShopLayout({
 
             {/* Quick Actions & Socials */}
             <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-              <div className="flex gap-2 w-full sm:w-auto items-center">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
                 <LanguageSwitcher />
+                {publicVapidKey && (
+                  <ShopNotificationButton
+                    shopId={shop._id.toString()}
+                    shopName={shop.name}
+                    publicVapidKey={publicVapidKey}
+                  />
+                )}
                 {whatsappNumber && (
                   <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm min-h-11">
                     <Phone className="w-4 h-4" /> WhatsApp
