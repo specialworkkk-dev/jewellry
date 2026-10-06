@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, CircleDollarSign, Cloud, Database, RefreshCw, Server, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDollarSign, RefreshCw, Server, XCircle } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
 import type { InfrastructureMetric, InfrastructureReport, InfrastructureServiceReport } from "@/lib/infrastructure-monitor";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
@@ -40,10 +40,77 @@ function formatMetric(metric: InfrastructureMetric) {
   return formatNumber(metric.value);
 }
 
-function serviceIcon(key: InfrastructureServiceReport["key"]) {
-  if (key === "mongodb") return <Database className="h-5 w-5" />;
-  if (key === "r2") return <Cloud className="h-5 w-5" />;
-  return <Server className="h-5 w-5" />;
+function ServiceLogo({ serviceKey }: { serviceKey: InfrastructureServiceReport["key"] }) {
+  if (serviceKey === "mongodb") {
+    return (
+      <svg role="img" aria-label="MongoDB logo" viewBox="0 0 24 24" className="h-7 w-7 fill-[#47A248]">
+        <path d="M17.193 9.555c-1.264-5.58-4.252-7.414-4.573-8.115-.28-.394-.53-.954-.735-1.44-.036.495-.055.685-.523 1.184-.723.566-4.438 3.682-4.74 10.02-.282 5.912 4.27 9.435 4.888 9.884l.07.05c.11.95.22 1.904.33 2.862h.481c.114-1.032.284-2.056.51-3.07.417-.296.604-.463.85-.693a11.342 11.342 0 0 0 3.639-8.464c.01-.814-.103-1.662-.197-2.218Zm-5.336 8.195s0-8.291.275-8.29c.213 0 .49 10.695.49 10.695-.381-.045-.765-1.76-.765-2.405Z" />
+      </svg>
+    );
+  }
+
+  if (serviceKey === "r2") {
+    return (
+      <svg role="img" aria-label="Cloudflare logo" viewBox="0 0 24 24" className="h-8 w-8 fill-[#F38020]">
+        <path d="M16.509 16.845c.147-.507.09-.971-.156-1.316-.224-.316-.604-.499-1.061-.52l-8.659-.113a.156.156 0 0 1-.133-.071.191.191 0 0 1-.021-.155.224.224 0 0 1 .203-.156l8.736-.113c1.035-.049 2.16-.887 2.554-1.913l.499-1.302a.299.299 0 0 0 .014-.168c-.563-2.546-2.835-4.445-5.55-4.445-2.504 0-4.628 1.618-5.388 3.862a2.55 2.55 0 0 0-1.794-.499 2.57 2.57 0 0 0-2.286 2.286c-.028.31-.007.613.064.894C1.568 13.171 0 14.775 0 16.752c0 .175.014.352.035.527a.171.171 0 0 0 .169.148h15.981a.219.219 0 0 0 .204-.156l.12-.426Zm2.757-5.564c-.077 0-.161 0-.239.011a.166.166 0 0 0-.127.098l-.338 1.174c-.147.507-.092.971.154 1.317.226.316.606.498 1.063.519l1.844.114c.055 0 .105.026.133.07a.184.184 0 0 1 .021.156.225.225 0 0 1-.204.155l-1.921.112c-1.041.049-2.158.887-2.553 1.914l-.14.358c-.029.071.021.142.098.142h6.598a.18.18 0 0 0 .169-.126c.112-.408.176-.837.176-1.28 0-2.603-2.125-4.727-4.734-4.727Z" />
+      </svg>
+    );
+  }
+
+  if (serviceKey === "vercel") {
+    return (
+      <svg role="img" aria-label="Vercel logo" viewBox="0 0 24 24" className="h-7 w-7 fill-black">
+        <path d="m12 1.608 12 20.784H0Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg role="img" aria-label="Ably logo" viewBox="0 0 78 64" className="h-7 w-8">
+      <defs>
+        <linearGradient id="ably-logo-gradient" x1="10.947" y1="74.844" x2="64.921" y2="14.901" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#FF5416" />
+          <stop offset="1" stopColor="#FF0000" />
+        </linearGradient>
+      </defs>
+      <path d="M38.572 0 6.296 59.074 0 54.659 29.864 0h8.708Zm.449 0 32.276 59.074 6.296-4.415L47.729 0h-8.708Z" fill="url(#ably-logo-gradient)" />
+      <path d="M70.848 59.421 38.797 34.32 6.745 59.421 13.287 64l25.51-19.971L64.307 64l6.541-4.579Z" fill="url(#ably-logo-gradient)" />
+    </svg>
+  );
+}
+
+function positiveNumber(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function ablyServiceReport(): InfrastructureServiceReport {
+  const configured = Boolean(process.env.ABLY_API_KEY?.trim());
+  const connectionLimit = positiveNumber(process.env.ABLY_CONNECTION_LIMIT, 200);
+  const monthlyMessageLimit = positiveNumber(process.env.ABLY_MONTHLY_MESSAGE_LIMIT, 6_000_000);
+
+  return {
+    key: "ably",
+    name: "Ably Realtime",
+    status: configured ? "healthy" : "unconfigured",
+    configured,
+    summary: configured
+      ? "Realtime updates are connected for owners and customers."
+      : "Realtime updates are not configured.",
+    recommendation: configured
+      ? "Review live connection and message usage in the Ably dashboard as traffic grows."
+      : "Add ABLY_API_KEY to enable realtime storefront updates.",
+    metrics: configured ? [
+      { label: "Configured connection limit", value: connectionLimit, unit: "count" },
+      { label: "Configured monthly messages", value: monthlyMessageLimit, unit: "count" },
+    ] : [],
+    projectedMonthlyCostInr: 0,
+    details: [
+      { label: "Provider", value: "Ably" },
+      { label: "Purpose", value: "Realtime owner and storefront updates" },
+      { label: "API authentication", value: configured ? "Connected" : "Needs configuration" },
+    ],
+  };
 }
 
 function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
@@ -51,8 +118,11 @@ function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="rounded-lg bg-gray-100 p-2 text-gray-700">{serviceIcon(service.key)}</span>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
+            <ServiceLogo serviceKey={service.key} />
+          </span>
           <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">Third-party service</p>
             <h2 className="font-semibold text-gray-900">{service.name}</h2>
             <p className="mt-1 text-sm text-gray-500">{service.summary}</p>
           </div>
@@ -114,7 +184,7 @@ export default async function InfrastructurePage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Infrastructure monitor</h1>
-          <p className="mt-2 text-gray-500">MongoDB, Cloudflare R2 and Vercel allowance, usage and cost alerts.</p>
+          <p className="mt-2 text-gray-500">MongoDB, Cloudflare R2, Vercel and Ably service status, allowance, usage and cost alerts.</p>
         </div>
         <form action={refreshInfrastructureReport}>
           <ActionSubmitButton pendingLabel="Checking services…" className="h-auto bg-gray-900 px-4 py-2.5 text-white hover:bg-black">
@@ -171,8 +241,8 @@ export default async function InfrastructurePage() {
             </div>
           )}
 
-          <div className="grid gap-5 xl:grid-cols-3">
-            {Object.values(report.services).map((service) => <ServiceCard key={service.key} service={service} />)}
+          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-4">
+            {[...Object.values(report.services), ablyServiceReport()].map((service) => <ServiceCard key={service.key} service={service} />)}
           </div>
         </>
       )}

@@ -15,7 +15,7 @@ export interface InfrastructureMetric {
 }
 
 export interface InfrastructureServiceReport {
-  key: "mongodb" | "r2" | "vercel";
+  key: "mongodb" | "r2" | "vercel" | "ably";
   name: string;
   status: InfrastructureStatus;
   configured: boolean;
