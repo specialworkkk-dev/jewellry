@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
-import { AtSign, Check, Copy, MessageCircle, Share2, Users } from "lucide-react";
+import { AtSign, Check, Copy, LoaderCircle, LogOut, MessageCircle, Share2, Users } from "lucide-react";
 import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
 
 type ShopSettings = {
@@ -31,6 +32,7 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
   const [copied, setCopied] = useState(false);
   const [publicShopUrl, setPublicShopUrl] = useState("");
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { t } = useLocale();
 
   useEffect(() => {
@@ -78,6 +80,17 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
     }
 
     window.open(whatsappShareUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+
+    try {
+      await signOut({ callbackUrl: "/login" });
+    } catch {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -231,6 +244,31 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
               <ActionSubmitButton pendingLabel="Saving changes…">Save Changes</ActionSubmitButton>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-red-100 bg-red-50/30">
+        <CardHeader>
+          <CardTitle>Account Access</CardTitle>
+          <CardDescription>Sign out securely from the shop owner dashboard on this device.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            type="button"
+            variant="destructive"
+            size="lg"
+            disabled={isSigningOut}
+            aria-busy={isSigningOut}
+            onClick={handleSignOut}
+            className="min-h-11 w-full justify-center gap-2 border border-red-200 px-5 sm:w-auto"
+          >
+            {isSigningOut ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+            )}
+            {isSigningOut ? "Signing out…" : "Sign out"}
+          </Button>
         </CardContent>
       </Card>
     </div>
