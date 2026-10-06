@@ -189,6 +189,12 @@ async function main() {
         headers: { cookie: cookieHeader(jar) },
       })).status,
     })));
+    const ownerStoreResponse = await fetch(`${BASE_URL}/shop/session-test-jewellers`, {
+      headers: { cookie: cookieHeader(jar) },
+    });
+    const ownerStoreHtml = await ownerStoreResponse.text();
+    const customerStoreResponse = await fetch(`${BASE_URL}/shop/session-test-jewellers`);
+    const customerStoreHtml = await customerStoreResponse.text();
 
     const result = {
       loginStatus: loginResponse.status,
@@ -208,6 +214,12 @@ async function main() {
         homeResumePath === "/dashboard",
       ownerPaginationPages: ownerListResponses,
       ownerPaginationHealthy: ownerListResponses.every(({ status }) => status === 200),
+      ownerPreviewBackLink:
+        ownerStoreResponse.status === 200 &&
+        ownerStoreHtml.includes("Back to Dashboard"),
+      ownerControlsHiddenFromCustomers:
+        customerStoreResponse.status === 200 &&
+        !customerStoreHtml.includes("Back to Dashboard"),
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
       httpOnlyCookie: /HttpOnly/i.test(sessionCookie),
@@ -221,6 +233,8 @@ async function main() {
       !result.loginResumesDashboard ||
       !result.homeResumesDashboard ||
       !result.ownerPaginationHealthy ||
+      !result.ownerPreviewBackLink ||
+      !result.ownerControlsHiddenFromCustomers ||
       !result.persistentCookie ||
       result.serverErrors.length
     ) {

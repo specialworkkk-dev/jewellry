@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import { admitUniqueShopVisitor } from "@/lib/unique-shop-visitors";
 import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
 import { ShopNotificationButton } from "@/components/public/ShopNotificationButton";
+import { getCurrentSession } from "@/lib/session";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -59,7 +60,10 @@ export default async function PublicShopLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await getPublicShopBySlug(slug);
+  const [shop, session] = await Promise.all([
+    getPublicShopBySlug(slug),
+    getCurrentSession(),
+  ]);
   
   if (!shop) {
     notFound();
@@ -85,6 +89,8 @@ export default async function PublicShopLayout({
   }
 
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
+  const isOwnerPreview = session?.user.role === "SHOP_OWNER"
+    && session.user.shopId === shop._id.toString();
   const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
   const maximumUniqueVisitors = shop.maxLinkOpens || 500;
   const admission = await admitUniqueShopVisitor(
@@ -124,6 +130,22 @@ export default async function PublicShopLayout({
         appName={shop.name}
         description={`Install ${shop.name} for quick access to this jewellery collection.`}
       />
+
+      {isOwnerPreview && (
+        <div className="sticky top-0 z-[70] flex h-12 items-center border-b border-amber-300/20 bg-stone-950 px-4 text-white shadow-lg">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+            <span className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-amber-300 sm:text-sm">
+              Owner preview · {shop.name}
+            </span>
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-amber-400 px-3 py-2 text-xs font-bold text-stone-950 transition hover:bg-amber-300 sm:px-4 sm:text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (
@@ -141,7 +163,7 @@ export default async function PublicShopLayout({
       )}
       
       {/* Public Shop Header */}
-      <header className="z-50 border-b border-stone-200/80 bg-white/95 backdrop-blur-md sm:sticky sm:top-0">
+      <header className={`z-50 border-b border-stone-200/80 bg-white/95 backdrop-blur-md sm:sticky ${isOwnerPreview ? "sm:top-12" : "sm:top-0"}`}>
         <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
