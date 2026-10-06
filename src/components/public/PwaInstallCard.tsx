@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Share, Smartphone, X, Zap } from "lucide-react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
+import { CheckCircle2, Download, LoaderCircle, Share, Smartphone, X, Zap } from "lucide-react";
+import type { BeforeInstallPromptEvent } from "@/lib/pwa-install";
+import {
+  clearCapturedInstallPrompt,
+  getCapturedInstallPrompt,
+  PWA_APP_INSTALLED_EVENT,
+  PWA_INSTALL_READY_EVENT,
+} from "@/lib/pwa-install";
 
 function isStandalone() {
   return window.matchMedia("(display-mode: standalone)").matches
@@ -18,38 +20,62 @@ export function PwaInstallCard({ appName }: { appName: string }) {
   const [showSteps, setShowSteps] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [checkedInstallState, setCheckedInstallState] = useState(false);
 
   useEffect(() => {
     const initialize = window.setTimeout(() => {
       setHidden(isStandalone());
       setIsAndroid(/Android/i.test(navigator.userAgent));
+      setIsIOS(/iPhone|iPad|iPod/i.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+      setPrompt(getCapturedInstallPrompt() || null);
+      setCheckedInstallState(true);
     }, 0);
-    const handlePrompt = (event: Event) => {
-      event.preventDefault();
-      setPrompt(event as BeforeInstallPromptEvent);
+    const handlePrompt = () => {
+      setPrompt(getCapturedInstallPrompt() || null);
       setHidden(false);
+      setCheckedInstallState(true);
     };
-    const handleInstalled = () => setHidden(true);
-    window.addEventListener("beforeinstallprompt", handlePrompt);
-    window.addEventListener("appinstalled", handleInstalled);
+    const handleInstalled = () => {
+      setHidden(true);
+      setCheckedInstallState(true);
+    };
+    window.addEventListener(PWA_INSTALL_READY_EVENT, handlePrompt);
+    window.addEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
     return () => {
       window.clearTimeout(initialize);
-      window.removeEventListener("beforeinstallprompt", handlePrompt);
-      window.removeEventListener("appinstalled", handleInstalled);
+      window.removeEventListener(PWA_INSTALL_READY_EVENT, handlePrompt);
+      window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
     };
   }, []);
 
-  if (hidden) return null;
+  if (!checkedInstallState || hidden) return null;
 
   const install = async () => {
     if (!prompt) {
       setShowSteps(true);
       return;
     }
-    await prompt.prompt();
-    const choice = await prompt.userChoice;
-    if (choice.outcome === "accepted") setHidden(true);
-    setPrompt(null);
+    setInstalling(true);
+    try {
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
+      clearCapturedInstallPrompt();
+      setPrompt(null);
+      if (choice.outcome === "accepted") {
+        setHidden(true);
+      } else {
+        setShowSteps(true);
+      }
+    } catch {
+      clearCapturedInstallPrompt();
+      setPrompt(null);
+      setShowSteps(true);
+    } finally {
+      setInstalling(false);
+    }
   };
 
   const openInChrome = () => {
@@ -74,14 +100,17 @@ export function PwaInstallCard({ appName }: { appName: string }) {
               <p className="mt-1 text-sm leading-6 text-stone-600">Install this shop for one-tap access to new jewellery, gold rates and WhatsApp enquiries.</p>
             </div>
           </div>
-          <button type="button" onClick={install} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-sm font-bold text-white hover:bg-stone-800">
-            <Download className="h-4 w-4" /> Install shop
+          <button type="button" onClick={install} disabled={installing} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/15 transition hover:-translate-y-0.5 hover:bg-stone-800 disabled:cursor-wait disabled:opacity-70">
+            {installing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : prompt ? <Download className="h-4 w-4" /> : <Share className="h-4 w-4" />}
+            {installing ? "Opening…" : prompt ? "Install in one tap" : isIOS ? "Add to iPhone" : "Install shop"}
           </button>
         </div>
         {showSteps && (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-white/80 p-4 text-sm text-stone-700">
-            <p className="flex items-center gap-2 font-semibold"><Share className="h-4 w-4" /> If the install window does not appear:</p>
-            <p className="mt-1">Open this page in Chrome, then choose <strong>Install app</strong> from the three-dot menu. Do not choose “Create shortcut”.</p>
+            <p className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> {isIOS ? "Install from Safari" : "Install from your browser"}</p>
+            <p className="mt-1">{isIOS
+              ? <>Tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>. Apple does not allow websites to skip these confirmation steps.</>
+              : <>Open this page in Chrome, tap the three-dot menu and choose <strong>Install app</strong>. Do not choose “Create shortcut”.</>}</p>
             {isAndroid && !prompt && (
               <button type="button" onClick={openInChrome} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-stone-900 px-5 py-2 text-xs font-bold text-white">
                 Open in Chrome to install

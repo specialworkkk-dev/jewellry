@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
+import { PwaInstallCapture } from "@/components/public/PwaInstallCapture";
 import { LocaleProvider } from "@/i18n/useLocale";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#111827" />
       </head>
       <body className="font-sans antialiased h-full flex flex-col min-h-screen">
+        <PwaInstallCapture />
         <LocaleProvider>
           {children}
           <PwaServiceWorker />

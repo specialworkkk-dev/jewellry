@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Download, Share, Smartphone, X } from "lucide-react";
+import type { BeforeInstallPromptEvent } from "@/lib/pwa-install";
+import {
+  clearCapturedInstallPrompt,
+  getCapturedInstallPrompt,
+  PWA_APP_INSTALLED_EVENT,
+  PWA_INSTALL_READY_EVENT,
+} from "@/lib/pwa-install";
 
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
 
 interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
@@ -51,9 +53,8 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
       return installed || recentlyDismissed;
     };
 
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
+    const handleBeforeInstallPrompt = () => {
+      setDeferredPrompt(getCapturedInstallPrompt() || null);
       if (!promptIsSuppressed()) setIsVisible(true);
     };
 
@@ -62,11 +63,14 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
       setIsVisible(false);
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
+    window.addEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
 
     const initializePrompt = window.setTimeout(() => {
       if (promptIsSuppressed()) return;
+
+      const capturedPrompt = getCapturedInstallPrompt();
+      if (capturedPrompt) setDeferredPrompt(capturedPrompt);
 
       const ios = isIOSDevice();
       const android = /Android/i.test(navigator.userAgent);
@@ -78,8 +82,8 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
 
     return () => {
       window.clearTimeout(initializePrompt);
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
+      window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
     };
   }, [dismissedStorageKey, installStorageKey]);
 
@@ -95,6 +99,7 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
       if (outcome === "accepted") {
         markInstalled();
       }
+      clearCapturedInstallPrompt();
       setDeferredPrompt(null);
       return;
     }

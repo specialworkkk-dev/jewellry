@@ -21,6 +21,7 @@ export async function GET(
       name: shop.name,
       short_name: shop.name.slice(0, 24),
       description: shop.shortDescription || `Welcome to ${shop.name}`,
+      lang: "en-IN",
       start_url: `/shop/${shop.slug}?source=pwa`,
       scope: `/shop/${shop.slug}`,
       display: "standalone",
@@ -29,6 +30,8 @@ export async function GET(
       orientation: "portrait-primary",
       background_color: "#ffffff",
       theme_color: "#111827",
+      categories: ["shopping", "lifestyle"],
+      prefer_related_applications: false,
       icons: [
         {
           src: `/api/shop/${shop.slug}/icon/192`,
