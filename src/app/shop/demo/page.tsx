@@ -107,22 +107,22 @@ export default function DemoStorePage() {
             <span className="text-sm text-gray-500">{t("handpickedForCeremonies")}</span>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-9">
             {featuredProducts.map((product) => (
-              <article key={product.name} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-                <div className="aspect-[4/5] overflow-hidden">
+              <article key={product.name} className="group overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-[0_10px_35px_rgba(68,48,28,0.07)] transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="aspect-square overflow-hidden bg-stone-100">
                   <StoreImage
                     src={product.image}
                     alt={product.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                <div className="p-4">
-                  <p className="text-sm text-gray-500">Fine jewellery</p>
-                  <h3 className="mt-1 text-lg font-medium text-gray-900">{product.name}</h3>
+                <div className="p-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">Fine jewellery</p>
+                  <h3 className="mt-1.5 font-serif text-xl font-semibold text-gray-900">{product.name}</h3>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="font-semibold text-gray-900">{product.price}</span>
-                    <a href={product.enquiryUrl} target="_blank" rel="noreferrer" className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-medium text-white inline-flex items-center hover:bg-amber-600">Enquire</a>
+                    <span className="text-lg font-bold text-gray-900">{product.price}</span>
+                    <a href={product.enquiryUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-full bg-stone-900 px-5 py-2 text-sm font-bold text-white hover:bg-stone-800">Enquire</a>
                   </div>
                 </div>
               </article>

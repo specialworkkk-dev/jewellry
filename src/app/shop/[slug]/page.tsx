@@ -107,7 +107,7 @@ export default async function PublicShopPage({
             New designs are being prepared. Please check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-9">
             {products.map((product) => {
               const message = encodeURIComponent(`Hi! I'm interested in ${product.name}. Please share more details.`);
               const enquiryUrl = ownerWhatsApp ? `https://wa.me/${ownerWhatsApp}?text=${message}` : "#";
@@ -118,15 +118,15 @@ export default async function PublicShopPage({
               );
 
               return (
-                <article key={product._id.toString()} className="group relative min-w-0 overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
+                <article key={product._id.toString()} className="group relative min-w-0 overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-[0_10px_35px_rgba(68,48,28,0.07)] transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
                   <ProductCardFavorite productId={product._id.toString()} shopId={shop._id.toString()} initialSaved={savedProductIds.has(product._id.toString())} />
                   <Link href={`/shop/${shop.slug}/product/${product._id}`} className="relative block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                  <div className="aspect-[4/5] w-full overflow-hidden bg-stone-100">
+                  <div className="aspect-square w-full overflow-hidden bg-gradient-to-br from-stone-50 to-stone-100">
                     {product.images?.[0] ? (
                       <StoreImage
                         src={product.images[0]}
                         alt={product.name}
-                        sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
+                        sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 50vw, 33vw"
                         className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -143,12 +143,12 @@ export default async function PublicShopPage({
                     <ArrowUpRight className="h-4 w-4" />
                   </span>
                   </Link>
-                  <div className="flex flex-col p-3 sm:p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 sm:text-xs">{product.goldPurity ? `${product.goldPurity} gold` : "Fine jewellery"}</p>
-                    <h3 className="mt-1 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-stone-900 sm:text-base">
+                  <div className="flex flex-col p-5 sm:p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">{product.goldPurity ? `${product.goldPurity} gold` : "Fine jewellery"}</p>
+                    <h3 className="mt-1.5 line-clamp-2 min-h-12 font-serif text-xl font-semibold leading-6 text-stone-900">
                       <Link href={`/shop/${shop.slug}/product/${product._id}`} className="hover:text-amber-700">{product.name}</Link>
                     </h3>
-                    <p className="mt-2 text-sm font-bold text-stone-900 sm:text-base">
+                    <p className="mt-2 text-lg font-bold tracking-tight text-stone-950">
                       {product.priceType === "FIXED_PRICE" && product.price !== undefined
                         ? `₹${product.price.toLocaleString("en-IN")}`
                         : product.priceType === "STARTING_FROM" && product.price !== undefined
@@ -169,13 +169,13 @@ export default async function PublicShopPage({
                         ₹{makingChargeAfterDiscount.toLocaleString("en-IN")} · {discountLabel(product.makingChargesDiscountType, product.makingChargesDiscountValue)}
                       </p>
                     ) : null}
-                    <div className={`mt-3 grid gap-2 ${ownerWhatsApp ? "grid-cols-[1fr_42px]" : "grid-cols-1"}`}>
-                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-xs font-bold text-white hover:bg-stone-800">
+                    <div className={`mt-4 grid gap-2.5 ${ownerWhatsApp ? "grid-cols-2" : "grid-cols-1"}`}>
+                      <Link href={`/shop/${shop.slug}/product/${product._id}`} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-sm font-bold text-white hover:bg-stone-800">
                         View design
                       </Link>
                       {ownerWhatsApp && (
-                        <a href={enquiryUrl} target="_blank" rel="noreferrer" aria-label={`Ask about ${product.name} on WhatsApp`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#168c48] text-white hover:bg-[#11763c]">
-                          <MessageCircle className="h-4 w-4" />
+                        <a href={enquiryUrl} target="_blank" rel="noreferrer" aria-label={`Ask about ${product.name} on WhatsApp`} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-[#168c48] px-3 text-sm font-bold text-white hover:bg-[#11763c]">
+                          <MessageCircle className="h-4 w-4" /> Ask
                         </a>
                       )}
                     </div>

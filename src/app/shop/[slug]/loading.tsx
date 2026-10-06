@@ -9,11 +9,11 @@ export default function ShopLoading() {
       </div>
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="h-9 w-64 rounded bg-stone-200" />
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="overflow-hidden rounded-2xl bg-white">
-              <div className="aspect-[4/5] bg-stone-200" />
-              <div className="space-y-3 p-4">
+        <div className="mt-8 grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-9">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="overflow-hidden rounded-3xl bg-white">
+              <div className="aspect-square bg-stone-200" />
+              <div className="space-y-3 p-5">
                 <div className="h-4 rounded bg-stone-200" />
                 <div className="h-4 w-2/3 rounded bg-stone-200" />
               </div>
