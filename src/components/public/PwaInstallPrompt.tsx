@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Share, Smartphone, X } from "lucide-react";
+import { Download, Share, Smartphone, X, Zap } from "lucide-react";
 import type { BeforeInstallPromptEvent } from "@/lib/pwa-install";
 import {
   clearCapturedInstallPrompt,
@@ -31,9 +31,17 @@ interface PwaInstallPromptProps {
   appId: string;
   appName: string;
   description?: string;
+  dismissDurationMs?: number;
+  showDelayMs?: number;
 }
 
-export function PwaInstallPrompt({ appId, appName, description }: PwaInstallPromptProps) {
+export function PwaInstallPrompt({
+  appId,
+  appName,
+  description,
+  dismissDurationMs = DISMISS_DURATION_MS,
+  showDelayMs = 0,
+}: PwaInstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -45,17 +53,24 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let revealTimer: number | undefined;
 
     const promptIsSuppressed = () => {
       const installed = localStorage.getItem(installStorageKey) === "true" || isStandaloneMode();
       const dismissedAt = Number(localStorage.getItem(dismissedStorageKey) || 0);
-      const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_DURATION_MS;
+      const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < dismissDurationMs;
       return installed || recentlyDismissed;
+    };
+
+    const revealPrompt = () => {
+      if (promptIsSuppressed()) return;
+      if (revealTimer) window.clearTimeout(revealTimer);
+      revealTimer = window.setTimeout(() => setIsVisible(true), showDelayMs);
     };
 
     const handleBeforeInstallPrompt = () => {
       setDeferredPrompt(getCapturedInstallPrompt() || null);
-      if (!promptIsSuppressed()) setIsVisible(true);
+      revealPrompt();
     };
 
     const handleAppInstalled = () => {
@@ -77,15 +92,16 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       setIsIOS(ios);
       setIsAndroid(android);
-      setIsVisible(ios || mobile);
+      if (capturedPrompt || ios || mobile) revealPrompt();
     }, 0);
 
     return () => {
       window.clearTimeout(initializePrompt);
+      if (revealTimer) window.clearTimeout(revealTimer);
       window.removeEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
       window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
     };
-  }, [dismissedStorageKey, installStorageKey]);
+  }, [dismissedStorageKey, dismissDurationMs, installStorageKey, showDelayMs]);
 
   const markInstalled = () => {
     localStorage.setItem(installStorageKey, "true");
@@ -94,13 +110,20 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        markInstalled();
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          markInstalled();
+        } else {
+          setShowManualSteps(true);
+        }
+      } catch {
+        setShowManualSteps(true);
+      } finally {
+        clearCapturedInstallPrompt();
+        setDeferredPrompt(null);
       }
-      clearCapturedInstallPrompt();
-      setDeferredPrompt(null);
       return;
     }
 
@@ -135,6 +158,9 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
           </div>
 
           <div className="flex-1">
+            <div className="mb-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              <Zap className="h-3 w-3" /> Free · quick install
+            </div>
             <div className="text-sm font-semibold text-slate-900">{title}</div>
             <div className="mt-1 text-xs text-slate-600">
               {description || (isIOS
@@ -185,7 +211,7 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700"
             >
               <Download className="mr-1.5 h-3.5 w-3.5" />
-              {isIOS ? "Show steps" : "Install"}
+              {isIOS ? "Show steps" : deferredPrompt ? "Install now" : "Install"}
             </button>
             {!showManualSteps && (
               <button

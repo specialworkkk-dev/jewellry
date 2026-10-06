@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
+import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { StoreImage } from "@/components/public/StoreImage";
 import { getPublicShopBySlug } from "@/lib/public-store";
 import { headers } from "next/headers";
@@ -152,6 +153,13 @@ export default async function PublicShopLayout({
       {process.env.ABLY_API_KEY?.trim() && (
         <ShopRealtimeSync shopId={shop._id.toString()} audience="customer" />
       )}
+      <PwaInstallPrompt
+        appId={`shop-${shop.slug}`}
+        appName={shop.name}
+        description={`Keep ${shop.name} on your Home Screen for one-tap access to new designs, live gold rates and WhatsApp enquiries.`}
+        dismissDurationMs={24 * 60 * 60 * 1000}
+        showDelayMs={1800}
+      />
       {isOwnerPreview && (
         <div className="sticky top-0 z-[70] flex h-12 items-center border-b border-amber-300/20 bg-stone-950 px-4 text-white shadow-lg">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
