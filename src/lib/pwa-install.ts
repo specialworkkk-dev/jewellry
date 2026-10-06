@@ -9,6 +9,7 @@ export const PWA_APP_INSTALLED_EVENT = "luxestore:pwa-app-installed";
 declare global {
   interface Window {
     __luxestoreInstallPrompt?: BeforeInstallPromptEvent;
+    __luxestorePwaCaptureReady?: boolean;
   }
 }
 

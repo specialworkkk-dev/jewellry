@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
-import { PwaInstallCapture } from "@/components/public/PwaInstallCapture";
 import { LocaleProvider } from "@/i18n/useLocale";
 import "./globals.css";
 
@@ -31,9 +31,23 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="theme-color" content="#111827" />
+        <Script id="luxestore-pwa-install-capture" strategy="beforeInteractive">
+          {`(function(){
+            if(window.__luxestorePwaCaptureReady)return;
+            window.__luxestorePwaCaptureReady=true;
+            window.addEventListener("beforeinstallprompt",function(event){
+              event.preventDefault();
+              window.__luxestoreInstallPrompt=event;
+              window.dispatchEvent(new Event("luxestore:pwa-install-ready"));
+            });
+            window.addEventListener("appinstalled",function(){
+              delete window.__luxestoreInstallPrompt;
+              window.dispatchEvent(new Event("luxestore:pwa-app-installed"));
+            });
+          })();`}
+        </Script>
       </head>
       <body className="font-sans antialiased h-full flex flex-col min-h-screen">
-        <PwaInstallCapture />
         <LocaleProvider>
           {children}
           <PwaServiceWorker />
