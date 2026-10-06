@@ -6,6 +6,7 @@ import { Activity, ExternalLink, LayoutDashboard, LogOut, Package, Settings, Hel
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
+import { LanguageSwitcher } from "@/i18n/useLocale";
 
 export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "shop" | "admin"; shopSlug?: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,9 +32,12 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
       {/* Mobile Top Header */}
       <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100">
         <span className="font-bold text-lg text-gray-900">{mode === "admin" ? "Admin Panel" : "Shop Owner Panel"}</span>
-        <button type="button" aria-label="Open navigation" onClick={() => setIsOpen(true)} className="p-2 -mr-2 text-gray-600 hover:text-black">
-          <Menu className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-2">
+          {mode === "shop" && <LanguageSwitcher compact className="min-h-11 px-3" />}
+          <button type="button" aria-label="Open navigation" onClick={() => setIsOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 hover:text-black">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -56,6 +60,11 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
               <div className="flex-shrink-0 flex items-center px-4 font-bold text-xl text-gray-900 mb-5">
                 LuxeStore SaaS
               </div>
+              {mode === "shop" && (
+                <div className="px-4 pb-3">
+                  <LanguageSwitcher className="w-full justify-center rounded-xl" />
+                </div>
+              )}
               <nav className="mt-5 px-2 space-y-1">
                 {links.map((item) => {
                   const Icon = item.icon;
