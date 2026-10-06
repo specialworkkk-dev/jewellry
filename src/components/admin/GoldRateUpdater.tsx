@@ -45,7 +45,7 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
               value={rate22K}
               onChange={(e) => setRate22K(e.target.value)}
               placeholder="e.g. 6500" 
-              className="w-full px-3 py-2 text-sm border-amber-200 rounded-md focus:ring-amber-500 focus:border-amber-500 bg-white" 
+              className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
             />
           </div>
           <div className="flex-1 w-full space-y-1">
@@ -56,7 +56,7 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
               value={rate24K}
               onChange={(e) => setRate24K(e.target.value)}
               placeholder="e.g. 7000" 
-              className="w-full px-3 py-2 text-sm border-amber-200 rounded-md focus:ring-amber-500 focus:border-amber-500 bg-white" 
+              className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
             />
           </div>
           <button 

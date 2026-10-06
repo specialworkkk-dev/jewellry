@@ -6,6 +6,7 @@ import type { NextAuthOptions } from "next-auth";
 import { encode as encodeJwt } from "next-auth/jwt";
 
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
+const useSecureCookies = process.env.NODE_ENV === "production";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -88,6 +89,20 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: SEVEN_DAYS_IN_SECONDS,
     updateAge: 24 * 60 * 60,
+  },
+  useSecureCookies,
+  cookies: {
+    sessionToken: {
+      name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+        maxAge: SEVEN_DAYS_IN_SECONDS,
+        priority: "high",
+      },
+    },
   },
   jwt: {
     maxAge: SEVEN_DAYS_IN_SECONDS,
