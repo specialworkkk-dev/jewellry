@@ -164,6 +164,10 @@ async function main() {
       redirect: "manual",
       headers: { cookie: cookieHeader(jar) },
     });
+    const loginResumeLocation = loginAfterReopen.headers.get("location");
+    const loginResumePath = loginResumeLocation
+      ? new URL(loginResumeLocation, BASE_URL).pathname
+      : null;
 
     const result = {
       loginStatus: loginResponse.status,
@@ -173,7 +177,7 @@ async function main() {
       dashboardAfterReopen: dashboardAfterReopen.status,
       loginResumesDashboard:
         loginAfterReopen.status === 307 &&
-        loginAfterReopen.headers.get("location") === "/dashboard",
+        loginResumePath === "/dashboard",
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
       httpOnlyCookie: /HttpOnly/i.test(sessionCookie),
