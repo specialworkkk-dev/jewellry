@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 function canonicalProductionUrl() {
   const explicitBaseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
@@ -17,19 +18,37 @@ function canonicalProductionUrl() {
   }
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const canonical = canonicalProductionUrl();
-  if (!canonical || request.nextUrl.hostname === canonical.hostname) {
-    return NextResponse.next();
+  if (canonical && request.nextUrl.hostname !== canonical.hostname) {
+    // Authentication cookies are origin-bound. Force all production deployment
+    // aliases onto the one configured origin so an installed owner app and the
+    // browser always use the same persistent seven-day session.
+    const destination = request.nextUrl.clone();
+    destination.protocol = canonical.protocol;
+    destination.host = canonical.host;
+    return NextResponse.redirect(destination, 307);
   }
 
-  // Authentication cookies are origin-bound. Force all production deployment
-  // aliases onto the one configured origin so an installed owner app and the
-  // browser always use the same persistent seven-day session.
-  const destination = request.nextUrl.clone();
-  destination.protocol = canonical.protocol;
-  destination.host = canonical.host;
-  return NextResponse.redirect(destination, 307);
+  // Installed PWAs may reopen their last /login URL. Resolve the signed cookie
+  // before rendering so a valid owner session resumes the dashboard instantly.
+  if (request.nextUrl.pathname === "/login") {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
+    });
+
+    if (token?.role === "SHOP_OWNER") {
+      return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+    }
+
+    if (token?.role === "SUPER_ADMIN" || token?.role === "PLATFORM_ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url), 307);
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
