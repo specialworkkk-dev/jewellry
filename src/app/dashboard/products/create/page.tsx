@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { MediaUploader } from "@/components/ui/media-uploader";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Video, X } from "lucide-react";
+import { calculateDiscountedAmount, type DiscountType } from "@/lib/product-pricing";
 
 interface CategoryOption {
   _id: string;
@@ -38,6 +39,11 @@ export default function CreateProductPage() {
   
   const [priceType, setPriceType] = useState("FIXED_PRICE");
   const [price, setPrice] = useState("");
+  const [discountType, setDiscountType] = useState<DiscountType>("PERCENTAGE");
+  const [discountValue, setDiscountValue] = useState("");
+  const [makingCharges, setMakingCharges] = useState("");
+  const [makingChargesDiscountType, setMakingChargesDiscountType] = useState<DiscountType>("PERCENTAGE");
+  const [makingChargesDiscountValue, setMakingChargesDiscountValue] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
   const [mediaPolicy, setMediaPolicy] = useState<MediaPolicy | null>(null);
@@ -87,6 +93,34 @@ export default function CreateProductPage() {
       setError("Name and SKU are required.");
       return;
     }
+    const numericPrice = price ? Number(price) : 0;
+    const numericDiscount = discountValue ? Number(discountValue) : 0;
+    const numericMakingCharges = makingCharges ? Number(makingCharges) : 0;
+    const numericMakingDiscount = makingChargesDiscountValue ? Number(makingChargesDiscountValue) : 0;
+    if (numericDiscount > 0 && numericPrice <= 0) {
+      setError("Enter a product price before adding a main discount.");
+      return;
+    }
+    if (numericMakingDiscount > 0 && numericMakingCharges <= 0) {
+      setError("Enter making charges before adding a making-charge discount.");
+      return;
+    }
+    if (discountType === "PERCENTAGE" && numericDiscount > 100) {
+      setError("Main percentage discount cannot exceed 100%.");
+      return;
+    }
+    if (discountType === "FIXED_AMOUNT" && numericDiscount > numericPrice) {
+      setError("Main fixed discount cannot exceed the product price.");
+      return;
+    }
+    if (makingChargesDiscountType === "PERCENTAGE" && numericMakingDiscount > 100) {
+      setError("Making-charge percentage discount cannot exceed 100%.");
+      return;
+    }
+    if (makingChargesDiscountType === "FIXED_AMOUNT" && numericMakingDiscount > numericMakingCharges) {
+      setError("Making-charge fixed discount cannot exceed making charges.");
+      return;
+    }
     
     setIsSubmitting(true);
     setError("");
@@ -101,7 +135,12 @@ export default function CreateProductPage() {
           description,
           categoryId,
           priceType,
-          price: price ? parseFloat(price) : 0,
+          price: price ? numericPrice : undefined,
+          discountType,
+          discountValue: numericDiscount,
+          makingCharges: makingCharges ? numericMakingCharges : undefined,
+          makingChargesDiscountType,
+          makingChargesDiscountValue: numericMakingDiscount,
           ...(goldPurity ? { goldPurity } : {}),
           goldWeight: goldWeight ? parseFloat(goldWeight) : 0,
           diamondWeight: diamondWeight ? parseFloat(diamondWeight) : 0,
@@ -124,6 +163,13 @@ export default function CreateProductPage() {
       setIsSubmitting(false);
     }
   };
+
+  const pricePreview = calculateDiscountedAmount(Number(price) || 0, discountType, Number(discountValue) || 0);
+  const makingChargesPreview = calculateDiscountedAmount(
+    Number(makingCharges) || 0,
+    makingChargesDiscountType,
+    Number(makingChargesDiscountValue) || 0,
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-20">
@@ -295,6 +341,73 @@ export default function CreateProductPage() {
                   className="w-full px-3 py-2 border rounded-md" 
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Main Discount</label>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                  <select
+                    value={discountType}
+                    onChange={(event) => setDiscountType(event.target.value as DiscountType)}
+                    className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED_AMOUNT">Fixed amount (₹)</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    max={discountType === "PERCENTAGE" ? 100 : undefined}
+                    step="0.01"
+                    value={discountValue}
+                    onChange={(event) => setDiscountValue(event.target.value)}
+                    placeholder={discountType === "PERCENTAGE" ? "e.g. 10" : "e.g. 1000"}
+                    aria-label="Main discount value"
+                    className="min-h-11 w-full rounded-md border px-3"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 border-t pt-4">
+                <label className="text-sm font-medium">Making Charges (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={makingCharges}
+                  onChange={(event) => setMakingCharges(event.target.value)}
+                  placeholder="0.00"
+                  className="min-h-11 w-full rounded-md border px-3"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Making Charges Discount</label>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                  <select
+                    value={makingChargesDiscountType}
+                    onChange={(event) => setMakingChargesDiscountType(event.target.value as DiscountType)}
+                    className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED_AMOUNT">Fixed amount (₹)</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    max={makingChargesDiscountType === "PERCENTAGE" ? 100 : undefined}
+                    step="0.01"
+                    value={makingChargesDiscountValue}
+                    onChange={(event) => setMakingChargesDiscountValue(event.target.value)}
+                    placeholder={makingChargesDiscountType === "PERCENTAGE" ? "e.g. 25" : "e.g. 500"}
+                    aria-label="Making charges discount value"
+                    className="min-h-11 w-full rounded-md border px-3"
+                  />
+                </div>
+              </div>
+              {(Number(price) > 0 || Number(makingCharges) > 0) && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
+                  <p className="font-bold">Discount preview</p>
+                  {Number(price) > 0 && <p className="mt-1">Product price after discount: ₹{pricePreview.toLocaleString("en-IN")}</p>}
+                  {Number(makingCharges) > 0 && <p>Making charges after discount: ₹{makingChargesPreview.toLocaleString("en-IN")}</p>}
+                </div>
+              )}
             </CardContent>
           </Card>
 

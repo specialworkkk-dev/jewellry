@@ -14,6 +14,8 @@ export interface IProduct extends Document {
   price?: number;
   originalPrice?: number;
   discountPercentage?: number;
+  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue?: number;
   
   // Jewellery Specific Details
   goldPurity?: '14K' | '18K' | '22K' | '24K';
@@ -22,6 +24,8 @@ export interface IProduct extends Document {
   stoneType?: string;
   stoneWeight?: number;
   makingCharges?: number;
+  makingChargesDiscountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  makingChargesDiscountValue?: number;
   
   // Tagging & Status
   isPublished: boolean;
@@ -56,7 +60,9 @@ const ProductSchema: Schema = new Schema(
     },
     price: { type: Number },
     originalPrice: { type: Number },
-    discountPercentage: { type: Number },
+    discountPercentage: { type: Number, min: 0, max: 100 },
+    discountType: { type: String, enum: ['PERCENTAGE', 'FIXED_AMOUNT'] },
+    discountValue: { type: Number, min: 0 },
     
     goldPurity: {
       type: String,
@@ -66,7 +72,9 @@ const ProductSchema: Schema = new Schema(
     diamondWeight: { type: Number },
     stoneType: { type: String },
     stoneWeight: { type: Number },
-    makingCharges: { type: Number },
+    makingCharges: { type: Number, min: 0 },
+    makingChargesDiscountType: { type: String, enum: ['PERCENTAGE', 'FIXED_AMOUNT'] },
+    makingChargesDiscountValue: { type: Number, min: 0 },
     
     isPublished: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },

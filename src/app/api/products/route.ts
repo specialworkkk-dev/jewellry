@@ -9,9 +9,11 @@ import Category from '@/models/Category';
 import { cleanString, isDuplicateKeyError, isObjectId, isRecord, safeExternalUrl } from '@/lib/validation';
 import { scheduleShopEvent } from '@/lib/realtime';
 import { scheduleShopPushNotification } from '@/lib/push-notifications';
+import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
+const DISCOUNT_TYPES = new Set<DiscountType>(['PERCENTAGE', 'FIXED_AMOUNT']);
 
 function optionalNumber(value: unknown) {
   if (value === '' || value === null || value === undefined) return undefined;
@@ -119,6 +121,68 @@ export async function POST(req: Request) {
     const goldPurity = typeof body.goldPurity === 'string' && GOLD_PURITIES.has(body.goldPurity)
       ? body.goldPurity
       : undefined;
+    const enteredPrice = optionalNumber(body.price);
+    const makingCharges = optionalNumber(body.makingCharges);
+    const discountType = typeof body.discountType === 'string' && DISCOUNT_TYPES.has(body.discountType as DiscountType)
+      ? body.discountType as DiscountType
+      : undefined;
+    const makingChargesDiscountType = typeof body.makingChargesDiscountType === 'string'
+      && DISCOUNT_TYPES.has(body.makingChargesDiscountType as DiscountType)
+      ? body.makingChargesDiscountType as DiscountType
+      : undefined;
+    const discountValue = optionalNumber(body.discountValue) ?? 0;
+    const makingChargesDiscountValue = optionalNumber(body.makingChargesDiscountValue) ?? 0;
+
+    if ((body.price !== '' && body.price !== undefined)
+      && (!Number.isFinite(Number(body.price)) || Number(body.price) < 0)) {
+      return NextResponse.json({ error: 'Product price must be a positive number' }, { status: 400 });
+    }
+    if ((body.makingCharges !== '' && body.makingCharges !== undefined)
+      && (!Number.isFinite(Number(body.makingCharges)) || Number(body.makingCharges) < 0)) {
+      return NextResponse.json({ error: 'Making charges must be a positive number' }, { status: 400 });
+    }
+    if ((body.discountValue !== '' && body.discountValue !== undefined)
+      && (!Number.isFinite(Number(body.discountValue)) || Number(body.discountValue) < 0)) {
+      return NextResponse.json({ error: 'Main discount must be a positive number' }, { status: 400 });
+    }
+    if ((body.makingChargesDiscountValue !== '' && body.makingChargesDiscountValue !== undefined)
+      && (!Number.isFinite(Number(body.makingChargesDiscountValue)) || Number(body.makingChargesDiscountValue) < 0)) {
+      return NextResponse.json({ error: 'Making-charge discount must be a positive number' }, { status: 400 });
+    }
+    if (discountValue > 0 && !discountType) {
+      return NextResponse.json({ error: 'Select a valid main discount type' }, { status: 400 });
+    }
+    if (makingChargesDiscountValue > 0 && !makingChargesDiscountType) {
+      return NextResponse.json({ error: 'Select a valid making-charge discount type' }, { status: 400 });
+    }
+    if (discountValue > 0 && (!enteredPrice || enteredPrice <= 0)) {
+      return NextResponse.json({ error: 'Enter a product price before adding a main discount' }, { status: 400 });
+    }
+    if (discountType === 'PERCENTAGE' && discountValue > 100) {
+      return NextResponse.json({ error: 'Main percentage discount cannot exceed 100%' }, { status: 400 });
+    }
+    if (discountType === 'FIXED_AMOUNT' && enteredPrice !== undefined && discountValue > enteredPrice) {
+      return NextResponse.json({ error: 'Main fixed discount cannot exceed the product price' }, { status: 400 });
+    }
+    if (makingChargesDiscountValue > 0 && (!makingCharges || makingCharges <= 0)) {
+      return NextResponse.json({ error: 'Enter making charges before adding a making-charge discount' }, { status: 400 });
+    }
+    if (makingChargesDiscountType === 'PERCENTAGE' && makingChargesDiscountValue > 100) {
+      return NextResponse.json({ error: 'Making-charge percentage discount cannot exceed 100%' }, { status: 400 });
+    }
+    if (makingChargesDiscountType === 'FIXED_AMOUNT' && makingCharges !== undefined && makingChargesDiscountValue > makingCharges) {
+      return NextResponse.json({ error: 'Making-charge fixed discount cannot exceed making charges' }, { status: 400 });
+    }
+
+    const hasMainDiscount = Boolean(discountType && discountValue > 0 && enteredPrice !== undefined);
+    const finalPrice = enteredPrice === undefined
+      ? undefined
+      : calculateDiscountedAmount(enteredPrice, discountType, discountValue);
+    const discountPercentage = hasMainDiscount && enteredPrice
+      ? discountType === 'PERCENTAGE'
+        ? discountValue
+        : Math.round((discountValue / enteredPrice * 100) * 100) / 100
+      : undefined;
 
     const newProduct = new Product({
       shopId: new Types.ObjectId(shopId),
@@ -129,14 +193,19 @@ export async function POST(req: Request) {
       images,
       videos,
       priceType,
-      price: optionalNumber(body.price),
-      originalPrice: optionalNumber(body.originalPrice),
+      price: finalPrice,
+      originalPrice: hasMainDiscount ? enteredPrice : undefined,
+      discountPercentage,
+      discountType: hasMainDiscount ? discountType : undefined,
+      discountValue: hasMainDiscount ? discountValue : undefined,
       goldPurity,
       goldWeight: optionalNumber(body.goldWeight),
       diamondWeight: optionalNumber(body.diamondWeight),
       stoneType: cleanString(body.stoneType, 120),
       stoneWeight: optionalNumber(body.stoneWeight),
-      makingCharges: optionalNumber(body.makingCharges),
+      makingCharges,
+      makingChargesDiscountType: makingChargesDiscountValue > 0 ? makingChargesDiscountType : undefined,
+      makingChargesDiscountValue: makingChargesDiscountValue > 0 ? makingChargesDiscountValue : undefined,
       isPublished: body.isPublished === true,
       isFeatured: body.isFeatured === true,
       isNewArrival: body.isNewArrival === true,

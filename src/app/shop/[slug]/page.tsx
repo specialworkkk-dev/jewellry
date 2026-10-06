@@ -19,6 +19,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import Interaction from "@/models/Interaction";
 import { isObjectId } from "@/lib/validation";
+import { calculateDiscountedAmount, discountLabel } from "@/lib/product-pricing";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
 
@@ -55,7 +56,7 @@ export default async function PublicShopPage({
   const products = await Product.find(query)
     .sort({ createdAt: -1 })
     .limit(50)
-    .select("name sku images goldPurity priceType price originalPrice discountPercentage isNewArrival isBestseller isBridalCollection")
+    .select("name sku images goldPurity priceType price originalPrice discountPercentage discountType discountValue makingCharges makingChargesDiscountType makingChargesDiscountValue isNewArrival isBestseller isBridalCollection")
     .lean();
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
   const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
@@ -138,6 +139,11 @@ export default async function PublicShopPage({
             {products.map((product) => {
               const message = encodeURIComponent(`Hi! I'm interested in ${product.name}. Please share more details.`);
               const enquiryUrl = ownerWhatsApp ? `https://wa.me/${ownerWhatsApp}?text=${message}` : "#";
+              const makingChargeAfterDiscount = calculateDiscountedAmount(
+                product.makingCharges || 0,
+                product.makingChargesDiscountType,
+                product.makingChargesDiscountValue,
+              );
 
               return (
                 <article key={product._id.toString()} className="group relative min-w-0 overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/10">
@@ -171,18 +177,26 @@ export default async function PublicShopPage({
                       <Link href={`/shop/${shop.slug}/product/${product._id}`} className="hover:text-amber-700">{product.name}</Link>
                     </h3>
                     <p className="mt-2 text-sm font-bold text-stone-900 sm:text-base">
-                      {product.priceType === "FIXED_PRICE" && product.price
+                      {product.priceType === "FIXED_PRICE" && product.price !== undefined
                         ? `₹${product.price.toLocaleString("en-IN")}`
-                        : product.priceType === "STARTING_FROM" && product.price
+                        : product.priceType === "STARTING_FROM" && product.price !== undefined
                           ? `From ₹${product.price.toLocaleString("en-IN")}`
                           : "Price on request"}
                     </p>
-                    {product.originalPrice && product.price && product.originalPrice > product.price && (
+                    {product.originalPrice !== undefined && product.price !== undefined && product.originalPrice > product.price && (
                       <p className="mt-0.5 flex items-center gap-2 text-xs text-stone-400">
                         <span className="line-through">₹{product.originalPrice.toLocaleString("en-IN")}</span>
-                        {product.discountPercentage ? <span className="font-semibold text-emerald-700">{product.discountPercentage}% off</span> : null}
+                        <span className="font-semibold text-emerald-700">
+                          {discountLabel(product.discountType, product.discountValue) || `${product.discountPercentage}% off`}
+                        </span>
                       </p>
                     )}
+                    {product.makingCharges && product.makingChargesDiscountValue ? (
+                      <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                        Making charges: <span className="text-stone-400 line-through">₹{product.makingCharges.toLocaleString("en-IN")}</span>{" "}
+                        ₹{makingChargeAfterDiscount.toLocaleString("en-IN")} · {discountLabel(product.makingChargesDiscountType, product.makingChargesDiscountValue)}
+                      </p>
+                    ) : null}
                     <div className={`mt-3 grid gap-2 ${ownerWhatsApp ? "grid-cols-[1fr_42px]" : "grid-cols-1"}`}>
                       <Link href={`/shop/${shop.slug}/product/${product._id}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-stone-900 px-3 py-2 text-xs font-bold text-white hover:bg-stone-800">
                         View design

@@ -12,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import Interaction from "@/models/Interaction";
 import { isObjectId } from "@/lib/validation";
+import { calculateDiscountedAmount, discountLabel } from "@/lib/product-pricing";
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string; id: string }> },
@@ -73,11 +74,16 @@ export default async function ProductDetailPage({
   const initiallyLiked = actorId && isObjectId(actorId)
     ? Boolean(await Interaction.exists({ userId: actorId, targetId: product._id, interactionType: "LIKE" }))
     : false;
-  const priceLabel = product.priceType === "FIXED_PRICE" && product.price
+  const priceLabel = product.priceType === "FIXED_PRICE" && product.price !== undefined
     ? `₹${product.price.toLocaleString("en-IN")}`
-    : product.priceType === "STARTING_FROM" && product.price
+    : product.priceType === "STARTING_FROM" && product.price !== undefined
       ? `From ₹${product.price.toLocaleString("en-IN")}`
       : "Price on Request";
+  const makingChargeAfterDiscount = calculateDiscountedAmount(
+    product.makingCharges || 0,
+    product.makingChargesDiscountType,
+    product.makingChargesDiscountValue,
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
@@ -115,10 +121,12 @@ export default async function ProductDetailPage({
             <h2 className="text-2xl font-medium text-gray-900">
               {priceLabel}
             </h2>
-            {product.originalPrice && product.price && product.originalPrice > product.price && (
+            {product.originalPrice !== undefined && product.price !== undefined && product.originalPrice > product.price && (
               <p className="mt-1 flex items-center gap-2 text-sm">
                 <span className="text-gray-400 line-through">₹{product.originalPrice.toLocaleString("en-IN")}</span>
-                {product.discountPercentage ? <span className="font-semibold text-emerald-700">{product.discountPercentage}% off</span> : null}
+                <span className="rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">
+                  {discountLabel(product.discountType, product.discountValue) || `${product.discountPercentage}% off`}
+                </span>
               </p>
             )}
             <p className="text-sm text-gray-500 mt-1">Inclusive of all taxes. Gold rates subject to daily change.</p>
@@ -164,6 +172,22 @@ export default async function ProductDetailPage({
                 <div className="flex justify-between border-b border-gray-100 pb-2">
                   <dt className="text-gray-500">Stone Type</dt>
                   <dd className="font-medium text-gray-900">{product.stoneType}</dd>
+                </div>
+              )}
+              {product.makingCharges !== undefined && (
+                <div className="flex justify-between gap-4 border-b border-gray-100 pb-2">
+                  <dt className="text-gray-500">Making Charges</dt>
+                  <dd className="text-right font-medium text-gray-900">
+                    {product.makingChargesDiscountValue ? (
+                      <>
+                        <span className="mr-2 text-gray-400 line-through">₹{product.makingCharges.toLocaleString("en-IN")}</span>
+                        <span>₹{makingChargeAfterDiscount.toLocaleString("en-IN")}</span>
+                        <span className="mt-0.5 block text-xs font-semibold text-emerald-700">
+                          {discountLabel(product.makingChargesDiscountType, product.makingChargesDiscountValue)}
+                        </span>
+                      </>
+                    ) : `₹${product.makingCharges.toLocaleString("en-IN")}`}
+                  </dd>
                 </div>
               )}
             </dl>
