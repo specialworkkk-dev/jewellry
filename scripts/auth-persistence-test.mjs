@@ -175,8 +175,10 @@ async function main() {
       dashboardBeforeClose: dashboardBeforeClose.status,
       sessionAfterReopen: afterReopen?.user?.role === "SHOP_OWNER",
       dashboardAfterReopen: dashboardAfterReopen.status,
+      loginResumeStatus: loginAfterReopen.status,
+      loginResumePath,
       loginResumesDashboard:
-        loginAfterReopen.status === 307 &&
+        [302, 303, 307, 308].includes(loginAfterReopen.status) &&
         loginResumePath === "/dashboard",
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
