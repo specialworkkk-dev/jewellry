@@ -10,6 +10,7 @@ import { cleanString, isDuplicateKeyError, isObjectId, isRecord, safeExternalUrl
 import { scheduleShopEvent } from '@/lib/realtime';
 import { scheduleShopPushNotification } from '@/lib/push-notifications';
 import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
+import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
@@ -214,6 +215,7 @@ export async function POST(req: Request) {
     });
 
     await newProduct.save();
+    invalidatePublicStoreCache();
     scheduleShopEvent(shopId, 'product.created', newProduct.isPublished ? 'both' : 'owner', newProduct._id.toString());
     if (newProduct.isPublished) {
       scheduleShopPushNotification(shopId, 'product.created', {

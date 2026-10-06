@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { isObjectId } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
+import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 
 export async function getCategoriesAction() {
   const session = await getServerSession(authOptions);
@@ -59,6 +60,7 @@ export async function setProductPublishedAction(productId: string, isPublished: 
   revalidatePath("/dashboard/products", "page");
   revalidatePath("/dashboard", "page");
   if (shop?.slug) revalidatePath(`/shop/${shop.slug}`, "layout");
+  invalidatePublicStoreCache();
   scheduleShopEvent(shopId, "product.updated", "both", productId);
   if (isPublished) {
     scheduleShopPushNotification(shopId, "product.published", {
@@ -76,5 +78,6 @@ export async function deleteProductAction(productId: string) {
   if (deleted.deletedCount === 0) throw new Error("Product not found");
   revalidatePath("/dashboard/products");
   revalidatePath("/shop/[slug]", "page");
+  invalidatePublicStoreCache();
   scheduleShopEvent(shopId, "product.deleted", "both", productId);
 }

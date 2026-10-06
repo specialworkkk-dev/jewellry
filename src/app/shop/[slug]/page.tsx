@@ -1,4 +1,3 @@
-import Product from "@/models/Product";
 import { notFound } from "next/navigation";
 import { CinematicHero } from "@/components/public/CinematicHero";
 import { StoreImage } from "@/components/public/StoreImage";
@@ -6,12 +5,10 @@ import { StoreImage } from "@/components/public/StoreImage";
 // Optional: Optimize Next.js dynamic rendering
 // export const revalidate = 60; // revalidate every 60 seconds
 
-import Category from "@/models/Category";
 import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, Gem, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
-import { Types } from "mongoose";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
-import { getPublicShopBySlug } from "@/lib/public-store";
+import { getPublicCatalogue, getPublicShopBySlug } from "@/lib/public-store";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
 import { cookies } from "next/headers";
@@ -35,29 +32,7 @@ export default async function PublicShopPage({
   const shop = await getPublicShopBySlug(slug);
   if (!shop || shop.isActive === false) notFound();
 
-  // Fetch all categories for this shop
-  const categories = await Category.find({ $or: [{ shopId: shop._id }, { isSystemDefault: true }] })
-    .select("name slug")
-    .lean();
-
-  // Build the product query
-  const query: { shopId: Types.ObjectId; isPublished: boolean; categoryId?: Types.ObjectId } = {
-    shopId: shop._id,
-    isPublished: true,
-  };
-  if (activeCategory && activeCategory !== "all") {
-    const categoryDoc = categories.find(c => c.slug === activeCategory);
-    if (categoryDoc) {
-      query.categoryId = categoryDoc._id;
-    }
-  }
-
-  // Fetch products
-  const products = await Product.find(query)
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .select("name sku images goldPurity priceType price originalPrice discountPercentage discountType discountValue makingCharges makingChargesDiscountType makingChargesDiscountValue isNewArrival isBestseller isBridalCollection")
-    .lean();
+  const { categories, products } = await getPublicCatalogue(shop._id.toString(), activeCategory);
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
   const [session, cookieStore] = await Promise.all([getServerSession(authOptions), cookies()]);
   const cookieVisitorId = cookieStore.get("luxestore_visitor_id")?.value;

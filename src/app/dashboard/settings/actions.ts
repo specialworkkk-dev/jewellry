@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { cleanString, safeExternalUrl } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
+import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 
 export async function updateShopSettings(formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -40,6 +41,7 @@ export async function updateShopSettings(formData: FormData) {
     revalidatePath(`/shop/${shop.slug}`);
   }
   revalidatePath("/shop/[slug]", "page");
+  invalidatePublicStoreCache();
   scheduleShopEvent(shopId, "shop.settings.updated", "both");
   const customerVisibleMediaChanged = shop?.logoUrl !== updates.logoUrl || shop?.coverUrl !== updates.coverUrl;
   if (customerVisibleMediaChanged) {
