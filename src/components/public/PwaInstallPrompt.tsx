@@ -35,6 +35,7 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
   const storageSuffix = appId.replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
   const installStorageKey = `luxestore-pwa-${storageSuffix}-installed`;
@@ -68,8 +69,10 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
       if (promptIsSuppressed()) return;
 
       const ios = isIOSDevice();
+      const android = /Android/i.test(navigator.userAgent);
       const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       setIsIOS(ios);
+      setIsAndroid(android);
       setIsVisible(ios || mobile);
     }, 0);
 
@@ -109,6 +112,11 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
     setIsVisible(false);
   };
 
+  const openInChrome = () => {
+    const chromeIntent = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${window.location.protocol.replace(":", "")};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end`;
+    window.location.assign(chromeIntent);
+  };
+
   if (!isVisible) return null;
 
   const title = `Install ${appName}`;
@@ -139,10 +147,19 @@ export function PwaInstallPrompt({ appId, appName, description }: PwaInstallProm
                   </ol>
                 ) : (
                   <ol className="list-decimal space-y-1 pl-4">
-                    <li>Open this page in Chrome or your browser.</li>
-                    <li>Tap the browser menu.</li>
-                    <li>Select “Install app” or “Add to Home Screen”.</li>
+                    <li>Open this page in the full Chrome browser.</li>
+                    <li>Tap Chrome&apos;s three-dot menu.</li>
+                    <li>Select <strong>Install app</strong> (not “Create shortcut”).</li>
                   </ol>
+                )}
+                {isAndroid && !deferredPrompt && (
+                  <button
+                    type="button"
+                    onClick={openInChrome}
+                    className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 font-semibold text-white"
+                  >
+                    Open in Chrome to install
+                  </button>
                 )}
               </div>
             )}

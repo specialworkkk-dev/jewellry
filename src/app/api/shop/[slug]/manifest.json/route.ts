@@ -24,6 +24,9 @@ export async function GET(
       start_url: `/shop/${shop.slug}?source=pwa`,
       scope: `/shop/${shop.slug}`,
       display: "standalone",
+      display_override: ["standalone"],
+      launch_handler: { client_mode: "navigate-existing" },
+      orientation: "portrait-primary",
       background_color: "#ffffff",
       theme_color: "#111827",
       icons: [

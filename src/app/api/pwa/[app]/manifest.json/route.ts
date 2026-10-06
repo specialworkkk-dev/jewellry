@@ -38,6 +38,9 @@ export async function GET(
     start_url: config.startUrl,
     scope: config.scope,
     display: "standalone",
+    display_override: ["standalone"],
+    launch_handler: { client_mode: "navigate-existing" },
+    orientation: "portrait-primary",
     background_color: "#f8fafc",
     theme_color: "#111827",
     icons: [

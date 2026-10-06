@@ -17,9 +17,13 @@ export function PwaInstallCard({ appName }: { appName: string }) {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showSteps, setShowSteps] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
-    const initialize = window.setTimeout(() => setHidden(isStandalone()), 0);
+    const initialize = window.setTimeout(() => {
+      setHidden(isStandalone());
+      setIsAndroid(/Android/i.test(navigator.userAgent));
+    }, 0);
     const handlePrompt = (event: Event) => {
       event.preventDefault();
       setPrompt(event as BeforeInstallPromptEvent);
@@ -48,6 +52,11 @@ export function PwaInstallCard({ appName }: { appName: string }) {
     setPrompt(null);
   };
 
+  const openInChrome = () => {
+    const chromeIntent = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${window.location.protocol.replace(":", "")};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end`;
+    window.location.assign(chromeIntent);
+  };
+
   return (
     <section className="mx-auto mt-8 max-w-5xl px-4 sm:px-6">
       <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-sm sm:p-7">
@@ -72,7 +81,12 @@ export function PwaInstallCard({ appName }: { appName: string }) {
         {showSteps && (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-white/80 p-4 text-sm text-stone-700">
             <p className="flex items-center gap-2 font-semibold"><Share className="h-4 w-4" /> If the install window does not appear:</p>
-            <p className="mt-1">Open your browser menu and choose <strong>Install app</strong> or <strong>Add to Home Screen</strong>.</p>
+            <p className="mt-1">Open this page in Chrome, then choose <strong>Install app</strong> from the three-dot menu. Do not choose “Create shortcut”.</p>
+            {isAndroid && !prompt && (
+              <button type="button" onClick={openInChrome} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-stone-900 px-5 py-2 text-xs font-bold text-white">
+                Open in Chrome to install
+              </button>
+            )}
           </div>
         )}
       </div>
