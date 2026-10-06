@@ -6,18 +6,28 @@ import { markEnquiryContactedAction } from "./actions";
 import "@/models/Product";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { getCurrentSession } from "@/lib/session";
+import { OwnerPagination } from "@/components/ui/owner-pagination";
+import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
-export default async function EnquiriesDashboardPage() {
+export default async function EnquiriesDashboardPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const enquiries = await Enquiry.find({ shopId })
+  const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
+  const loadEnquiries = (pageNumber: number) => Enquiry.find({ shopId })
     .select("customerName customerPhone message status productId createdAt")
     .sort({ createdAt: -1 })
-    .limit(200)
+    .skip((pageNumber - 1) * perPage)
+    .limit(perPage)
     .populate("productId", "name sku")
     .lean();
+  const [totalEnquiries, requestedEnquiries] = await Promise.all([
+    Enquiry.countDocuments({ shopId }),
+    loadEnquiries(requestedPage),
+  ]);
+  const page = clampOwnerPage(requestedPage, totalEnquiries, perPage);
+  const enquiries = page === requestedPage ? requestedEnquiries : await loadEnquiries(page);
 
   return (
     <div className="space-y-6">
@@ -139,6 +149,7 @@ export default async function EnquiriesDashboardPage() {
               </tbody>
             </table>
           </div>
+          <OwnerPagination basePath="/dashboard/enquiries" page={page} perPage={perPage} totalItems={totalEnquiries} />
           </>
         )}
       </div>

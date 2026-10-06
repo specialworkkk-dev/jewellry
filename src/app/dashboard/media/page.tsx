@@ -5,17 +5,27 @@ import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Plus, Image as ImageIcon, Video, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { getCurrentSession } from "@/lib/session";
+import { OwnerPagination } from "@/components/ui/owner-pagination";
+import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
-export default async function SocialFeedDashboard() {
+export default async function SocialFeedDashboard({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const posts = await Post.find({ shopId })
+  const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
+  const loadPosts = (pageNumber: number) => Post.find({ shopId })
     .select("caption mediaUrls mediaType likesCount createdAt")
     .sort({ createdAt: -1 })
-    .limit(20)
+    .skip((pageNumber - 1) * perPage)
+    .limit(perPage)
     .lean();
+  const [totalPosts, requestedPosts] = await Promise.all([
+    Post.countDocuments({ shopId }),
+    loadPosts(requestedPage),
+  ]);
+  const page = clampOwnerPage(requestedPage, totalPosts, perPage);
+  const posts = page === requestedPage ? requestedPosts : await loadPosts(page);
 
   return (
     <div className="space-y-6">
@@ -95,6 +105,7 @@ export default async function SocialFeedDashboard() {
               ))}
             </div>
           )}
+          <OwnerPagination basePath="/dashboard/media" page={page} perPage={perPage} totalItems={totalPosts} />
         </div>
       </div>
     </div>

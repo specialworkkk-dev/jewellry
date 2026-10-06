@@ -176,6 +176,19 @@ async function main() {
     const homeResumePath = homeResumeLocation
       ? new URL(homeResumeLocation, BASE_URL).pathname
       : null;
+    const ownerListPaths = [
+      "/dashboard/products?page=2&perPage=5",
+      "/dashboard/enquiries?page=2&perPage=10",
+      "/dashboard/media?page=2&perPage=15",
+      "/dashboard/marketing?page=999&perPage=7",
+    ];
+    const ownerListResponses = await Promise.all(ownerListPaths.map(async (path) => ({
+      path,
+      status: (await fetch(`${BASE_URL}${path}`, {
+        redirect: "manual",
+        headers: { cookie: cookieHeader(jar) },
+      })).status,
+    })));
 
     const result = {
       loginStatus: loginResponse.status,
@@ -193,6 +206,8 @@ async function main() {
       homeResumesDashboard:
         [302, 303, 307, 308].includes(homeAfterReopen.status) &&
         homeResumePath === "/dashboard",
+      ownerPaginationPages: ownerListResponses,
+      ownerPaginationHealthy: ownerListResponses.every(({ status }) => status === 200),
       persistentCookie: /Max-Age=604800/i.test(sessionCookie) && /Expires=/i.test(sessionCookie),
       secureCookie: /Secure/i.test(sessionCookie),
       httpOnlyCookie: /HttpOnly/i.test(sessionCookie),
@@ -205,6 +220,7 @@ async function main() {
       result.dashboardAfterReopen !== 200 ||
       !result.loginResumesDashboard ||
       !result.homeResumesDashboard ||
+      !result.ownerPaginationHealthy ||
       !result.persistentCookie ||
       result.serverErrors.length
     ) {

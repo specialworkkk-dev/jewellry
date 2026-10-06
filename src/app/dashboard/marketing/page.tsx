@@ -5,17 +5,27 @@ import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Tag, TrendingUp, Presentation } from "lucide-react";
 import Image from "next/image";
 import { getCurrentSession } from "@/lib/session";
+import { OwnerPagination } from "@/components/ui/owner-pagination";
+import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
-export default async function MarketingDashboardPage() {
+export default async function MarketingDashboardPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const ads = await Advertisement.find({ shopId })
+  const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
+  const loadAds = (pageNumber: number) => Advertisement.find({ shopId })
     .select("title type message imageUrl isActive validUntil createdAt")
     .sort({ createdAt: -1 })
-    .limit(100)
+    .skip((pageNumber - 1) * perPage)
+    .limit(perPage)
     .lean();
+  const [totalAds, requestedAds] = await Promise.all([
+    Advertisement.countDocuments({ shopId }),
+    loadAds(requestedPage),
+  ]);
+  const page = clampOwnerPage(requestedPage, totalAds, perPage);
+  const ads = page === requestedPage ? requestedAds : await loadAds(page);
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -59,7 +69,8 @@ export default async function MarketingDashboardPage() {
               </CardContent>
             </Card>
           ) : (
-            ads.map((ad) => (
+            <>
+            {ads.map((ad) => (
               <Card key={ad._id.toString()} className={!ad.isActive ? "opacity-60" : ""}>
                 <CardContent className="p-0 flex flex-col sm:flex-row">
                   {ad.imageUrl && (
@@ -90,7 +101,9 @@ export default async function MarketingDashboardPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))
+            ))}
+            <OwnerPagination basePath="/dashboard/marketing" page={page} perPage={perPage} totalItems={totalAds} />
+            </>
           )}
         </div>
       </div>

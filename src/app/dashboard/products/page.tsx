@@ -9,17 +9,28 @@ import { deleteProductAction, setProductPublishedAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { getCurrentSession } from "@/lib/session";
+import { OwnerPagination } from "@/components/ui/owner-pagination";
+import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
-export default async function ProductsListPage() {
+export default async function ProductsListPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const session = await getCurrentSession();
   await connectToDatabase();
 
   const shopId = session?.user.shopId;
-  const products = await Product.find({ shopId })
+  const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
+  const loadProducts = (pageNumber: number) => Product.find({ shopId })
     .select("name sku images priceType price isPublished categoryId createdAt")
     .sort({ createdAt: -1 })
+    .skip((pageNumber - 1) * perPage)
+    .limit(perPage)
     .populate("categoryId", "name")
     .lean();
+  const [totalProducts, requestedProducts] = await Promise.all([
+    Product.countDocuments({ shopId }),
+    loadProducts(requestedPage),
+  ]);
+  const page = clampOwnerPage(requestedPage, totalProducts, perPage);
+  const products = page === requestedPage ? requestedProducts : await loadProducts(page);
 
   return (
     <div className="space-y-6">
@@ -129,6 +140,7 @@ export default async function ProductsListPage() {
               </tbody>
             </table>
           </div>
+          <OwnerPagination basePath="/dashboard/products" page={page} perPage={perPage} totalItems={totalProducts} />
         </div>
       )}
     </div>
