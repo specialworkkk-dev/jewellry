@@ -8,6 +8,8 @@ interface CinematicHeroProps {
 }
 
 export function CinematicHero({ coverUrl, shopName, shortDescription }: CinematicHeroProps) {
+  const shopNameWords = shopName.trim().split(/\s+/).filter(Boolean);
+
   return (
     <section className="relative flex min-h-[520px] w-full items-end overflow-hidden bg-[#17120d] sm:min-h-[620px] lg:min-h-[720px]">
       {coverUrl ? (
@@ -16,7 +18,7 @@ export function CinematicHero({ coverUrl, shopName, shortDescription }: Cinemati
           alt={shopName}
           sizes="100vw"
           preload
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="storefront-hero-cover absolute inset-0 h-full w-full object-cover object-center"
         />
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,#d7a94b_0%,#72501f_30%,#17120d_72%)]" />
@@ -29,17 +31,30 @@ export function CinematicHero({ coverUrl, shopName, shortDescription }: Cinemati
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 sm:pb-16 lg:px-8 lg:pb-20">
         <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/30 bg-black/25 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100 backdrop-blur-sm">
+          <span className="storefront-hero-reveal inline-flex items-center gap-2 rounded-full border border-amber-200/30 bg-black/25 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100 backdrop-blur-sm [animation-delay:80ms]">
             <Sparkles className="h-3.5 w-3.5" /> Fine jewellery collection
           </span>
-          <h1 className="mt-5 text-4xl font-serif font-semibold leading-[1.04] tracking-tight text-white drop-shadow-lg sm:text-6xl lg:text-7xl">
-          {shopName}
+          <h1
+            aria-label={shopName}
+            className="mt-5 text-4xl font-serif font-semibold leading-[1.04] tracking-tight text-white drop-shadow-lg sm:text-6xl lg:text-7xl"
+          >
+            {shopNameWords.map((word, index) => (
+              <span key={`${word}-${index}`} aria-hidden="true" className="inline-block overflow-hidden align-bottom">
+                <span
+                  className="storefront-hero-word inline-block"
+                  style={{ animationDelay: `${180 + index * 95}ms` }}
+                >
+                  {word}
+                </span>
+                {index < shopNameWords.length - 1 && <span aria-hidden="true">&nbsp;</span>}
+              </span>
+            ))}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 drop-shadow-md sm:text-xl">
+          <p className="storefront-hero-reveal mt-5 max-w-2xl text-base leading-7 text-white/85 drop-shadow-md sm:text-xl [animation-delay:520ms]">
             {shortDescription || "Timeless designs, trusted craftsmanship and jewellery made for life’s most precious moments."}
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="storefront-hero-reveal mt-7 flex flex-wrap items-center gap-3 [animation-delay:680ms]">
             <a
               href="#collection"
               className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-sm font-bold text-stone-950 shadow-lg shadow-black/20 transition hover:bg-amber-300"
