@@ -1,11 +1,13 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
-import { r2Client } from "@/lib/r2";
+import { deleteR2Keys, r2Client } from "@/lib/r2";
 import { errorMessage } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
 import { withRetry } from "@/lib/retry";
-import { getPlanBlock } from "@/lib/plan";
-import { dailyLimit, dailyLimitMessage, releaseDailyUpload, reserveDailyUpload } from "@/lib/media-quota";
+import { getUploadPlanBlock } from "@/lib/plan";
+import { createReservation, dailyLimit, dailyLimitMessage, releaseDailyUpload, reserveDailyUpload } from "@/lib/media-quota";
+import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
+import { declaredMatchesSniffed, sniffMedia } from "@/lib/media-sniff";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -25,9 +27,12 @@ export async function POST(req: Request) {
     }
     const { shopId, shop } = tenant;
 
-    const planBlock = getPlanBlock(shop);
-    if (planBlock) {
-      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    const rate = await checkRateLimit(`upload-file:${shopId}:${requestClientId(req)}`, 30, 60_000);
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "Too many uploads. Please wait a moment." }, {
+        status: 429,
+        headers: { "Retry-After": String(rate.retryAfterSeconds) },
+      });
     }
 
     const bucket = process.env.R2_BUCKET_NAME;
@@ -43,6 +48,12 @@ export async function POST(req: Request) {
     const folder = typeof requestedFolder === "string" && ALLOWED_FOLDERS.has(requestedFolder)
       ? requestedFolder
       : "products";
+
+    // Expired shops may still upload branding (logo/cover); all other content stays blocked.
+    const planBlock = getUploadPlanBlock(shop, folder);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
 
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Please choose a file" }, { status: 400 });
@@ -72,17 +83,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `File must be smaller than ${maxMb} MB` }, { status: 413 });
     }
 
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const sniffed = sniffMedia(fileBuffer.subarray(0, 512));
+    if (!declaredMatchesSniffed(file.type, sniffed)) {
+      return NextResponse.json({ error: "File content does not match its type" }, { status: 415 });
+    }
+
     const extension = EXTENSION_BY_TYPE[file.type] ?? (isImage ? "jpg" : "mp4");
     const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
 
     const kind = isVideo ? "videos" : "photos";
     const limit = dailyLimit(kind, shop);
-    if (!(await reserveDailyUpload(shopId, kind, limit))) {
+    const day = await reserveDailyUpload(shopId, kind, limit);
+    if (!day) {
       return NextResponse.json({ error: dailyLimitMessage(kind, limit) }, { status: 429 });
     }
 
     try {
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
     await withRetry(() => r2Client.send(new PutObjectCommand({
         Bucket: bucket,
         Key: key,
@@ -95,8 +112,11 @@ export async function POST(req: Request) {
         baseDelayMs: 150,
         maxDelayMs: 1_000,
       });
+      // Server-verified bytes: record as confirmed so the key can be attached to content.
+      await createReservation({ shopId, key, kind, day, contentType: file.type, contentLength: file.size, state: "confirmed" });
     } catch (uploadError) {
-      await releaseDailyUpload(shopId, kind);
+      await releaseDailyUpload(shopId, kind, day);
+      await deleteR2Keys([key]);
       throw uploadError;
     }
 

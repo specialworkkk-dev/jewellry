@@ -124,6 +124,22 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
           body: uploadFile,
         }, 90_000);
         if (!uploadResponse.ok) throw new Error("Direct upload failed");
+        // Server verifies the stored object (size + real file type) before the key is usable.
+        let confirmed = false;
+        let confirmError = "Upload verification failed";
+        for (let attempt = 0; attempt < 3 && !confirmed; attempt += 1) {
+          const confirmResponse = await fetchWithTransientRetry("/api/upload/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: prepared.key }),
+          }, 15_000);
+          if (confirmResponse.ok) { confirmed = true; break; }
+          const confirmData = await confirmResponse.json().catch(() => ({})) as { error?: string };
+          confirmError = confirmData.error || confirmError;
+          if (confirmResponse.status !== 404) break;
+          await new Promise((resolve) => window.setTimeout(resolve, 500));
+        }
+        if (!confirmed) throw new Error(confirmError);
         result = { publicUrl: prepared.publicUrl, key: prepared.key };
       } catch (directUploadError) {
         if (isVideo) throw directUploadError;

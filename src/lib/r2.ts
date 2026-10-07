@@ -1,4 +1,4 @@
-import { DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -47,10 +47,14 @@ export function shopOwnedR2Keys(shopId: string, urls: unknown[]): string[] {
 
 /** Best-effort deletion of a shop's own R2 objects. Never throws. */
 export async function deleteShopObjects(shopId: string, urls: unknown[]): Promise<void> {
+  await deleteR2Keys(shopOwnedR2Keys(shopId, urls));
+}
+
+/** Best-effort deletion of exact R2 keys (callers must have verified ownership). Never throws. */
+export async function deleteR2Keys(keys: string[]): Promise<void> {
   try {
     const bucket = process.env.R2_BUCKET_NAME;
-    if (!bucket) return;
-    const keys = shopOwnedR2Keys(shopId, urls);
+    if (!bucket || keys.length === 0) return;
     for (let index = 0; index < keys.length; index += 1000) {
       const chunk = keys.slice(index, index + 1000);
       await r2Client.send(new DeleteObjectsCommand({
@@ -60,5 +64,26 @@ export async function deleteShopObjects(shopId: string, urls: unknown[]): Promis
     }
   } catch (error) {
     console.error("R2 object cleanup failed:", error instanceof Error ? error.message : "unknown error");
+  }
+}
+
+/**
+ * Reads the stored size and the first bytes of an object with one ranged GET.
+ * Returns null when the object does not exist.
+ */
+export async function readObjectHead(key: string, bytes = 512): Promise<{ length: number; head: Uint8Array } | null> {
+  const bucket = process.env.R2_BUCKET_NAME;
+  if (!bucket) throw new Error("Media storage is not configured");
+  try {
+    const response = await r2Client.send(new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=0-${bytes - 1}` }));
+    // ContentRange is "bytes 0-511/12345"; without it the whole (small) object was returned.
+    const total = Number(response.ContentRange?.split("/")[1] ?? response.ContentLength);
+    const head = response.Body ? await response.Body.transformToByteArray() : new Uint8Array();
+    return { length: Number.isFinite(total) ? total : head.length, head };
+  } catch (error) {
+    const name = (error as { name?: string })?.name;
+    if (name === "NoSuchKey" || name === "NotFound") return null;
+    if (name === "InvalidRange") return { length: 0, head: new Uint8Array() }; // zero-byte object
+    throw error;
   }
 }

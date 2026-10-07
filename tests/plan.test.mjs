@@ -43,3 +43,16 @@ test("price types and future dates", () => {
   assert.equal(isFutureDate(new Date(Date.now() - 5000)), false);
   assert.equal(isFutureDate(new Date("x")), false);
 });
+
+test("expired shops may upload branding only", async () => {
+  const { getUploadPlanBlock } = await import("../src/lib/plan.ts");
+  const now = Date.parse("2026-10-07T00:00:00Z");
+  const expired = { isActive: true, planEndsAt: new Date(now - 1000) };
+  assert.equal(getUploadPlanBlock(expired, "logos", now), null);
+  assert.equal(getUploadPlanBlock(expired, "covers", now), null);
+  for (const folder of ["products", "posts", "stories"]) {
+    assert.equal(getUploadPlanBlock(expired, folder, now).status, 403);
+  }
+  assert.equal(getUploadPlanBlock({ isActive: false, planEndsAt: null }, "logos", now).status, 403);
+  assert.equal(getUploadPlanBlock({ isActive: true }, "products", now), null);
+});

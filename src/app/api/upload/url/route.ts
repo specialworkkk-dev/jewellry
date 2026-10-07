@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2";
 import { cleanString, isRecord } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
-import { getPlanBlock } from "@/lib/plan";
-import { dailyLimit, dailyLimitMessage, reserveDailyUpload } from "@/lib/media-quota";
+import { getUploadPlanBlock } from "@/lib/plan";
+import { createReservation, dailyLimit, dailyLimitMessage, releaseDailyUpload, reserveDailyUpload } from "@/lib/media-quota";
+import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_TYPES = new Set([
@@ -22,12 +23,15 @@ export async function POST(req: Request) {
     }
     const { shopId, shop } = tenant;
 
-    const planBlock = getPlanBlock(shop);
-    if (planBlock) {
-      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    const rate = await checkRateLimit(`upload-url:${shopId}:${requestClientId(req)}`, 60, 60_000);
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "Too many uploads. Please wait a moment." }, {
+        status: 429,
+        headers: { "Retry-After": String(rate.retryAfterSeconds) },
+      });
     }
 
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
@@ -38,6 +42,11 @@ export async function POST(req: Request) {
     const durationSeconds = Number(body.durationSeconds);
     const folderValue = cleanString(body.folder, 30);
     const folder = ALLOWED_FOLDERS.has(folderValue) ? folderValue : "products";
+    // Expired shops may still upload branding (logo/cover); all other content stays blocked.
+    const planBlock = getUploadPlanBlock(shop, folder);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
     const bucket = process.env.R2_BUCKET_NAME;
     const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, "");
 
@@ -66,7 +75,8 @@ export async function POST(req: Request) {
 
     const kind = isVideo ? "videos" : "photos";
     const limit = dailyLimit(kind, shop);
-    if (!(await reserveDailyUpload(shopId, kind, limit))) {
+    const day = await reserveDailyUpload(shopId, kind, limit);
+    if (!day) {
       return NextResponse.json({ error: dailyLimitMessage(kind, limit) }, { status: 429 });
     }
 
@@ -80,8 +90,16 @@ export async function POST(req: Request) {
       CacheControl: "public, max-age=31536000, immutable",
     });
 
-    const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 300 });
-    return NextResponse.json({ signedUrl, key, publicUrl: `${publicBaseUrl}/${key}` });
+    // The quota unit stays held by a "pending" reservation until the client calls
+    // /api/upload/confirm; unconfirmed reservations expire and are refunded.
+    try {
+      await createReservation({ shopId, key, kind, day, contentType, contentLength, state: "pending" });
+      const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 300 });
+      return NextResponse.json({ signedUrl, key, publicUrl: `${publicBaseUrl}/${key}`, confirmRequired: true });
+    } catch (prepareError) {
+      await releaseDailyUpload(shopId, kind, day);
+      throw prepareError;
+    }
   } catch (error: unknown) {
     console.error("Presigned URL generation error:", error);
     return NextResponse.json({ error: "Unable to prepare upload" }, { status: 500 });

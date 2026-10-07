@@ -34,6 +34,22 @@ export function getPlanBlock(
   return null;
 }
 
+const BRANDING_FOLDERS = new Set(["logos", "covers"]);
+
+/**
+ * Upload gate: like getPlanBlock, except an expired (but still active) shop may
+ * upload branding images (logo/cover) so it can keep its storefront presentable.
+ * Product/post/story/ad/video content stays blocked.
+ */
+export function getUploadPlanBlock(
+  shop: { isActive?: boolean; planEndsAt?: Date | string | null },
+  folder: string,
+  now: number = Date.now(),
+) {
+  if (shop.isActive !== false && BRANDING_FOLDERS.has(folder) && isPlanExpired(shop.planEndsAt, now)) return null;
+  return getPlanBlock(shop, now);
+}
+
 /** IST calendar day key, e.g. "2026-10-07". */
 export function istDayKey(now: number = Date.now()) {
   return new Date(now + 330 * 60 * 1000).toISOString().slice(0, 10);
