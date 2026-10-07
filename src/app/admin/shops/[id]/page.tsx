@@ -7,8 +7,10 @@ import { updateShopLimits } from "./actions";
 import { isObjectId } from "@/lib/validation";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { ShopPlanFields } from "@/components/admin/ShopPlanFields";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 export default async function AdminShopEditPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePlatformAdmin();
   await connectToDatabase();
   const resolvedParams = await params;
   if (!isObjectId(resolvedParams.id)) notFound();

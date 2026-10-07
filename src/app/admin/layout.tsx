@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Activity, AlertTriangle, LayoutDashboard, Store, Users, Settings } from "lucide-react";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
@@ -9,7 +8,7 @@ import { connection } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
 import type { InfrastructureAlert } from "@/lib/infrastructure-monitor";
-import { getCurrentSession } from "@/lib/session";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 
 export const dynamic = "force-dynamic";
@@ -31,13 +30,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getCurrentSession();
-  const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
-  const activeRole = session?.user?.role ?? "";
-
-  if (!session || !allowedAdminRoles.has(activeRole)) {
-    redirect("/login");
-  }
+  const session = await requirePlatformAdmin();
 
   const displayName = session.user.name ?? "Admin";
   const displayEmail = session.user.email ?? "";

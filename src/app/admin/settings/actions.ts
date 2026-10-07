@@ -1,10 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import PlatformSettings from "@/models/PlatformSettings";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
   const parsed = Number(value ?? fallback);
@@ -13,13 +12,7 @@ const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback
 };
 
 export async function updatePlatformSettings(formData: FormData) {
-  const session = await getServerSession(authOptions);
-  const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
-  const activeRole = session?.user?.role ?? "";
-
-  if (!session || !allowedAdminRoles.has(activeRole)) {
-    throw new Error("Unauthorized");
-  }
+  await requirePlatformAdmin();
 
   await connectToDatabase();
 

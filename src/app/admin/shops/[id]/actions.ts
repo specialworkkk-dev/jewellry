@@ -1,13 +1,12 @@
 "use server";
 import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isObjectId } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
   const parsed = Number(value ?? fallback);
@@ -43,12 +42,7 @@ const parsePlanEndDate = (value: FormDataEntryValue | null | undefined) => {
 };
 
 export async function updateShopLimits(shopId: string, formData: FormData) {
-  const session = await getServerSession(authOptions);
-  const allowedAdminRoles = new Set(["SUPER_ADMIN", "PLATFORM_ADMIN"]);
-  const activeRole = session?.user?.role ?? "";
-  if (!session || !allowedAdminRoles.has(activeRole)) {
-    throw new Error("Unauthorized");
-  }
+  await requirePlatformAdmin();
   if (!isObjectId(shopId)) throw new Error("Invalid shop");
   
   await connectToDatabase();

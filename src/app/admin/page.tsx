@@ -3,8 +3,10 @@ import Shop from "@/models/Shop";
 import User from "@/models/User";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Store, Users, CheckCircle, Clock } from "lucide-react";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 export default async function AdminDashboardPage() {
+  await requirePlatformAdmin();
   await connectToDatabase();
 
   const [totalShops, pendingShops, totalUsers, recentShops] = await Promise.all([

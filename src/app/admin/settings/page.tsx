@@ -2,6 +2,7 @@ import connectToDatabase from '@/lib/mongoose';
 import PlatformSettings from '@/models/PlatformSettings';
 import { updatePlatformSettings } from './actions';
 import { ActionSubmitButton } from '@/components/ui/action-submit-button';
+import { requirePlatformAdmin } from '@/lib/admin-auth';
 
 const defaultSettings = {
   platformName: 'LuxeStore SaaS',
@@ -14,6 +15,7 @@ const defaultSettings = {
 };
 
 export default async function AdminSettingsPage() {
+  await requirePlatformAdmin();
   await connectToDatabase();
   const settings = await PlatformSettings.findOne({ key: 'default' }).lean();
   const values = settings ? { ...defaultSettings, ...settings } : defaultSettings;

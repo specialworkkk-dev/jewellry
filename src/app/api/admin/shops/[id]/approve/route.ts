@@ -1,22 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
 import { isObjectId } from '@/lib/validation';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
+import { isPlatformAdmin } from '@/lib/admin-auth';
 
 export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    const allowedAdminRoles = new Set(['SUPER_ADMIN', 'PLATFORM_ADMIN']);
-    const activeRole = session?.user?.role ?? '';
-
-    if (!session || !allowedAdminRoles.has(activeRole)) {
+    if (!await isPlatformAdmin()) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

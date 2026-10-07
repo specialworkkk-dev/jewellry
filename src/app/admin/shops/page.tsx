@@ -2,8 +2,10 @@ import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 export default async function AdminShopsPage() {
+  await requirePlatformAdmin();
   await connectToDatabase();
   const shops = await Shop.find()
     .select("name slug isActive planPrice planEndsAt createdAt")

@@ -2,6 +2,7 @@ import { AlertTriangle, CheckCircle2, CircleDollarSign, RefreshCw, Server, XCirc
 import connectToDatabase from "@/lib/mongoose";
 import type { InfrastructureMetric, InfrastructureReport, InfrastructureServiceReport } from "@/lib/infrastructure-monitor";
 import InfrastructureSnapshot from "@/models/InfrastructureSnapshot";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 import { refreshInfrastructureReport } from "./actions";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 
@@ -171,6 +172,7 @@ function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
 }
 
 export default async function InfrastructurePage() {
+  await requirePlatformAdmin();
   await connectToDatabase();
   const [latest, history] = await Promise.all([
     InfrastructureSnapshot.findOne().sort({ checkedAt: -1 }).lean(),

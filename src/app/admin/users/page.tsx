@@ -1,7 +1,9 @@
 import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
+import { requirePlatformAdmin } from "@/lib/admin-auth";
 
 export default async function AdminUsersPage() {
+  await requirePlatformAdmin();
   await connectToDatabase();
   const users = await User.find()
     .select("name email role createdAt")
