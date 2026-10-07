@@ -132,6 +132,25 @@ Maintenance scripts at the repo root (run with `.env.local` loaded): `seed.ts` (
 
 Deployed on Vercel. [vercel.json](vercel.json) schedules `/api/cron/infrastructure` daily at 03:00 UTC. Set all production environment variables, including `CRON_SECRET`, `ABLY_API_KEY` and the VAPID keys. Redeploy after changing them. In production, requests to non-canonical hostnames are redirected to the configured origin so auth cookies stay consistent.
 
+### Cron response shape
+
+`GET /api/cron/infrastructure` requires `Authorization: Bearer $CRON_SECRET` (401 otherwise). It runs the infrastructure check and drains pending push jobs, then returns HTTP 200 when both succeed or 500 when either fails:
+
+```json
+{
+  "ok": true,
+  "infrastructure": { "ok": true, "checkedAt": "...", "alertCount": 0, "criticalCount": 0 },
+  "notifications": { "ok": true, "processed": 0 },
+  "checkedAt": "...", "alertCount": 0, "notificationJobsProcessed": 0
+}
+```
+
+A failed part reports `{ "ok": false, "error": "..." }` and the flat fields become `null`.
+
+### Owner enquiry alerts and visitor counting
+
+Owners can enable push alerts for new enquiries from Dashboard > Settings. These use the separate `OwnerPushSubscription` model (`scope: "owner"` on `/api/notifications/subscriptions`, shop taken from the verified session) and are skipped silently when VAPID keys are missing. Unique-visitor admission ignores bots, link-preview fetchers, HEAD and prefetch requests, and keys new visitors by IP plus a coarse browser/OS hash; visitors admitted under the older IP-only key remain recognised.
+
 ## Further Reading
 
 - [special.md](special.md): the original product "master prompt" (full requirements, about 4,300 lines)

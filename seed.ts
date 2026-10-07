@@ -14,8 +14,12 @@ async function seed() {
 
   const salt = await bcrypt.genSalt(10);
 
+  // The demo owner has a well-known password: never create it unless explicitly allowed.
+  const demoAllowed = process.env.ALLOW_DEMO_SEED === '1' && process.env.NODE_ENV !== 'production';
   const existingDemo = await users.findOne({ email: 'demo@example.com' });
-  if (!existingDemo) {
+  if (!demoAllowed) {
+    console.log('Skipped demo owner/shop: set ALLOW_DEMO_SEED=1 (non-production only) to create them.');
+  } else if (!existingDemo) {
     const userId = new mongoose.Types.ObjectId();
     const shopId = new mongoose.Types.ObjectId();
 
@@ -44,6 +48,7 @@ async function seed() {
       pincode: "123456",
       whatsappNumber: "1234567890",
       businessPhone: "1234567890",
+      storefrontTemplate: Math.floor(Math.random() * 5) + 1,
       isApproved: true,
       isActive: true,
       maxProducts: 50,
