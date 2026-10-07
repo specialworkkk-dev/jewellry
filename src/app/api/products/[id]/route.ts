@@ -9,8 +9,9 @@ import { scheduleShopEvent } from '@/lib/realtime';
 import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
-import { getPlanReminderStatus } from '@/lib/plan';
-import { deleteShopObjects } from '@/lib/r2';
+import { getPlanReminderStatus, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
+import { deleteUnreferencedShopObjects } from '@/lib/media-refs';
+import { findUnconfirmedMedia } from '@/lib/media-quota';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const PRICED_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM']);
@@ -48,7 +49,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return fail('Your plan has expired. Renew to edit products.', 403);
     }
 
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) return fail('Invalid request payload');
 
     await connectToDatabase();
@@ -72,6 +73,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const images = Array.isArray(body.images) ? body.images.slice(0, 12).map(safeExternalUrl).filter(Boolean) : [];
     const videos = Array.isArray(body.videos) ? body.videos.slice(0, 4).map(safeExternalUrl).filter(Boolean) : [];
+    const existingImages = new Set(product.images ?? []);
+    const addedImages = images.filter((url) => !existingImages.has(url));
+    const publicMediaBase = shopMediaBaseUrl();
+    if (addedImages.some((url) => !isShopMediaUrl(url, publicMediaBase, shopId, 'products'))) {
+      return fail('Invalid product image source');
+    }
     const existingVideos = new Set(product.videos ?? []);
     const addedVideos = videos.filter((url) => !existingVideos.has(url));
     if (addedVideos.length > 0) {
@@ -91,6 +98,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return fail(`Daily video limit reached. This shop can publish ${maxVideosPerDay} video${maxVideosPerDay === 1 ? '' : 's'} per day.`, 403);
       }
     }
+
+    // Newly attached media must come from a server-confirmed upload of this shop.
+    const unconfirmed = await findUnconfirmedMedia(shopId, [...addedImages, ...addedVideos]);
+    if (unconfirmed.length > 0) return fail('Some media was not uploaded correctly. Please upload it again.');
 
     const priceType = typeof body.priceType === 'string' && PRICE_TYPES.has(body.priceType) ? body.priceType : 'PRICE_ON_REQUEST';
     const goldPurity = typeof body.goldPurity === 'string' && GOLD_PURITIES.has(body.goldPurity) ? body.goldPurity : undefined;
@@ -181,7 +192,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       { runValidators: true },
     );
 
-    if (removedMedia.length > 0) await deleteShopObjects(shopId, removedMedia);
+    if (removedMedia.length > 0) await deleteUnreferencedShopObjects(shopId, removedMedia);
     revalidatePath('/dashboard/products', 'page');
     revalidatePath('/dashboard', 'page');
     revalidatePath('/shop/[slug]', 'page');

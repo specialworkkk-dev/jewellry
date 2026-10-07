@@ -9,6 +9,7 @@ import { scheduleShopPushNotification } from '@/lib/push-notifications';
 import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
+import { findUnconfirmedMedia } from '@/lib/media-quota';
 import { getPlanBlock, isShopMediaUrl, priceTypeAllowsPrice, shopMediaBaseUrl } from '@/lib/plan';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     const { shopId, shop } = tenant;
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
@@ -111,6 +112,11 @@ export async function POST(req: Request) {
           error: `Daily video limit reached. This shop can publish ${maxVideosPerDay} video${maxVideosPerDay === 1 ? '' : 's'} per day.`,
         }, { status: 403 });
       }
+    }
+    // Media must come from a server-confirmed upload of this shop.
+    const unconfirmed = await findUnconfirmedMedia(shopId, [...images, ...videos]);
+    if (unconfirmed.length > 0) {
+      return NextResponse.json({ error: 'Some media was not uploaded correctly. Please upload it again.' }, { status: 400 });
     }
     const priceType = typeof body.priceType === 'string' && PRICE_TYPES.has(body.priceType)
       ? body.priceType

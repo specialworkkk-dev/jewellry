@@ -3,8 +3,10 @@ import connectToDatabase from '@/lib/mongoose';
 import Advertisement from '@/models/Advertisement';
 import { Types } from 'mongoose';
 import { cleanString, isRecord, safeExternalUrl } from '@/lib/validation';
+import { publishShopContentChange } from '@/lib/public-store-cache';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
 import { getPlanBlock, isFutureDate, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
+import { findUnconfirmedMedia } from '@/lib/media-quota';
 
 const AD_TYPES = new Set(['HERO_BANNER', 'PROMO_STRIP', 'GOLD_RATE']);
 
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
     if (planBlock) {
       return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
     }
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
@@ -36,6 +38,9 @@ export async function POST(req: Request) {
     const imageUrl = safeExternalUrl(body.imageUrl);
     if (imageUrl && !isShopMediaUrl(imageUrl, shopMediaBaseUrl(), shopId)) {
       return NextResponse.json({ error: 'Invalid advertisement image source' }, { status: 400 });
+    }
+    if (imageUrl && (await findUnconfirmedMedia(shopId, [imageUrl])).length > 0) {
+      return NextResponse.json({ error: 'Image was not uploaded correctly. Please upload it again.' }, { status: 400 });
     }
 
     let validUntil: Date | undefined;
@@ -68,6 +73,7 @@ export async function POST(req: Request) {
     });
 
     await newAd.save();
+    publishShopContentChange({ shopId, slug: shop.slug }, newAd._id.toString());
 
     return NextResponse.json({ message: 'Advertisement created successfully', ad: newAd }, { status: 201 });
   } catch (error: unknown) {

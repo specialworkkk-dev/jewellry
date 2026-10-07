@@ -5,8 +5,10 @@ import { Types } from 'mongoose';
 import Product from '@/models/Product';
 import { cleanString, isObjectId, isRecord, safeExternalUrl } from '@/lib/validation';
 import { scheduleShopPushNotification } from '@/lib/push-notifications';
+import { publishShopContentChange } from '@/lib/public-store-cache';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
 import { getPlanBlock, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
+import { findUnconfirmedMedia } from '@/lib/media-quota';
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
     if (planBlock) {
       return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
     }
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
@@ -36,6 +38,9 @@ export async function POST(req: Request) {
     const publicBaseUrl = shopMediaBaseUrl();
     if (mediaUrls.some((url) => !isShopMediaUrl(url, publicBaseUrl, shopId, 'posts'))) {
       return NextResponse.json({ error: 'Invalid post media source' }, { status: 400 });
+    }
+    if ((await findUnconfirmedMedia(shopId, mediaUrls)).length > 0) {
+      return NextResponse.json({ error: 'Some media was not uploaded correctly. Please upload it again.' }, { status: 400 });
     }
 
     await connectToDatabase();
@@ -61,6 +66,7 @@ export async function POST(req: Request) {
 
     await newPost.save();
     await scheduleShopPushNotification(shopId, 'post.created');
+    publishShopContentChange({ shopId, slug: shop.slug }, newPost._id.toString());
 
     return NextResponse.json({ message: 'Post created successfully', post: newPost }, { status: 201 });
   } catch (error: unknown) {

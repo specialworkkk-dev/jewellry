@@ -1,16 +1,20 @@
 import connectToDatabase from "@/lib/mongoose";
 import Advertisement from "@/models/Advertisement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
-import { Tag, TrendingUp, Presentation } from "lucide-react";
+import { Tag } from "lucide-react";
+import { CreateAdForm } from "./create-ad-form";
+import { RowActions } from "../media/row-actions";
 import Image from "next/image";
 import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
+const currentTimeMs = () => Date.now();
+
 export default async function MarketingDashboardPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
+  const nowMs = currentTimeMs();
 
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadAds = (pageNumber: number) => Advertisement.find({ shopId })
@@ -41,18 +45,10 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
         <div className="md:col-span-1 space-y-4">
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Create New</CardTitle>
+              <CardTitle className="text-lg">Create Promotion</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start gap-3 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100">
-                <TrendingUp className="w-4 h-4" /> Update Gold Rate
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <Tag className="w-4 h-4 text-pink-500" /> Promo Strip
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3">
-                <Presentation className="w-4 h-4 text-blue-500" /> Hero Banner Ad
-              </Button>
+            <CardContent>
+              <CreateAdForm />
             </CardContent>
           </Card>
         </div>
@@ -93,9 +89,13 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
                     </div>
                     <div className="mt-4 flex items-center justify-between border-t pt-4">
                       <span className="text-xs text-gray-400">
-                        {ad.validUntil ? `Valid till ${new Date(ad.validUntil).toLocaleDateString()}` : 'Runs continuously'}
+                        {ad.validUntil && new Date(ad.validUntil).getTime() < nowMs ? "Expired" : ad.validUntil ? `Valid till ${new Date(ad.validUntil).toLocaleDateString()}` : 'Runs continuously'}
                       </span>
-                      <Button variant="ghost" size="sm" className="h-8 text-gray-500">Edit</Button>
+                      <RowActions
+                        endpoint={`/api/advertisements/${ad._id.toString()}`}
+                        noun="advertisement"
+                        toggle={{ field: "isActive", value: ad.isActive, onLabel: "Activate", offLabel: "Deactivate" }}
+                      />
                     </div>
                   </div>
                 </CardContent>
