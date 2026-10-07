@@ -69,7 +69,13 @@ export default async function ProductDetailPage({
   const actorId = await getPublicActorId();
   if (actorId) await connectToDatabase();
   const initiallyLiked = actorId
-    ? Boolean(await Interaction.exists({ userId: actorId, targetId: product._id, interactionType: "LIKE" }))
+    ? Boolean(await Interaction.exists({
+      userId: actorId,
+      shopId: shop._id,
+      targetId: product._id,
+      targetType: "PRODUCT",
+      interactionType: "LIKE",
+    }))
     : false;
   const priceLabel = product.priceType === "FIXED_PRICE" && product.price !== undefined
     ? `₹${product.price.toLocaleString("en-IN")}`

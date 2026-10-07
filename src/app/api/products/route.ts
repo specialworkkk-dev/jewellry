@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Product from '@/models/Product';
-import Shop from '@/models/Shop';
 import { Types } from 'mongoose';
 import Category from '@/models/Category';
 import { cleanString, isDuplicateKeyError, isObjectId, isRecord, safeExternalUrl } from '@/lib/validation';
@@ -11,6 +8,7 @@ import { scheduleShopEvent } from '@/lib/realtime';
 import { scheduleShopPushNotification } from '@/lib/push-notifications';
 import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
+import { getVerifiedOwnerTenant } from '@/lib/tenant';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
@@ -35,15 +33,14 @@ function startOfTodayInIndia() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== 'SHOP_OWNER') {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const shopId = session.user.shopId;
+    const { shopId, shop } = tenant;
     const body: unknown = await req.json();
-    if (!shopId || !isRecord(body)) {
+    if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
 
@@ -57,11 +54,6 @@ export async function POST(req: Request) {
     }
 
     await connectToDatabase();
-
-    const shop = await Shop.findById(shopId);
-    if (!shop) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
 
     // Enforce Product Limits
     if (!shop.isActive) {

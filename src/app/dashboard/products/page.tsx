@@ -8,15 +8,14 @@ import Image from "next/image";
 import { deleteProductAction, setProductPublishedAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
-import { getCurrentSession } from "@/lib/session";
+import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
 export default async function ProductsListPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
-  const session = await getCurrentSession();
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
 
-  const shopId = session?.user.shopId;
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadProducts = (pageNumber: number) => Product.find({ shopId })
     .select("name sku images priceType price isPublished categoryId createdAt")

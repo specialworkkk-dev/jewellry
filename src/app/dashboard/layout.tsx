@@ -4,7 +4,7 @@ import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink } from "lu
 import MobileSidebar from "@/components/admin/MobileSidebar";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
 import { getCurrentSession } from "@/lib/session";
-import { getOwnerShop, getPlatformSupport } from "@/lib/owner-data";
+import { getPlatformSupport } from "@/lib/owner-data";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import type { Metadata } from "next";
@@ -13,6 +13,7 @@ import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
 import { PremiumRenewalNotice } from "@/components/shop/PremiumRenewalNotice";
 import { getPlanReminderStatus } from "@/lib/plan";
 import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
+import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 export async function generateMetadata(): Promise<Metadata> {
   await connection();
@@ -46,10 +47,12 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const [shop, platformSupport] = await Promise.all([
-    session.user.shopId ? getOwnerShop(session.user.shopId) : null,
+  const [tenant, platformSupport] = await Promise.all([
+    getVerifiedOwnerTenant(),
     getPlatformSupport(),
   ]);
+  if (!tenant) redirect("/login");
+  const shop = tenant.shop;
   const planPrice = Math.max(0, Number(shop?.planPrice ?? 0));
   const planEndsAt = shop?.planEndsAt ? new Date(shop.planEndsAt) : null;
   const planReminder = getPlanReminderStatus(planEndsAt);

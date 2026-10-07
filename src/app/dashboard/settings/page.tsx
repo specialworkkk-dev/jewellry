@@ -1,5 +1,4 @@
 import { ShopSettingsForm } from "@/components/shop/ShopSettingsForm";
-import { getCurrentSession } from "@/lib/session";
 import { getOwnerShop } from "@/lib/owner-data";
 import connectToDatabase from "@/lib/mongoose";
 import {
@@ -10,15 +9,15 @@ import {
 import { NotificationSettingsCard } from "@/components/shop/NotificationSettingsCard";
 import PushSubscriptionModel from "@/models/PushSubscription";
 import ShopNotificationSettings from "@/models/ShopNotificationSettings";
+import { requireOwnerTenant } from "@/lib/tenant";
 
 export default async function ShopSettingsPage() {
-  const session = await getCurrentSession();
-  const shopId = session?.user.shopId;
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
   const [shop, notificationSettings, subscriberCount] = await Promise.all([
-    shopId ? getOwnerShop(shopId) : null,
-    shopId ? ShopNotificationSettings.findOne({ shopId }).lean() : null,
-    shopId ? PushSubscriptionModel.countDocuments({ shopId }) : 0,
+    getOwnerShop(shopId),
+    ShopNotificationSettings.findOne({ shopId }).lean(),
+    PushSubscriptionModel.countDocuments({ shopId }),
   ]);
   const serializableShop = shop ? JSON.parse(JSON.stringify(shop)) : undefined;
   const initialTriggers = customerNotificationTriggers.map((trigger) => {

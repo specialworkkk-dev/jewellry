@@ -4,15 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Plus, Image as ImageIcon, Video, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
-import { getCurrentSession } from "@/lib/session";
+import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
 export default async function SocialFeedDashboard({ searchParams }: { searchParams: OwnerListSearchParams }) {
-  const session = await getCurrentSession();
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
 
-  const shopId = session?.user.shopId;
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadPosts = (pageNumber: number) => Post.find({ shopId })
     .select("caption mediaUrls mediaType likesCount createdAt")

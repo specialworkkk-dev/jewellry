@@ -1,24 +1,15 @@
 "use server";
 
-import connectToDatabase from "@/lib/mongoose";
 import Shop from "@/models/Shop";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { cleanString, safeExternalUrl } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
+import { requireOwnerTenant } from "@/lib/tenant";
 
 export async function updateShopSettings(formData: FormData) {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "SHOP_OWNER" || !session.user.shopId) {
-    throw new Error("Unauthorized");
-  }
-
-  await connectToDatabase();
-  const shopId = session.user.shopId;
-  const shop = await Shop.findById(shopId).lean();
+  const { shopId, shop } = await requireOwnerTenant();
 
   const updates = {
     shortDescription: cleanString(formData.get("shortDescription"), 500),

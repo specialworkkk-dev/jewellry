@@ -4,15 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComingSoonButton as Button } from "@/components/ui/coming-soon-button";
 import { Tag, TrendingUp, Presentation } from "lucide-react";
 import Image from "next/image";
-import { getCurrentSession } from "@/lib/session";
+import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
 export default async function MarketingDashboardPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
-  const session = await getCurrentSession();
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
 
-  const shopId = session?.user.shopId;
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadAds = (pageNumber: number) => Advertisement.find({ shopId })
     .select("title type message imageUrl isActive validUntil createdAt")

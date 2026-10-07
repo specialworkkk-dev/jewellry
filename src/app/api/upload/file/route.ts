@@ -1,11 +1,8 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/authOptions";
 import { r2Client } from "@/lib/r2";
 import { errorMessage } from "@/lib/validation";
-import connectToDatabase from "@/lib/mongoose";
-import Shop from "@/models/Shop";
+import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -15,11 +12,11 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const shopId = session?.user?.shopId;
-    if (session?.user?.role !== "SHOP_OWNER" || !shopId) {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { shopId, shop } = tenant;
 
     const bucket = process.env.R2_BUCKET_NAME;
     const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, "");
@@ -48,10 +45,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Videos are not allowed in this section" }, { status: 400 });
     }
     if (isVideo) {
-      await connectToDatabase();
-      const shop = await Shop.findById(shopId)
-        .select("videoUploadsEnabled maxVideoDurationSeconds isActive")
-        .lean();
       if (!shop?.isActive || shop.videoUploadsEnabled !== true) {
         return NextResponse.json({ error: "Video uploads are not enabled for this shop" }, { status: 403 });
       }

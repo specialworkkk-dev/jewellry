@@ -1,24 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import connectToDatabase from '@/lib/mongoose';
 import Advertisement from '@/models/Advertisement';
 import { Types } from 'mongoose';
 import { cleanString, isRecord, safeExternalUrl } from '@/lib/validation';
+import { getVerifiedOwnerTenant } from '@/lib/tenant';
 
 const AD_TYPES = new Set(['HERO_BANNER', 'PROMO_STRIP', 'GOLD_RATE']);
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== 'SHOP_OWNER') {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const shopId = session.user.shopId;
+    const { shopId } = tenant;
     const body: unknown = await req.json();
-    if (!shopId || !isRecord(body)) {
+    if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
 

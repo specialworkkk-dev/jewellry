@@ -2,8 +2,6 @@
 
 import connectToDatabase from "@/lib/mongoose";
 import Category from "@/models/Category";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import Product from "@/models/Product";
 import Shop from "@/models/Shop";
 import { revalidatePath } from "next/cache";
@@ -11,15 +9,13 @@ import { isObjectId } from "@/lib/validation";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
+import { requireOwnerTenant } from "@/lib/tenant";
 
 export async function getCategoriesAction() {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "SHOP_OWNER" || !session.user.shopId) {
-    throw new Error("Unauthorized");
-  }
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
   const categories = await Category.find({
-    $or: [{ isSystemDefault: true }, { shopId: session.user.shopId }],
+    $or: [{ isSystemDefault: true }, { shopId }],
   }).sort({ name: 1 }).lean();
   return JSON.parse(JSON.stringify(categories));
 }
@@ -39,9 +35,8 @@ export async function getProductMediaPolicyAction() {
 }
 
 async function ownerShopId() {
-  const session = await getServerSession(authOptions);
-  if (session?.user.role !== "SHOP_OWNER" || !session.user.shopId) throw new Error("Unauthorized");
-  return session.user.shopId;
+  const tenant = await requireOwnerTenant();
+  return tenant.shopId;
 }
 
 export async function setProductPublishedAction(productId: string, isPublished: boolean) {

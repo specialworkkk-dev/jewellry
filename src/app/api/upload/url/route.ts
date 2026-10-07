@@ -1,12 +1,9 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/authOptions";
 import { r2Client } from "@/lib/r2";
 import { cleanString, isRecord } from "@/lib/validation";
-import connectToDatabase from "@/lib/mongoose";
-import Shop from "@/models/Shop";
+import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_TYPES = new Set([
@@ -17,11 +14,11 @@ const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const shopId = session?.user?.shopId;
-    if (session?.user?.role !== "SHOP_OWNER" || !shopId) {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { shopId, shop } = tenant;
 
     const body: unknown = await req.json();
     if (!isRecord(body)) {
@@ -48,10 +45,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Photo must be smaller than 10 MB" }, { status: 413 });
     }
     if (isVideo) {
-      await connectToDatabase();
-      const shop = await Shop.findById(shopId)
-        .select("videoUploadsEnabled maxVideoDurationSeconds isActive")
-        .lean();
       if (!shop?.isActive || shop.videoUploadsEnabled !== true) {
         return NextResponse.json({ error: "Video uploads are not enabled for this shop" }, { status: 403 });
       }

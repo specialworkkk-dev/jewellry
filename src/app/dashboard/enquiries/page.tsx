@@ -5,22 +5,21 @@ import { CheckCircle, MessageSquare, Phone } from "lucide-react";
 import { markEnquiryContactedAction } from "./actions";
 import "@/models/Product";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
-import { getCurrentSession } from "@/lib/session";
+import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
 export default async function EnquiriesDashboardPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
-  const session = await getCurrentSession();
+  const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
 
-  const shopId = session?.user.shopId;
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadEnquiries = (pageNumber: number) => Enquiry.find({ shopId })
     .select("customerName customerPhone message status productId createdAt")
     .sort({ createdAt: -1 })
     .skip((pageNumber - 1) * perPage)
     .limit(perPage)
-    .populate("productId", "name sku")
+    .populate({ path: "productId", match: { shopId }, select: "name sku" })
     .lean();
   const [totalEnquiries, requestedEnquiries] = await Promise.all([
     Enquiry.countDocuments({ shopId }),

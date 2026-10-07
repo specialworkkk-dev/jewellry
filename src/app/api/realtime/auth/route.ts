@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import { getAblyRestClient, shopRealtimeChannel } from "@/lib/realtime";
 import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 import { isObjectId } from "@/lib/validation";
 import Shop from "@/models/Shop";
+import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 const TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -41,12 +40,12 @@ export async function GET(request: NextRequest) {
   let clientId: string;
 
   if (audience === "owner") {
-    const session = await getServerSession(authOptions);
-    if (session?.user.role !== "SHOP_OWNER" || session.user.shopId !== shopId) {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant || tenant.shopId !== shopId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     channel = shopRealtimeChannel(shopId, "owner");
-    clientId = `owner:${session.user.id}`;
+    clientId = `owner:${tenant.session.user.id}`;
   } else {
     const shop = await Shop.findOne({ _id: shopId, isApproved: true, isActive: true }).select("_id").lean();
     if (!shop) return NextResponse.json({ error: "Shop not found" }, { status: 404 });

@@ -38,7 +38,9 @@ export default async function PublicShopPage({
     await connectToDatabase();
     const ids = await Interaction.find({
       userId: actorId,
+      shopId: shop._id,
       targetId: { $in: products.map((product) => product._id) },
+      targetType: "PRODUCT",
       interactionType: "LIKE",
     }).distinct("targetId");
     ids.forEach((id) => savedProductIds.add(id.toString()));

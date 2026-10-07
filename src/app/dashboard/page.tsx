@@ -6,33 +6,28 @@ import Enquiry from "@/models/Enquiry";
 import AnalyticsEvent from "@/models/AnalyticsEvent";
 import Interaction from "@/models/Interaction";
 import Shop from "@/models/Shop";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
 import { GoldRateUpdater } from "@/components/admin/GoldRateUpdater";
 import Image from "next/image";
 import Link from "next/link";
-import { getCurrentSession } from "@/lib/session";
 import { getOwnerShop } from "@/lib/owner-data";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
+import { requireOwnerTenant } from "@/lib/tenant";
 
 export default async function DashboardOverviewPage() {
-  const session = await getCurrentSession();
-  const shopId = session?.user.shopId;
-  if (!shopId) throw new Error("Shop owner account is missing a shop");
+  const { shopId } = await requireOwnerTenant();
 
   async function updateGoldRate(rate22k: number | null, rate24k: number | null) {
     "use server";
-    const activeSession = await getServerSession(authOptions);
-    if (activeSession?.user.role !== "SHOP_OWNER" || !activeSession.user.shopId) throw new Error("Unauthorized");
+    const tenant = await requireOwnerTenant();
 
     const final22K = typeof rate22k === "number" && Number.isFinite(rate22k) && rate22k > 0 ? Math.round(rate22k) : null;
     const final24K = typeof rate24k === "number" && Number.isFinite(rate24k) && rate24k > 0 ? Math.round(rate24k) : null;
 
     await connectToDatabase();
-    await Shop.findByIdAndUpdate(activeSession.user.shopId, {
+    await Shop.updateOne({ _id: tenant.shopId, ownerId: tenant.session.user.id }, {
       $set: {
         goldRate22K: final22K,
         goldRate24K: final24K,
@@ -40,12 +35,12 @@ export default async function DashboardOverviewPage() {
     }, { strict: false });
     
     // Revalidate public storefront to instantly show the new banner
-    const currentShop = await Shop.findById(activeSession.user.shopId).select("slug").lean();
+    const currentShop = await Shop.findOne({ _id: tenant.shopId, ownerId: tenant.session.user.id }).select("slug").lean();
     if (currentShop) revalidatePath(`/shop/${currentShop.slug}`, "layout");
     revalidatePath("/dashboard");
     invalidatePublicStoreCache();
-    scheduleShopEvent(activeSession.user.shopId, "shop.gold-rate.updated", "both");
-    scheduleShopPushNotification(activeSession.user.shopId, "gold-rate.updated");
+    scheduleShopEvent(tenant.shopId, "shop.gold-rate.updated", "both");
+    scheduleShopPushNotification(tenant.shopId, "gold-rate.updated");
   }
 
   await connectToDatabase();
@@ -59,7 +54,7 @@ export default async function DashboardOverviewPage() {
       .select("customerName message status productId createdAt")
       .sort({ createdAt: -1 })
       .limit(3)
-      .populate("productId", "name")
+      .populate({ path: "productId", match: { shopId }, select: "name" })
       .lean(),
     Product.find({ shopId })
       .select("name images viewsCount likesCount")

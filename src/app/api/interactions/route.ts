@@ -36,23 +36,32 @@ export async function GET(req: NextRequest) {
   try {
     const targetId = req.nextUrl.searchParams.get("targetId");
     const targetType = req.nextUrl.searchParams.get("targetType");
+    const shopId = req.nextUrl.searchParams.get("shopId");
     const interactionType = req.nextUrl.searchParams.get("interactionType") || "LIKE";
     if (!targetId || !isObjectId(targetId)
+      || !shopId || !isObjectId(shopId)
       || !targetType || !TARGET_TYPES.has(targetType)
       || !INTERACTION_TYPES.has(interactionType)) {
       return NextResponse.json({ error: "Invalid interaction" }, { status: 400 });
     }
 
     await connectToDatabase();
+    const shop = await Shop.findOne({ _id: shopId, isApproved: true, isActive: true }).select("_id").lean();
+    if (!shop) return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+
     const model = targetType === "PRODUCT" ? Product : targetType === "POST" ? Post : Shop;
-    const target = await model.findById(targetId).select(targetType === "SHOP" ? "_id" : "likesCount").lean();
+    const target = targetType === "SHOP"
+      ? (targetId === shopId ? shop : null)
+      : await model.findOne({ _id: targetId, shopId: shop._id, isPublished: true })
+        .select("likesCount")
+        .lean();
     if (!target) return NextResponse.json({ error: "Target not found" }, { status: 404 });
 
     const session = await getServerSession(authOptions);
     const cookieVisitorId = req.cookies.get(VISITOR_COOKIE)?.value;
     const actorId = session?.user?.id || (cookieVisitorId && isObjectId(cookieVisitorId) ? cookieVisitorId : undefined);
     const state = actorId
-      ? Boolean(await Interaction.exists({ userId: actorId, targetId, interactionType }))
+      ? Boolean(await Interaction.exists({ userId: actorId, shopId: shop._id, targetId, targetType, interactionType }))
       : false;
     const likesCount = "likesCount" in target ? Number(target.likesCount || 0) : undefined;
 
@@ -112,7 +121,9 @@ export async function POST(req: NextRequest) {
 
     const identity = {
       userId: actorId,
+      shopId: shop._id,
       targetId: body.targetId,
+      targetType: body.targetType,
       interactionType: body.interactionType,
     };
     const removed = await Interaction.findOneAndDelete(identity);
@@ -121,8 +132,8 @@ export async function POST(req: NextRequest) {
       let likesCount: number | undefined;
       if (body.interactionType === "LIKE") {
         const model = body.targetType === "PRODUCT" ? Product : Post;
-        await model.updateOne({ _id: body.targetId, likesCount: { $gt: 0 } }, { $inc: { likesCount: -1 } });
-        const target = await model.findById(body.targetId).select("likesCount").lean();
+        await model.updateOne({ _id: body.targetId, shopId: shop._id, likesCount: { $gt: 0 } }, { $inc: { likesCount: -1 } });
+        const target = await model.findOne({ _id: body.targetId, shopId: shop._id }).select("likesCount").lean();
         likesCount = target?.likesCount ?? 0;
       }
       scheduleShopEvent(body.shopId, "interaction.updated", "owner", body.targetId);
@@ -131,7 +142,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      await Interaction.create({ ...identity, shopId: shop._id, targetType: body.targetType });
+      await Interaction.create(identity);
     } catch (error: unknown) {
       if (!isDuplicateKeyError(error)) throw error;
       const response = NextResponse.json({ message: "Interaction already exists", state: true });
@@ -141,8 +152,8 @@ export async function POST(req: NextRequest) {
     let likesCount: number | undefined;
     if (body.interactionType === "LIKE") {
       const model = body.targetType === "PRODUCT" ? Product : Post;
-      await model.updateOne({ _id: body.targetId }, { $inc: { likesCount: 1 } });
-      const target = await model.findById(body.targetId).select("likesCount").lean();
+      await model.updateOne({ _id: body.targetId, shopId: shop._id }, { $inc: { likesCount: 1 } });
+      const target = await model.findOne({ _id: body.targetId, shopId: shop._id }).select("likesCount").lean();
       likesCount = target?.likesCount ?? 0;
     }
     scheduleShopEvent(body.shopId, "interaction.updated", "owner", body.targetId);

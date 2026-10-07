@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import {
   customerNotificationTemplates,
@@ -10,12 +8,10 @@ import {
 } from "@/lib/notification-templates";
 import { cleanString } from "@/lib/validation";
 import ShopNotificationSettings from "@/models/ShopNotificationSettings";
+import { requireOwnerTenant } from "@/lib/tenant";
 
 export async function updateNotificationSettings(formData: FormData) {
-  const session = await getServerSession(authOptions);
-  if (session?.user.role !== "SHOP_OWNER" || !session.user.shopId) {
-    throw new Error("Unauthorized");
-  }
+  const { shopId } = await requireOwnerTenant();
 
   const triggers = customerNotificationTriggers.map((trigger) => {
     const requestedTemplateId = cleanString(formData.get(`${trigger}:templateId`), 80);
@@ -34,16 +30,15 @@ export async function updateNotificationSettings(formData: FormData) {
 
   await connectToDatabase();
   await ShopNotificationSettings.updateOne(
-    { shopId: session.user.shopId },
+    { shopId },
     {
       $set: {
         enabled: formData.get("notificationsEnabled") === "on",
         triggers,
       },
-      $setOnInsert: { shopId: session.user.shopId },
+      $setOnInsert: { shopId },
     },
     { upsert: true, runValidators: true },
   );
   revalidatePath("/dashboard/settings");
 }
-
