@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { StoryViewer } from "@/components/public/StoryViewer";
 import { StoreImage } from "@/components/public/StoreImage";
 
@@ -63,13 +64,16 @@ export function StoriesRow({
           </button>
         ))}
       </div>
-      {openFrom !== null && (
+      {/* Portal to <body>: an ancestor with backdrop-filter would otherwise become the
+          containing block of the viewer's `position: fixed` and clip it to that card. */}
+      {openFrom !== null && typeof document !== "undefined" && createPortal(
         <StoryViewer
           stories={stories.slice(openFrom)}
           shopLogo={shopLogo}
           shopName={shopName}
           onClose={() => setOpenFrom(null)}
-        />
+        />,
+        document.body,
       )}
     </>
   );

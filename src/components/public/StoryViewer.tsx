@@ -44,8 +44,26 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
   };
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      else if (event.key === "ArrowRight") handleNext();
+      else if (event.key === "ArrowLeft") handlePrev();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleNext, onClose]);
+
+  useEffect(() => {
     if (stories.length === 0) return;
-    
+    // Videos advance when they end (see onEnded); only images use the timer.
+    if (stories[currentIndex]?.mediaType === "VIDEO") return;
+
     // Auto advance progress bar every 50ms for a 5 second image duration
     const timer = setInterval(() => {
       const next = progressRef.current + 100 / (5000 / 50);
@@ -59,7 +77,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
     }, 50);
 
     return () => clearInterval(timer);
-  }, [handleNext, stories.length]);
+  }, [handleNext, stories, currentIndex]);
 
   if (stories.length === 0) return null;
 
@@ -71,7 +89,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
         exit={{ opacity: 0, scale: 0.9 }}
         className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
       >
-        <div className="relative w-full max-w-md h-full sm:h-[90vh] bg-gray-900 sm:rounded-xl overflow-hidden shadow-2xl flex flex-col">
+        <div role="dialog" aria-modal="true" aria-label={`${shopName} stories`} className="relative w-full max-w-md h-full sm:h-[90vh] bg-gray-900 sm:rounded-xl overflow-hidden shadow-2xl flex flex-col">
           
           {/* Progress Bars */}
           <div className="absolute top-0 inset-x-0 z-20 flex gap-1 p-4">
@@ -93,7 +111,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
               <StoreImage src={shopLogo} alt={shopName} sizes="32px" className="w-8 h-8 rounded-full border border-white/20" />
               <span className="text-white font-medium text-sm drop-shadow-md">{shopName}</span>
             </div>
-            <button onClick={onClose} className="text-white p-1 hover:bg-white/10 rounded-full">
+            <button type="button" aria-label="Close stories" onClick={onClose} className="text-white p-1 hover:bg-white/10 rounded-full">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -101,7 +119,20 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
           {/* Media */}
           <div className="flex-1 relative bg-black">
             {currentStory.mediaType === "VIDEO" ? (
-              <video src={currentStory.mediaUrl} autoPlay playsInline className="w-full h-full object-cover" />
+              <video
+                key={currentStory._id}
+                src={currentStory.mediaUrl}
+                autoPlay
+                muted
+                playsInline
+                onTimeUpdate={(event) => {
+                  const video = event.currentTarget;
+                  if (video.duration > 0) setProgress((video.currentTime / video.duration) * 100);
+                }}
+                onEnded={handleNext}
+                onError={handleNext}
+                className="w-full h-full object-contain bg-black"
+              />
             ) : (
               <StoreImage src={currentStory.mediaUrl} alt={`${shopName} story`} sizes="(max-width: 640px) 100vw, 480px" className="w-full h-full object-cover" />
             )}
