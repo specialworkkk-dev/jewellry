@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     const visitorId = session?.user?.id ? undefined : anonymousVisitorId(req);
     const actorId = session?.user?.id || visitorId;
 
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)
       || !isObjectId(body.targetId)
       || !isObjectId(body.shopId)

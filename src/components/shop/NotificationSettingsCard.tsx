@@ -10,6 +10,7 @@ import {
   triggerLabels,
   type CustomerNotificationTrigger,
 } from "@/lib/notification-templates";
+import { OwnerPushButton } from "@/components/shop/OwnerPushButton";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -27,12 +28,14 @@ export function NotificationSettingsCard({
   configured,
   initialEnabled,
   initialTriggers,
+  publicVapidKey,
 }: {
   shopName: string;
   subscriberCount: number;
   configured: boolean;
   initialEnabled: boolean;
   initialTriggers: InitialTriggerSetting[];
+  publicVapidKey?: string;
 }) {
   const initialMap = useMemo(() => new Map(initialTriggers.map((item) => [item.trigger, item])), [initialTriggers]);
   const [selections, setSelections] = useState<Record<string, string>>(() => Object.fromEntries(
@@ -76,6 +79,13 @@ export function NotificationSettingsCard({
             Add VAPID keys in Vercel to activate customer push delivery. Your templates can be configured now.
           </div>
         )}
+        <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+          <p className="text-sm font-bold text-gray-900">Owner alerts: new enquiries</p>
+          <p className="mb-3 mt-1 text-xs text-gray-600">Get a push notification on this device whenever a customer sends an enquiry. Enable it on each phone or computer you use.</p>
+          {configured && publicVapidKey
+            ? <OwnerPushButton publicVapidKey={publicVapidKey} />
+            : <p className="text-sm text-amber-800">Push is not configured on the server yet (VAPID keys missing), so enquiry alerts are unavailable. Enquiries still appear in your dashboard.</p>}
+        </div>
         <form action={updateNotificationSettings} className="space-y-5">
           <label className="flex min-h-12 items-center justify-between gap-4 rounded-xl border bg-gray-50 px-4 py-3">
             <span>

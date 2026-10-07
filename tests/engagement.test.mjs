@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 const { clientIdFromHeaders } = await import("../src/lib/rate-limit.ts");
-const { enquiryDedupeKey, viewDedupeKey } = await import("../src/lib/engagement-dedupe.ts");
+const { enquiryDedupeKey, viewDedupeKey, isBotUserAgent, isNonHumanRequest, coarseUserAgent, EVENT_DEDUPE_WINDOWS_MS } = await import("../src/lib/engagement-dedupe.ts");
 
 const h = (o) => ({ get: (k) => o[k] ?? null });
 
@@ -29,4 +29,44 @@ test("view dedupe key varies by actor and target", () => {
   assert.equal(k("1.1.1.1", "p"), k("1.1.1.1", "p"));
   assert.notEqual(k("1.1.1.1", "p"), k("2.2.2.2", "p"));
   assert.notEqual(k("1.1.1.1", "p"), k("1.1.1.1", "q"));
+});
+
+test("bot and link-preview user agents are detected", () => {
+  for (const ua of [
+    "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "WhatsApp/2.23.20.0 A",
+    "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+    "Twitterbot/1.0",
+    "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)",
+    "Mozilla/5.0 (compatible; bingbot/2.0)",
+    "curl/8.4.0",
+    "",
+  ]) assert.equal(isBotUserAgent(ua), true, ua);
+  for (const ua of [
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 13; CUBOT_X30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  ]) assert.equal(isBotUserAgent(ua), false, ua);
+});
+test("HEAD and prefetch requests are non-human", () => {
+  const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
+  assert.equal(isNonHumanRequest(h({ "user-agent": ua })), false);
+  assert.equal(isNonHumanRequest(h({ "user-agent": ua }), "HEAD"), true);
+  assert.equal(isNonHumanRequest(h({ "user-agent": ua, purpose: "prefetch" })), true);
+  assert.equal(isNonHumanRequest(h({ "user-agent": ua, "sec-purpose": "prefetch;prerender" })), true);
+  assert.equal(isNonHumanRequest(h({ "user-agent": ua, "x-moz": "prefetch" })), true);
+});
+test("coarse UA ignores versions but separates devices", () => {
+  const c119 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36";
+  const c120 = c119.replace("119", "120");
+  assert.equal(coarseUserAgent(c119), coarseUserAgent(c120));
+  assert.equal(coarseUserAgent(c119), "chrome/windows");
+  assert.notEqual(coarseUserAgent(c119), coarseUserAgent("Mozilla/5.0 (Linux; Android 13) Chrome/120.0 Mobile Safari/537.36"));
+});
+test("story and whatsapp events dedupe within their own windows", () => {
+  const k = (type, now) => viewDedupeKey(type, "s", "t", "1.1.1.1", "ua", now, EVENT_DEDUPE_WINDOWS_MS[type]);
+  assert.equal(k("STORY_VIEW", 1000), k("STORY_VIEW", 2000));
+  assert.equal(k("WHATSAPP_CLICK", 1000), k("WHATSAPP_CLICK", 2000));
+  assert.notEqual(k("WHATSAPP_CLICK", 1000), k("WHATSAPP_CLICK", 1000 + 11 * 60_000));
+  assert.notEqual(k("STORY_VIEW", 1000), k("WHATSAPP_CLICK", 1000));
 });

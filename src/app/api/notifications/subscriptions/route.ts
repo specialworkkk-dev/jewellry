@@ -4,8 +4,11 @@ import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 import { cleanString, isObjectId, isRecord } from "@/lib/validation";
 import PushSubscriptionModel from "@/models/PushSubscription";
 import Shop from "@/models/Shop";
+import OwnerPushSubscription from "@/models/OwnerPushSubscription";
+import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 const MAX_SUBSCRIPTIONS_PER_SHOP = 5000;
+const MAX_OWNER_DEVICES_PER_SHOP = 20;
 
 function sameOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
@@ -53,6 +56,32 @@ export async function POST(request: NextRequest) {
   }
 
   const body: unknown = await request.json().catch(() => null);
+  if (isRecord(body) && body.scope === "owner") {
+    // Owner scope: the shop comes from the verified session, never from the body.
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const ownerSubscription = subscriptionDetails(body.subscription);
+    if (!ownerSubscription) return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+    const exists = await OwnerPushSubscription.exists({ shopId: tenant.shopId, endpoint: ownerSubscription.endpoint });
+    if (!exists && await OwnerPushSubscription.countDocuments({ shopId: tenant.shopId }) >= MAX_OWNER_DEVICES_PER_SHOP) {
+      return NextResponse.json({ error: "Too many devices registered" }, { status: 429 });
+    }
+    await OwnerPushSubscription.updateOne(
+      { shopId: tenant.shopId, endpoint: ownerSubscription.endpoint },
+      {
+        $set: {
+          userId: tenant.session.user.id,
+          expirationTime: ownerSubscription.expirationTime,
+          keys: { p256dh: ownerSubscription.p256dh, auth: ownerSubscription.auth },
+          userAgent: cleanString(request.headers.get("user-agent"), 500),
+          failureCount: 0,
+        },
+        $setOnInsert: { shopId: tenant.shopId, endpoint: ownerSubscription.endpoint },
+      },
+      { upsert: true, runValidators: true },
+    );
+    return NextResponse.json({ subscribed: true }, { headers: { "Cache-Control": "no-store" } });
+  }
   if (!isRecord(body) || !isObjectId(body.shopId)) {
     return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
   }
@@ -94,6 +123,14 @@ export async function DELETE(request: NextRequest) {
   if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const body: unknown = await request.json().catch(() => null);
+  if (isRecord(body) && body.scope === "owner") {
+    const tenant = await getVerifiedOwnerTenant();
+    if (!tenant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const ownerEndpoint = cleanString(body.endpoint, 2048);
+    if (!ownerEndpoint.startsWith("https://")) return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+    await OwnerPushSubscription.deleteOne({ shopId: tenant.shopId, endpoint: ownerEndpoint });
+    return NextResponse.json({ subscribed: false }, { headers: { "Cache-Control": "no-store" } });
+  }
   if (!isRecord(body) || !isObjectId(body.shopId)) {
     return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
   }

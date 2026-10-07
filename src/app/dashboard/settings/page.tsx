@@ -41,6 +41,7 @@ export default async function ShopSettingsPage() {
           shopName={shop.name}
           subscriberCount={subscriberCount}
           configured={Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY)}
+          publicVapidKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim()}
           initialEnabled={notificationSettings?.enabled ?? true}
           initialTriggers={JSON.parse(JSON.stringify(initialTriggers))}
         />

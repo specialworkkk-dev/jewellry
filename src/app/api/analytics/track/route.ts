@@ -6,17 +6,19 @@ import AnalyticsEvent from "@/models/AnalyticsEvent";
 import Shop from "@/models/Shop";
 import Product from "@/models/Product";
 import Story from "@/models/Story";
-import { viewDedupeKey } from "@/lib/engagement-dedupe";
+import { EVENT_DEDUPE_WINDOWS_MS, isNonHumanRequest, viewDedupeKey } from "@/lib/engagement-dedupe";
 
 const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAPP_CLICK"]);
 
 export async function POST(req: Request) {
   try {
+    // Crawlers and link-preview fetchers must not inflate engagement numbers.
+    if (isNonHumanRequest(req.headers)) return NextResponse.json({ success: true, ignored: true }, { status: 202 });
     const clientId = requestClientId(req);
     const rate = await checkRateLimit(`analytics:${clientId}`, 120, 60 * 1000);
     if (!rate.allowed) return NextResponse.json({ success: false }, { status: 202 });
 
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)
       || !isObjectId(body.shopId)
       || typeof body.eventType !== "string"
@@ -38,15 +40,26 @@ export async function POST(req: Request) {
       if (!exists) return NextResponse.json({ success: false }, { status: 404 });
     } else if (body.eventType === "SHOP_VIEW" && targetId && targetId !== body.shopId) {
       return NextResponse.json({ success: false }, { status: 400 });
-    } else if (body.eventType === "STORY_VIEW" && targetId) {
+    } else if (body.eventType === "STORY_VIEW") {
+      if (!targetId) return NextResponse.json({ success: false }, { status: 400 });
       const exists = await Story.exists({ _id: targetId, shopId: body.shopId });
+      if (!exists) return NextResponse.json({ success: false }, { status: 404 });
+    } else if (body.eventType === "WHATSAPP_CLICK" && targetId) {
+      // A WhatsApp tap may carry the product that was being viewed.
+      const exists = await Product.exists({ _id: targetId, shopId: body.shopId, isPublished: true });
       if (!exists) return NextResponse.json({ success: false }, { status: 404 });
     }
 
     const userAgent = cleanString(req.headers.get("user-agent"), 500);
-    const dedupeKey = body.eventType === "PRODUCT_VIEW" || body.eventType === "SHOP_VIEW"
-      ? viewDedupeKey(body.eventType, body.shopId, targetId, clientId, userAgent)
-      : undefined;
+    const dedupeKey = viewDedupeKey(
+      body.eventType,
+      body.shopId,
+      targetId,
+      clientId,
+      userAgent,
+      Date.now(),
+      EVENT_DEDUPE_WINDOWS_MS[body.eventType],
+    );
 
     // The unique dedupeKey makes "first view in this window" an atomic insert.
     try {

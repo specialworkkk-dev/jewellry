@@ -10,6 +10,7 @@ import {
   type CustomerNotificationTrigger,
 } from "@/lib/notification-templates";
 import PushSubscriptionModel from "@/models/PushSubscription";
+import OwnerPushSubscription from "@/models/OwnerPushSubscription";
 import Shop from "@/models/Shop";
 import ShopNotificationSettings from "@/models/ShopNotificationSettings";
 import { httpStatusFromError, isTransientHttpError, withRetry } from "@/lib/retry";
@@ -262,6 +263,87 @@ export async function scheduleShopPushNotification(
     } catch (error) {
       // A push-provider outage must never roll back the owner's successful edit.
       console.error("Shop push notification delivery failed", error);
+    }
+  });
+}
+
+export function ownerPushIsConfigured() {
+  return pushIsConfigured();
+}
+
+const MAX_OWNER_DEVICES = 20;
+
+async function deliverOwnerEnquiryPush(shopId: string, enquiry: { customerName: string; message: string; productName?: string }) {
+  if (!configureWebPush()) return;
+  await connectToDatabase();
+  const subscriptions = await OwnerPushSubscription.find({ shopId })
+    .select("endpoint expirationTime keys")
+    .limit(MAX_OWNER_DEVICES)
+    .lean<StoredSubscription[]>();
+  if (subscriptions.length === 0) return;
+
+  const snippet = enquiry.message.length > 120 ? `${enquiry.message.slice(0, 117)}...` : enquiry.message;
+  const payload = JSON.stringify({
+    title: enquiry.productName ? `New enquiry: ${enquiry.productName}` : "New customer enquiry",
+    body: `${enquiry.customerName}: ${snippet}`,
+    url: "/dashboard/enquiries",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: `luxestore-owner-enquiry:${shopId}`,
+  });
+
+  const expiredIds: string[] = [];
+  const deliveredIds: string[] = [];
+  const failedIds: string[] = [];
+  await Promise.all(subscriptions.map(async (subscription) => {
+    try {
+      await withRetry(() => webpush.sendNotification({
+        endpoint: subscription.endpoint,
+        expirationTime: subscription.expirationTime ?? null,
+        keys: subscription.keys,
+      }, payload, { TTL: 24 * 60 * 60, urgency: "high", timeout: 8_000 }), {
+        attempts: 2,
+        baseDelayMs: 200,
+        maxDelayMs: 1_000,
+        shouldRetry: isTransientHttpError,
+      });
+      deliveredIds.push(subscription._id.toString());
+    } catch (error: unknown) {
+      const statusCode = httpStatusFromError(error);
+      if (statusCode === 404 || statusCode === 410) expiredIds.push(subscription._id.toString());
+      else failedIds.push(subscription._id.toString());
+    }
+  }));
+
+  const updates: Promise<unknown>[] = [];
+  if (expiredIds.length) updates.push(OwnerPushSubscription.deleteMany({ _id: { $in: expiredIds } }));
+  if (deliveredIds.length) {
+    updates.push(OwnerPushSubscription.updateMany(
+      { _id: { $in: deliveredIds } },
+      { $set: { lastDeliveredAt: new Date(), failureCount: 0 } },
+    ));
+  }
+  if (failedIds.length) {
+    updates.push(OwnerPushSubscription.updateMany({ _id: { $in: failedIds } }, { $inc: { failureCount: 1 } }));
+  }
+  updates.push(OwnerPushSubscription.deleteMany({ shopId, failureCount: { $gte: MAX_SUBSCRIPTION_FAILURES } }));
+  await Promise.all(updates);
+}
+
+/**
+ * Alert the shop owner's registered devices about a new enquiry. Best effort:
+ * a no-op when VAPID is not configured, and failures never affect the customer.
+ */
+export function scheduleOwnerEnquiryPush(
+  shopId: string,
+  enquiry: { customerName: string; message: string; productName?: string },
+) {
+  if (!pushIsConfigured()) return;
+  after(async () => {
+    try {
+      await deliverOwnerEnquiryPush(shopId, enquiry);
+    } catch (error) {
+      console.error("Owner enquiry push failed", error);
     }
   });
 }

@@ -6,6 +6,7 @@ import Shop from "@/models/Shop";
 import ShopVisitor from "@/models/ShopVisitor";
 import { isDuplicateKeyError } from "@/lib/validation";
 import connectToDatabase from "@/lib/mongoose";
+import { coarseUserAgent, isNonHumanRequest } from "@/lib/engagement-dedupe";
 
 const TRACKING_VERSION = 1;
 const ADMISSION_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -62,9 +63,18 @@ export async function admitUniqueShopVisitor(
   maximumVisitors: number,
   requestHeaders: Headers,
   trackingVersion?: number,
+  method?: string,
 ) {
+  // Crawlers, link-preview bots, HEAD and prefetch requests are served but never
+  // consume (or even read) a visitor slot.
+  if (isNonHumanRequest(requestHeaders, method)) return { allowed: true, returning: true };
+
   const normalizedLimit = Math.max(1, Math.trunc(maximumVisitors));
-  const ipHash = hashIp(clientIp(requestHeaders));
+  const ip = clientIp(requestHeaders);
+  // Legacy rows were keyed by IP alone; new admissions use IP + coarse UA. An
+  // existing visitor matches either key, so counts for them stay stable.
+  const legacyHash = hashIp(ip);
+  const ipHash = hashIp(`${ip}|${coarseUserAgent(requestHeaders.get("user-agent"))}`);
   const cacheKey = `${shopId}:${trackingVersion ?? 0}:${normalizedLimit}:${ipHash}`;
   const warmAdmission = cachedAdmission(cacheKey);
   if (warmAdmission) return warmAdmission;
@@ -73,6 +83,7 @@ export async function admitUniqueShopVisitor(
     shopId,
     normalizedLimit,
     ipHash,
+    legacyHash,
     trackingVersion,
   ));
 }
@@ -81,6 +92,7 @@ async function admitUncachedVisitor(
   shopId: string,
   normalizedLimit: number,
   ipHash: string,
+  legacyHash: string,
   trackingVersion?: number,
 ): Promise<AdmissionResult> {
   // Public shop data may come from Next's cross-request cache on a fresh
@@ -100,7 +112,7 @@ async function admitUncachedVisitor(
 
   // Admission is lifetime-based, so returning visitors need only a read. Avoiding
   // a write on every page open keeps the free MongoDB operation budget healthy.
-  const returningVisitor = await ShopVisitor.exists({ shopId: objectId, ipHash });
+  const returningVisitor = await ShopVisitor.exists({ shopId: objectId, ipHash: { $in: [ipHash, legacyHash] } });
   if (returningVisitor) return { allowed: true, returning: true };
 
   const reserved = await Shop.findOneAndUpdate(
@@ -110,7 +122,7 @@ async function admitUncachedVisitor(
   ).select("currentLinkOpens").lean();
 
   if (!reserved) {
-    const admittedMeanwhile = await ShopVisitor.exists({ shopId: objectId, ipHash });
+    const admittedMeanwhile = await ShopVisitor.exists({ shopId: objectId, ipHash: { $in: [ipHash, legacyHash] } });
     return { allowed: Boolean(admittedMeanwhile), returning: Boolean(admittedMeanwhile) };
   }
 

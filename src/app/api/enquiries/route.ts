@@ -7,6 +7,7 @@ import Product from "@/models/Product";
 import Shop from "@/models/Shop";
 import { enquiryDedupeKey, ENQUIRY_DEDUPE_WINDOW_MS } from "@/lib/engagement-dedupe";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { scheduleOwnerEnquiryPush } from "@/lib/push-notifications";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const body: unknown = await req.json();
+    const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body) || !isObjectId(body.shopId)) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
     }
 
     let productId;
+    let productName: string | undefined;
     if (body.productId !== undefined) {
       if (!isObjectId(body.productId)) {
         return NextResponse.json({ error: "Invalid product" }, { status: 400 });
@@ -50,11 +52,12 @@ export async function POST(req: Request) {
         _id: body.productId,
         shopId: shop._id,
         isPublished: true,
-      }).select("_id");
+      }).select("_id name");
       if (!product) {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
       productId = product._id;
+      productName = typeof product.name === "string" ? product.name : undefined;
     }
 
     const ok = () => NextResponse.json({ message: "Enquiry submitted successfully" }, { status: 201 });
@@ -83,6 +86,7 @@ export async function POST(req: Request) {
       throw error;
     }
     scheduleShopEvent(shop._id.toString(), "enquiry.created", "owner", enquiry._id.toString());
+    scheduleOwnerEnquiryPush(shop._id.toString(), { customerName, message, productName });
 
     return ok();
   } catch (error: unknown) {
