@@ -49,7 +49,7 @@ export function TemplatePearl(props: TemplateProps) {
 
       <section id="collection" className="storefront-content mx-auto max-w-7xl scroll-mt-24 px-5 pb-28 pt-24 sm:px-8 sm:pt-32">
         <div className="flex flex-col justify-between gap-6 border-b border-neutral-200 pb-6 sm:flex-row sm:items-end">
-          <h2 className="text-3xl font-extralight uppercase tracking-[0.04em] sm:text-5xl">All designs <span className="align-top text-sm font-normal tracking-normal text-neutral-400" aria-label={`${products.length} designs`}>({products.length})</span></h2>
+          <h2 className="text-3xl font-extralight uppercase tracking-[0.04em] sm:text-5xl">All designs <span className="align-top text-sm font-normal tracking-normal text-neutral-500" aria-label={`${products.length} designs`}>({products.length})</span></h2>
           <CategoryNav
             props={props}
             wrap="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm"
@@ -75,14 +75,14 @@ export function TemplatePearl(props: TemplateProps) {
                       {product.images?.[0] ? (
                         <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 1023px) 48vw, 24vw" className="h-full w-full object-cover transition duration-[1100ms] group-hover:scale-[1.06]" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-sm text-neutral-300">No image</div>
+                        <div className="flex h-full items-center justify-center text-sm text-neutral-500">No image</div>
                       )}
                       <span className="absolute bottom-3 left-3 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] opacity-0 transition duration-300 group-hover:opacity-100">View</span>
                     </Link>
                     <ProductCardFavorite productId={id} shopId={shop._id.toString()} initialSaved={saved.has(id)} />
                   </div>
                   <div className="mt-4">
-                    <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-400">
+                    <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-500">
                       <span>{String(index + 1).padStart(2, "0")}</span>
                       <span className="truncate pl-2">{productTags(product)[0] || purityText(product)}</span>
                     </div>
@@ -90,8 +90,8 @@ export function TemplatePearl(props: TemplateProps) {
                       <Link href={productHref(shop, product)} className="hover:underline hover:underline-offset-4">{product.name}</Link>
                     </h3>
                     <p className="mt-1 text-sm font-semibold sm:text-base">{priceText(product)}</p>
-                    {savings && <p className="text-[11px] text-neutral-400"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-700">{savings.label}</span></p>}
-                    {making && <p className="text-[11px] font-medium text-emerald-700">Making: <span className="text-neutral-400 line-through">{making.original}</span> {making.discounted}</p>}
+                    {savings && <p className="text-[11px] text-neutral-500"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-700">{savings.label}</span></p>}
+                    {making && <p className="text-[11px] font-medium text-emerald-700">Making: <span className="text-neutral-500 line-through">{making.original}</span> {making.discounted}</p>}
                     {ownerWhatsApp && (
                       <a href={enquiryHref(ownerWhatsApp, product)} target="_blank" rel="noreferrer" aria-label={`Ask about ${product.name} on WhatsApp`} className="mt-3 inline-flex min-h-10 items-center gap-2 border-b border-neutral-300 text-xs font-medium text-neutral-600 hover:border-neutral-950 hover:text-neutral-950">
                         <MessageCircle className="h-4 w-4" /> Enquire
@@ -113,7 +113,7 @@ export function TemplatePearl(props: TemplateProps) {
 
         {ownerWhatsApp && (
           <div className="mt-28 grid gap-8 border-t border-neutral-950 pt-10 sm:grid-cols-[1fr_auto] sm:items-end">
-            <h3 className="max-w-2xl text-3xl font-extralight leading-tight tracking-tight sm:text-5xl">Questions about a piece? <span className="text-neutral-400">We reply in minutes.</span></h3>
+            <h3 className="max-w-2xl text-3xl font-extralight leading-tight tracking-tight sm:text-5xl">Questions about a piece? <span className="text-neutral-500">We reply in minutes.</span></h3>
             <a href={chatHref(shop, ownerWhatsApp)} target="_blank" rel="noreferrer" className="group inline-flex min-h-12 items-center gap-3 bg-neutral-950 px-8 text-xs font-semibold uppercase tracking-[0.25em] text-white hover:bg-neutral-700">
               WhatsApp us <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </a>

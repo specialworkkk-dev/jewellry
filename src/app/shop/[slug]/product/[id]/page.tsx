@@ -135,7 +135,7 @@ export default async function ProductDetailPage({
           {/* Action Buttons */}
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8">
             {normalizedPhone && (
-              <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebf59] text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14">
+              <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0f7a3d] hover:bg-[#0b6633] text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14">
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </a>
             )}

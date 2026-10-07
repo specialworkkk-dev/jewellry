@@ -42,7 +42,7 @@ export function TemplateEmerald(props: TemplateProps) {
             <Link href={productHref(shop, product)} className="hover:text-[#e6d49b]">{product.name}</Link>
           </h3>
           <p className="mt-2 text-lg font-bold text-[#e6d49b]">{priceText(product)}</p>
-          {savings && <p className="text-[11px] text-[#f1e6c0]/50"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-300">{savings.label}</span></p>}
+          {savings && <p className="text-[11px] text-[#f1e6c0]/70"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-300">{savings.label}</span></p>}
           <div className="mt-auto flex gap-2 pt-4">
             <Link href={productHref(shop, product)} className="inline-flex min-h-11 flex-1 items-center justify-center border border-[#d8c288]/50 text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6d49b] transition hover:bg-[#e6d49b] hover:text-[#031a14]">View</Link>
             {ownerWhatsApp && (

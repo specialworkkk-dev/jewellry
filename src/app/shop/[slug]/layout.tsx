@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
       title: 'Shop not found',
       description: 'This shop could not be found.',
+      robots: { index: false, follow: false },
     };
   }
 
@@ -100,22 +101,9 @@ export default async function PublicShopLayout({
   }
 
   if (shop.isActive === false) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-red-100">
-          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-2xl font-bold">!</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Account Suspended</h1>
-          <p className="text-gray-500 mb-6">
-            The digital storefront for <strong>{shop.name}</strong> is currently unavailable.
-          </p>
-          <a href="mailto:support@luxestore.com" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 rounded-full hover:bg-black transition-colors">
-            Contact Support
-          </a>
-        </div>
-      </div>
-    );
+    // Suspended storefront: respond 403 (not a streamed 200) before any body is
+    // sent. Next injects noindex; UI lives in src/app/shop/forbidden.tsx.
+    forbidden();
   }
 
   const templateId = resolveStorefrontTemplate(shop);
@@ -154,6 +142,28 @@ export default async function PublicShopLayout({
       </div>
     );
   }
+
+  const socialLinks = [
+    { href: shop.instagramUrl, label: "Instagram", Icon: AtSign },
+    { href: shop.facebookUrl, label: "Facebook", Icon: Users },
+    { href: shop.websiteUrl, label: "Website", Icon: Globe },
+  ].filter((link) => Boolean(link.href));
+  const socials = (visibility: string) => socialLinks.length > 0 && (
+    <div className={`${visibility} shrink-0 items-center gap-1 ${theme.muted}`}>
+      {socialLinks.map(({ href, label, Icon }) => (
+        <a
+          key={label}
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+          className={`${theme.iconHover} inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors`}
+        >
+          <Icon className="h-5 w-5" />
+        </a>
+      ))}
+    </div>
+  );
 
   return (
     <div data-storefront-template={templateId} className={`min-h-screen ${theme.pageBg}`}>
@@ -204,7 +214,7 @@ export default async function PublicShopLayout({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
             {/* Logo & Name */}
-            <div className="flex items-center gap-4 self-start sm:self-auto w-full sm:w-auto">
+            <div className="flex w-full min-w-0 items-center gap-4 self-start sm:w-auto sm:flex-1 sm:self-auto">
               <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border ${theme.logoRing} shadow-sm sm:h-14 sm:w-14`}>
                 {shop.logoUrl ? (
                   <StoreImage src={shop.logoUrl} alt={shop.name} sizes="56px" className="h-full w-full object-cover" />
@@ -212,8 +222,8 @@ export default async function PublicShopLayout({
                   <span className={`text-xl font-serif ${theme.muted}`}>{shop.name.charAt(0)}</span>
                 )}
               </div>
-              <div>
-                <h1 style={{ fontFamily: theme.display }} className={`line-clamp-1 text-lg font-semibold sm:text-xl ${theme.title}`}>{shop.name}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 style={{ fontFamily: theme.display }} className={`line-clamp-2 text-lg font-semibold sm:text-xl ${theme.title}`}>{shop.name}</h1>
                 <div className="flex flex-col gap-1 mt-1">
                   {(shop.address || shop.city || shop.state) && (
                     <p className={`text-sm flex items-start gap-1 ${theme.muted}`}>
@@ -231,11 +241,12 @@ export default async function PublicShopLayout({
                   )}
                 </div>
               </div>
+              {socials("flex sm:hidden")}
             </div>
 
             {/* Quick Actions & Socials */}
-            <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
+            <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
                 <LanguageSwitcher />
                 {publicVapidKey && (
                   <ShopNotificationButton
@@ -245,7 +256,7 @@ export default async function PublicShopLayout({
                   />
                 )}
                 {whatsappNumber && (
-                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm min-h-11">
+                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm min-h-11">
                     <Phone className="w-4 h-4" /> WhatsApp
                   </a>
                 )}
@@ -255,23 +266,7 @@ export default async function PublicShopLayout({
                 />
               </div>
               
-              <div className={`flex items-center gap-3 ${theme.muted}`}>
-                {shop.instagramUrl && (
-                  <a href={shop.instagramUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
-                    <AtSign className="w-5 h-5" />
-                  </a>
-                )}
-                {shop.facebookUrl && (
-                  <a href={shop.facebookUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
-                    <Users className="w-5 h-5" />
-                  </a>
-                )}
-                {shop.websiteUrl && (
-                  <a href={shop.websiteUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
-                    <Globe className="w-5 h-5" />
-                  </a>
-                )}
-              </div>
+              {socials("hidden sm:flex")}
             </div>
 
           </div>

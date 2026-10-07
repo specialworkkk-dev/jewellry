@@ -47,7 +47,7 @@ export function TemplateNoir(props: TemplateProps) {
               {[["22K·24K", "Hallmarked"], [products.length > 0 ? `${products.length}+` : "New", "New designs"], ["1:1", "Concierge"]].map(([value, label]) => (
                 <div key={label}>
                   <dt className="text-2xl text-amber-200 sm:text-3xl">{value}</dt>
-                  <dd className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/40">{label}</dd>
+                  <dd className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/60">{label}</dd>
                 </div>
               ))}
             </dl>
@@ -111,24 +111,24 @@ export function TemplateNoir(props: TemplateProps) {
                       {product.images?.[0] ? (
                         <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-110" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-white/20">No image</div>
+                        <div className="flex h-full items-center justify-center text-sm text-white/50">No image</div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                      <span className="absolute left-3 top-3 text-xs tabular-nums tracking-[0.3em] text-white/70">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="absolute left-3 top-3 bg-black/60 px-1.5 py-0.5 text-xs tabular-nums tracking-[0.3em] text-white">{String(index + 1).padStart(2, "0")}</span>
                     </Link>
                     <ProductCardFavorite productId={id} shopId={shop._id.toString()} initialSaved={saved.has(id)} />
                   </div>
                   <div className="mt-6 flex flex-1 flex-col">
                     <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.3em]">
                       <span className="text-amber-300">{purityText(product)}</span>
-                      <span className="truncate text-white/40">{productTags(product).join(" · ")}</span>
+                      <span className="truncate text-white/60">{productTags(product).join(" · ")}</span>
                     </div>
                     <h3 className="mt-3 line-clamp-2 min-h-[3.4rem] break-words text-2xl font-normal leading-[1.15]">
                       <Link href={productHref(shop, product)} className="transition hover:text-amber-200">{product.name}</Link>
                     </h3>
                     <p className="mt-3 bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-2xl font-semibold text-transparent">{priceText(product)}</p>
-                    {savings && <p className="mt-1 text-xs text-white/40"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-400">{savings.label}</span></p>}
-                    {making && <p className="mt-1 text-[11px] font-semibold text-emerald-400">Making: <span className="text-white/35 line-through">{making.original}</span> {making.discounted} · {making.label}</p>}
+                    {savings && <p className="mt-1 text-xs text-white/60"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-400">{savings.label}</span></p>}
+                    {making && <p className="mt-1 text-[11px] font-semibold text-emerald-400">Making: <span className="text-white/55 line-through">{making.original}</span> {making.discounted} · {making.label}</p>}
                     <div className="mt-auto flex gap-2 pt-6">
                       <Link href={productHref(shop, product)} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 border border-amber-300/60 text-[11px] font-bold uppercase tracking-[0.24em] text-amber-200 transition hover:bg-amber-300 hover:text-black">
                         View piece <ArrowUpRight className="h-4 w-4" />

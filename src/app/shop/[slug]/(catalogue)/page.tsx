@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
-import { getPublicCatalogue, getPublicShopBySlug } from "@/lib/public-store";
+import { getPublicAds, getPublicCatalogue, getPublicPosts, getPublicShopBySlug, getPublicStories, selectLiveContent } from "@/lib/public-store";
 import Interaction from "@/models/Interaction";
 import { getPublicActorId } from "@/lib/public-actor";
 import { StorefrontTemplate } from "@/components/storefront";
 import { resolveStorefrontTemplate } from "@/lib/storefront-template";
+import { StorefrontExtras } from "@/components/storefront/sections/StorefrontExtras";
 import connectToDatabase from "@/lib/mongoose";
 
 const normalizeWhatsAppNumber = (value?: string) => (value || "").replace(/\D/g, "");
@@ -22,7 +23,15 @@ export default async function PublicShopPage({
   const shop = await getPublicShopBySlug(slug);
   if (!shop || shop.isActive === false) notFound();
 
-  const { categories, products, nextCursor } = await getPublicCatalogue(shop._id.toString(), activeCategory, after);
+  const shopId = shop._id.toString();
+  const [{ categories, products, nextCursor }, cachedStories, posts, cachedAds] = await Promise.all([
+    getPublicCatalogue(shopId, activeCategory, after),
+    getPublicStories(shopId),
+    getPublicPosts(shopId),
+    getPublicAds(shopId),
+  ]);
+  const { stories, ads } = selectLiveContent(cachedStories, cachedAds);
+  const template = resolveStorefrontTemplate(shop);
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
   const actorId = await getPublicActorId();
   const savedProductIds = new Set<string>();
@@ -41,8 +50,9 @@ export default async function PublicShopPage({
   return (
     <>
       <StorefrontAnalytics shopId={shop._id.toString()} eventType="SHOP_VIEW" />
+      <StorefrontExtras placement="top" template={template} shop={shop} stories={stories} posts={posts} ads={ads} />
       <StorefrontTemplate
-        template={resolveStorefrontTemplate(shop)}
+        template={template}
         shop={shop}
         categories={categories}
         products={products}
@@ -52,6 +62,7 @@ export default async function PublicShopPage({
         savedProductIds={[...savedProductIds]}
         ownerWhatsApp={ownerWhatsApp}
       />
+      <StorefrontExtras placement="bottom" template={template} shop={shop} stories={stories} posts={posts} ads={ads} />
     </>
   );
 }

@@ -10,19 +10,20 @@ const configuredMediaPattern = (() => {
   }
 })();
 
-// Report-Only: violations are logged in the browser console but nothing is
-// blocked. 'unsafe-inline' is required for Next.js bootstrap scripts and the
-// PWA install capture script in the root layout. Tighten with nonces and switch
-// to enforcing Content-Security-Policy once the console is clean in production.
-const contentSecurityPolicyReportOnly = [
+// Enforced CSP. 'unsafe-inline' is required for the Next.js bootstrap scripts
+// and the PWA install capture script in the root layout (no nonces, so pages
+// stay statically cacheable). 'unsafe-eval' is only allowed in development
+// (React dev tooling / HMR); production builds do not need it.
+const isDev = process.env.NODE_ENV !== "production";
+const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https:",
-  // Ably realtime (https + wss), R2 presigned uploads (https PUT) and push endpoints.
-  "connect-src 'self' https: wss://*.ably.io wss://*.ably-realtime.com",
+  // Ably realtime (https + wss; current host is *.realtime.ably.net, legacy *.ably.io / *.ably-realtime.com). `https:` does not cover wss:, R2 presigned uploads (https PUT) and push endpoints.
+  "connect-src 'self' https: wss://*.ably.net wss://*.ably.io wss://*.ably-realtime.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -39,6 +40,8 @@ const nextConfig: NextConfig = {
     || process.env.VERCEL_GIT_COMMIT_SHA
     || process.env.NEXT_DEPLOYMENT_ID,
   experimental: {
+    // Enables forbidden() so suspended storefronts return a real HTTP 403.
+    authInterrupts: true,
     // The CLI checker cannot be spawned reliably in some restricted build runners.
     // This uses the same project-local TypeScript compiler API instead.
     useTypeScriptCli: false,
@@ -70,7 +73,7 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-          { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicyReportOnly },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

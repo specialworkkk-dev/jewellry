@@ -54,7 +54,7 @@ export function TemplateRose(props: TemplateProps) {
                   <div className="h-full w-full bg-[radial-gradient(circle_at_50%_30%,#fde2e4_0%,#d08397_60%,#8c3a52_100%)]" />
                 )}
               </div>
-              <div className="absolute -left-4 bottom-12 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-xl backdrop-blur-md sm:-left-10">
+              <div className="absolute left-2 bottom-12 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-xl backdrop-blur-md sm:-left-10">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600"><Heart className="h-5 w-5 fill-current" /></span>
                 <span className="text-sm font-semibold leading-tight">Loved by<br /><span className="text-rose-600">our families</span></span>
               </div>
@@ -93,7 +93,7 @@ export function TemplateRose(props: TemplateProps) {
                       {product.images?.[0] ? (
                         <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 639px) 92vw, 45vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-105" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-rose-300">No image</div>
+                        <div className="flex h-full items-center justify-center text-rose-500">No image</div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#4a1b29]/55 via-transparent to-transparent" />
                       <div className="absolute left-5 top-5 flex flex-wrap gap-1.5">

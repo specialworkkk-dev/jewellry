@@ -6,6 +6,9 @@ import { isObjectId } from "@/lib/validation";
 import Shop from "@/models/Shop";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
+import Post from "@/models/Post";
+import Story from "@/models/Story";
+import Advertisement from "@/models/Advertisement";
 import { Types, type QueryFilter } from "mongoose";
 import type { IProduct } from "@/models/Product";
 import {
@@ -133,3 +136,119 @@ export const getPublicCatalogue = cache(async (shopId: string, activeCategory?: 
     { revalidate: 3600, tags: [PUBLIC_STORE_TAG, publicStoreShopTag(shopId)] },
   )();
 });
+
+export interface PublicStory {
+  _id: string;
+  mediaUrl: string;
+  mediaType: "IMAGE" | "VIDEO";
+  linkUrl?: string;
+  expiresAt: string;
+}
+
+export interface PublicPost {
+  _id: string;
+  caption: string;
+  mediaUrls: string[];
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL";
+  linkedProductId?: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface PublicAd {
+  _id: string;
+  title: string;
+  message: string;
+  type: "HERO_BANNER" | "PROMO_STRIP" | "GOLD_RATE";
+  imageUrl?: string;
+  linkUrl?: string;
+  validUntil?: string;
+}
+
+// Short TTLs: stories/ads expire by clock, not by a mutation that could invalidate
+// the tag. Callers must still filter on expiresAt/validUntil at render time.
+export const getPublicStories = cache(async (shopId: string): Promise<PublicStory[]> => {
+  if (!isObjectId(shopId)) return [];
+  return unstable_cache(
+    async () => {
+      await connectToDatabase();
+      const stories = await Story.find({ shopId: new Types.ObjectId(shopId), expiresAt: { $gt: new Date() } })
+        .sort({ createdAt: 1 })
+        .limit(30)
+        .select("mediaUrl mediaType linkUrl expiresAt")
+        .lean();
+      return stories.map((story) => ({
+        _id: story._id.toString(),
+        mediaUrl: story.mediaUrl,
+        mediaType: story.mediaType === "VIDEO" ? "VIDEO" as const : "IMAGE" as const,
+        linkUrl: story.linkUrl || undefined,
+        expiresAt: new Date(story.expiresAt).toISOString(),
+      }));
+    },
+    ["public-stories", PUBLIC_STORE_CACHE_NAMESPACE, shopId],
+    { revalidate: 300, tags: [PUBLIC_STORE_TAG, publicStoreShopTag(shopId)] },
+  )();
+});
+
+export const getPublicPosts = cache(async (shopId: string): Promise<PublicPost[]> => {
+  if (!isObjectId(shopId)) return [];
+  return unstable_cache(
+    async () => {
+      await connectToDatabase();
+      const posts = await Post.find({ shopId: new Types.ObjectId(shopId), isPublished: { $ne: false } })
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .select("caption mediaUrls mediaType linkedProductId tags createdAt")
+        .lean();
+      return posts.map((post) => ({
+        _id: post._id.toString(),
+        caption: post.caption || "",
+        mediaUrls: (post.mediaUrls ?? []) as string[],
+        mediaType: post.mediaType as PublicPost["mediaType"],
+        linkedProductId: post.linkedProductId?.toString(),
+        tags: (post.tags ?? []) as string[],
+        createdAt: new Date(post.createdAt).toISOString(),
+      }));
+    },
+    ["public-posts", PUBLIC_STORE_CACHE_NAMESPACE, shopId],
+    { revalidate: 3600, tags: [PUBLIC_STORE_TAG, publicStoreShopTag(shopId)] },
+  )();
+});
+
+export const getPublicAds = cache(async (shopId: string): Promise<PublicAd[]> => {
+  if (!isObjectId(shopId)) return [];
+  return unstable_cache(
+    async () => {
+      await connectToDatabase();
+      const now = new Date();
+      const ads = await Advertisement.find({
+        shopId: new Types.ObjectId(shopId),
+        isActive: true,
+        $or: [{ validUntil: { $exists: false } }, { validUntil: null }, { validUntil: { $gt: now } }],
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select("title message type imageUrl linkUrl validUntil")
+        .lean();
+      return ads.map((ad) => ({
+        _id: ad._id.toString(),
+        title: ad.title,
+        message: ad.message,
+        type: ad.type as PublicAd["type"],
+        imageUrl: ad.imageUrl || undefined,
+        linkUrl: ad.linkUrl || undefined,
+        validUntil: ad.validUntil ? new Date(ad.validUntil).toISOString() : undefined,
+      }));
+    },
+    ["public-ads", PUBLIC_STORE_CACHE_NAMESPACE, shopId],
+    { revalidate: 300, tags: [PUBLIC_STORE_TAG, publicStoreShopTag(shopId)] },
+  )();
+});
+
+/** Drops stories/ads that expired after the cached read was taken. */
+export function selectLiveContent(stories: PublicStory[], ads: PublicAd[], now: number = Date.now()) {
+  return {
+    stories: stories.filter((story) => new Date(story.expiresAt).getTime() > now),
+    ads: ads.filter((ad) => !ad.validUntil || new Date(ad.validUntil).getTime() > now),
+  };
+}
