@@ -26,7 +26,7 @@ function subscriptionDetails(value: unknown) {
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const rate = checkRateLimit(`push-subscribe:${requestClientId(request)}`, 30, 60 * 60 * 1000);
+  const rate = await checkRateLimit(`push-subscribe:${requestClientId(request)}`, 30, 60 * 60 * 1000);
   if (!rate.allowed) {
     return NextResponse.json({ error: "Too many subscription attempts" }, {
       status: 429,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
-  const rate = checkRateLimit(`push-unsubscribe:${requestClientId(request)}`, 30, 60 * 60 * 1000);
+  const rate = await checkRateLimit(`push-unsubscribe:${requestClientId(request)}`, 30, 60 * 60 * 1000);
   if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const body: unknown = await request.json().catch(() => null);
@@ -80,4 +80,3 @@ export async function DELETE(request: NextRequest) {
   await PushSubscriptionModel.deleteOne({ shopId: body.shopId, endpoint });
   return NextResponse.json({ subscribed: false }, { headers: { "Cache-Control": "no-store" } });
 }
-

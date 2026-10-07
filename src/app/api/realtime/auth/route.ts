@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   // Mobile carriers and village Wi-Fi can place many real customers behind one
   // public IP, so customer token creation needs a higher shared-IP allowance.
   const rateLimit = audience === "owner" ? 30 : 300;
-  const rate = checkRateLimit(
+  const rate = await checkRateLimit(
     `realtime-auth:${audience}:${shopId}:${requestClientId(request)}`,
     rateLimit,
     60 * 1000,

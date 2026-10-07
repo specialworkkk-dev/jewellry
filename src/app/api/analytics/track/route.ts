@@ -11,7 +11,7 @@ const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAP
 export async function POST(req: Request) {
   try {
     const clientId = requestClientId(req);
-    const rate = checkRateLimit(`analytics:${clientId}`, 120, 60 * 1000);
+    const rate = await checkRateLimit(`analytics:${clientId}`, 120, 60 * 1000);
     if (!rate.allowed) return NextResponse.json({ success: false }, { status: 202 });
 
     const body: unknown = await req.json();

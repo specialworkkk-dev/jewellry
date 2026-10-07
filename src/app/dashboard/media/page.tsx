@@ -72,7 +72,7 @@ export default async function SocialFeedDashboard({ searchParams }: { searchPara
                 <Card key={post._id.toString()} className="overflow-hidden">
                   <div className="aspect-square bg-gray-100 relative">
                     {post.mediaUrls?.[0] ? (
-                      <Image src={post.mediaUrls[0]} alt="Post" fill sizes="(min-width: 640px) 50vw, 100vw" unoptimized className="object-cover" />
+                      <Image src={post.mediaUrls[0]} alt="Post" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">No Media</div>
                     )}

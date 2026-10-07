@@ -74,7 +74,7 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
                 <CardContent className="p-0 flex flex-col sm:flex-row">
                   {ad.imageUrl && (
                     <div className="sm:w-1/3 bg-gray-100 relative">
-                      <Image src={ad.imageUrl} alt={ad.title} fill sizes="(min-width: 640px) 33vw, 100vw" unoptimized className="object-cover" />
+                      <Image src={ad.imageUrl} alt={ad.title} fill sizes="(min-width: 640px) 33vw, 100vw" className="object-cover" />
                     </div>
                   )}
                   <div className="p-5 flex-1 flex flex-col justify-between">

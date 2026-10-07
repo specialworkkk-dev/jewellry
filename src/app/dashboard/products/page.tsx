@@ -62,7 +62,7 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                 <div className="flex gap-3">
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-gray-100">
                     {product.images?.[0] ? (
-                      <Image src={product.images[0]} alt={product.name} width={80} height={80} unoptimized className="h-full w-full object-cover" />
+                      <Image src={product.images[0]} alt={product.name} width={80} height={80} sizes="80px" className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs text-gray-400">No image</div>
                     )}
@@ -110,7 +110,7 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                     <td className="px-6 py-4 flex items-center gap-4">
                       <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border">
                         {product.images?.[0] && (
-                          <Image src={product.images[0]} alt={product.name} width={48} height={48} unoptimized className="w-full h-full object-cover" />
+                          <Image src={product.images[0]} alt={product.name} width={48} height={48} sizes="48px" className="w-full h-full object-cover" />
                         )}
                       </div>
                       <div className="font-medium text-gray-900">{product.name}</div>

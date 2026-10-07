@@ -9,7 +9,7 @@ import { scheduleShopEvent } from "@/lib/realtime";
 
 export async function POST(req: Request) {
   try {
-    const rate = checkRateLimit(`enquiry:${requestClientId(req)}`, 8, 10 * 60 * 1000);
+    const rate = await checkRateLimit(`enquiry:${requestClientId(req)}`, 8, 10 * 60 * 1000);
     if (!rate.allowed) {
       return NextResponse.json(
         { error: "Too many enquiries. Please try again later." },

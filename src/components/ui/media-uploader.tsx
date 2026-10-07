@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ImageUp, Loader2, Video } from "lucide-react";
+import { withRetry } from "@/lib/retry";
 
 interface MediaUploaderProps {
   folder: "products" | "logos" | "covers" | "posts" | "stories";
@@ -31,10 +32,15 @@ function readVideoDuration(file: File) {
 }
 
 async function optimizeLargePhoto(file: File) {
-  if (file.size <= 3.5 * 1024 * 1024) return file;
   try {
     const bitmap = await createImageBitmap(file);
     const maxDimension = 1920;
+    const needsResize = Math.max(bitmap.width, bitmap.height) > maxDimension;
+    const needsCompression = file.size > 1.5 * 1024 * 1024;
+    if (!needsResize && !needsCompression) {
+      bitmap.close();
+      return file;
+    }
     const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -43,12 +49,28 @@ async function optimizeLargePhoto(file: File) {
     if (!context) return file;
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.84));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
     if (!blob || blob.size >= file.size) return file;
     return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
   } catch {
     return file;
   }
+}
+
+async function fetchWithTransientRetry(input: RequestInfo | URL, init: RequestInit, timeoutMs: number) {
+  return withRetry(async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(input, { ...init, signal: controller.signal });
+      if ([408, 425, 429].includes(response.status) || response.status >= 500) {
+        throw new Error(`Temporary upload service failure (${response.status})`);
+      }
+      return response;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }, { attempts: 3, baseDelayMs: 200, maxDelayMs: 1_200 });
 }
 
 export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", maxVideoDurationSeconds = 30 }: MediaUploaderProps) {
@@ -87,20 +109,20 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
       let result: { publicUrl: string; key: string } | null = null;
 
       try {
-        const prepareResponse = await fetch("/api/upload/url", {
+        const prepareResponse = await fetchWithTransientRetry("/api/upload/url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: uploadFile.name, contentType: uploadFile.type, contentLength: uploadFile.size, folder, durationSeconds }),
-        });
+        }, 10_000);
         const prepared = await prepareResponse.json() as { signedUrl?: string; publicUrl?: string; key?: string; error?: string };
         if (!prepareResponse.ok || !prepared.signedUrl || !prepared.publicUrl || !prepared.key) {
           throw new Error(prepared.error || "Direct upload preparation failed");
         }
-        const uploadResponse = await fetch(prepared.signedUrl, {
+        const uploadResponse = await fetchWithTransientRetry(prepared.signedUrl, {
           method: "PUT",
           headers: { "Content-Type": uploadFile.type },
           body: uploadFile,
-        });
+        }, 90_000);
         if (!uploadResponse.ok) throw new Error("Direct upload failed");
         result = { publicUrl: prepared.publicUrl, key: prepared.key };
       } catch (directUploadError) {
@@ -109,7 +131,11 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
         formData.append("file", uploadFile);
         formData.append("folder", folder);
         if (durationSeconds) formData.append("durationSeconds", durationSeconds.toString());
-        const fallbackResponse = await fetch("/api/upload/file", { method: "POST", body: formData });
+        const fallbackResponse = await fetchWithTransientRetry(
+          "/api/upload/file",
+          { method: "POST", body: formData },
+          90_000,
+        );
         const fallbackData = await fallbackResponse.json() as { publicUrl?: string; key?: string; error?: string };
         if (!fallbackResponse.ok || !fallbackData.publicUrl || !fallbackData.key) {
           throw new Error(fallbackData.error || "Photo upload failed. Please try a smaller image or check your connection.");

@@ -23,14 +23,14 @@ export default async function PublicShopPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; after?: string }>;
 }) {
   const { slug } = await params;
-  const { category: activeCategory } = await searchParams;
+  const { category: activeCategory, after } = await searchParams;
   const shop = await getPublicShopBySlug(slug);
   if (!shop || shop.isActive === false) notFound();
 
-  const { categories, products } = await getPublicCatalogue(shop._id.toString(), activeCategory);
+  const { categories, products, nextCursor } = await getPublicCatalogue(shop._id.toString(), activeCategory, after);
   const ownerWhatsApp = normalizeWhatsAppNumber(shop.whatsappNumber);
   const actorId = await getPublicActorId();
   const savedProductIds = new Set<string>();
@@ -186,6 +186,29 @@ export default async function PublicShopPage({
               );
             })}
           </div>
+        )}
+        {(nextCursor || after) && (
+          <nav aria-label="Catalogue pages" className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            {after && (
+              <Link
+                href={`/shop/${shop.slug}${activeCategory && activeCategory !== "all" ? `?category=${encodeURIComponent(activeCategory)}` : ""}#collection`}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-stone-300 bg-white px-5 py-2 text-sm font-semibold text-stone-700 hover:border-amber-400"
+              >
+                Back to latest
+              </Link>
+            )}
+            {nextCursor && (
+              <Link
+                href={`/shop/${shop.slug}?${new URLSearchParams({
+                  ...(activeCategory && activeCategory !== "all" ? { category: activeCategory } : {}),
+                  after: nextCursor,
+                }).toString()}#collection`}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-stone-900 px-6 py-2 text-sm font-bold text-white hover:bg-stone-800"
+              >
+                View more designs
+              </Link>
+            )}
+          </nav>
         )}
         {ownerWhatsApp && (
           <div className="mt-14 overflow-hidden rounded-3xl bg-stone-900 px-5 py-8 text-white shadow-xl sm:px-10 sm:py-10">

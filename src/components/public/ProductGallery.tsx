@@ -30,7 +30,7 @@ export function ProductGallery({ images, videos = [], productName }: { images: s
               {item.type === "image" ? (
                 <StoreImage src={item.url} alt="" sizes="80px" className="h-full w-full object-cover" />
               ) : (
-                <><video src={item.url} muted playsInline preload="metadata" className="h-full w-full bg-black object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><Play className="h-6 w-6 fill-white text-white" /></span></>
+                <><video src={item.url} muted playsInline preload="none" className="h-full w-full bg-black object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><Play className="h-6 w-6 fill-white text-white" /></span></>
               )}
             </button>
           ))}

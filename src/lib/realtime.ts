@@ -2,6 +2,7 @@ import "server-only";
 
 import { Rest } from "ably";
 import { after } from "next/server";
+import { withRetry } from "@/lib/retry";
 
 export type ShopRealtimeEventType =
   | "product.created"
@@ -60,7 +61,10 @@ async function publishShopEvent(
 
   try {
     await Promise.all(
-      targets.map((target) => client.channels.get(shopRealtimeChannel(shopId, target)).publish("shop-update", event)),
+      targets.map((target) => withRetry(
+        () => client.channels.get(shopRealtimeChannel(shopId, target)).publish("shop-update", event),
+        { attempts: 3, baseDelayMs: 100, maxDelayMs: 750 },
+      )),
     );
   } catch (error) {
     // Realtime delivery must never roll back a successful business mutation.

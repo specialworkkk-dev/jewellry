@@ -12,6 +12,9 @@ import {
 import PushSubscriptionModel from "@/models/PushSubscription";
 import Shop from "@/models/Shop";
 import ShopNotificationSettings from "@/models/ShopNotificationSettings";
+import { httpStatusFromError, isTransientHttpError, withRetry } from "@/lib/retry";
+import NotificationJob from "@/models/NotificationJob";
+import { cleanString, isObjectId } from "@/lib/validation";
 
 type PushContext = {
   entityId?: string;
@@ -96,16 +99,23 @@ async function deliverShopNotification(
     const batch = subscriptions.slice(index, index + 25);
     await Promise.all(batch.map(async (subscription) => {
       try {
-        await webpush.sendNotification({
-          endpoint: subscription.endpoint,
-          expirationTime: subscription.expirationTime ?? null,
-          keys: subscription.keys,
-        }, payload, { TTL: 24 * 60 * 60, urgency: "normal" });
+        await withRetry(() => webpush.sendNotification({
+            endpoint: subscription.endpoint,
+            expirationTime: subscription.expirationTime ?? null,
+            keys: subscription.keys,
+          }, payload, {
+            TTL: 24 * 60 * 60,
+            urgency: "normal",
+            timeout: 8_000,
+          }), {
+            attempts: 3,
+            baseDelayMs: 200,
+            maxDelayMs: 1_000,
+            shouldRetry: isTransientHttpError,
+          });
         deliveredIds.push(subscription._id.toString());
       } catch (error: unknown) {
-        const statusCode = typeof error === "object" && error !== null && "statusCode" in error
-          ? Number((error as { statusCode?: unknown }).statusCode)
-          : 0;
+        const statusCode = httpStatusFromError(error);
         if (statusCode === 404 || statusCode === 410) expiredIds.push(subscription._id.toString());
         else failedIds.push(subscription._id.toString());
       }
@@ -129,15 +139,111 @@ async function deliverShopNotification(
   await Promise.all(updates);
 }
 
-export function scheduleShopPushNotification(
+const JOB_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_JOB_ATTEMPTS = 5;
+
+export async function processNotificationJob(jobId: string) {
+  if (!pushIsConfigured() || !isObjectId(jobId)) return false;
+  await connectToDatabase();
+  const staleLock = new Date(Date.now() - 10 * 60 * 1000);
+  const job = await NotificationJob.findOneAndUpdate(
+    {
+      _id: jobId,
+      attempts: { $lt: MAX_JOB_ATTEMPTS },
+      availableAt: { $lte: new Date() },
+      $or: [
+        { status: "PENDING" },
+        { status: "PROCESSING", lockedAt: { $lt: staleLock } },
+      ],
+    },
+    {
+      $set: { status: "PROCESSING", lockedAt: new Date() },
+      $inc: { attempts: 1 },
+    },
+    { returnDocument: "after" },
+  ).lean();
+  if (!job) return false;
+
+  try {
+    await deliverShopNotification(
+      job.shopId.toString(),
+      job.trigger as CustomerNotificationTrigger,
+      job.context || {},
+    );
+    await NotificationJob.updateOne({ _id: job._id }, {
+      $set: {
+        status: "DELIVERED",
+        deliveredAt: new Date(),
+        expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
+      },
+      $unset: { lockedAt: "", lastError: "" },
+    });
+    return true;
+  } catch (error) {
+    const attempts = Number(job.attempts || 1);
+    const terminal = attempts >= MAX_JOB_ATTEMPTS;
+    const retryDelayMs = Math.min(6 * 60 * 60 * 1000, 60_000 * 2 ** Math.max(0, attempts - 1));
+    await NotificationJob.updateOne({ _id: job._id }, {
+      $set: {
+        status: terminal ? "FAILED" : "PENDING",
+        availableAt: new Date(Date.now() + retryDelayMs),
+        lastError: cleanString(error instanceof Error ? error.message : "Notification delivery failed", 500),
+        expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
+      },
+      $unset: { lockedAt: "" },
+    });
+    throw error;
+  }
+}
+
+export async function drainPendingNotificationJobs(limit = 5) {
+  if (!pushIsConfigured()) return { processed: 0 };
+  await connectToDatabase();
+  const jobs = await NotificationJob.find({
+    status: "PENDING",
+    attempts: { $lt: MAX_JOB_ATTEMPTS },
+    availableAt: { $lte: new Date() },
+  })
+    .sort({ availableAt: 1 })
+    .limit(Math.min(20, Math.max(1, limit)))
+    .select("_id")
+    .lean();
+
+  const results = await Promise.allSettled(
+    jobs.map((job) => processNotificationJob(job._id.toString())),
+  );
+  return { processed: results.filter((result) => result.status === "fulfilled" && result.value).length };
+}
+
+export async function scheduleShopPushNotification(
   shopId: string,
   trigger: CustomerNotificationTrigger,
   context: PushContext = {},
 ) {
   if (!pushIsConfigured()) return;
+  await connectToDatabase();
+  let jobId: string | null = null;
+  try {
+    const job = await NotificationJob.create({
+      shopId,
+      trigger,
+      context: {
+        entityId: cleanString(context.entityId, 100) || undefined,
+        productName: cleanString(context.productName, 200) || undefined,
+      },
+      expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
+    });
+    jobId = job._id.toString();
+  } catch (error) {
+    // A queue write must not roll back the owner's successful business change.
+    console.error("Unable to enqueue shop push notification", error);
+  }
+
   after(async () => {
     try {
-      await deliverShopNotification(shopId, trigger, context);
+      if (jobId) await processNotificationJob(jobId);
+      else await deliverShopNotification(shopId, trigger, context);
+      await drainPendingNotificationJobs(2);
     } catch (error) {
       // A push-provider outage must never roll back the owner's successful edit.
       console.error("Shop push notification delivery failed", error);

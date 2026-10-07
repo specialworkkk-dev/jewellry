@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2";
 import { errorMessage } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
+import { withRetry } from "@/lib/retry";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -63,14 +64,19 @@ export async function POST(req: Request) {
     const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || (isImage ? "jpg" : "mp4");
     const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
 
-    await r2Client.send(new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: Buffer.from(await file.arrayBuffer()),
-      ContentLength: file.size,
-      ContentType: file.type,
-      CacheControl: "public, max-age=31536000, immutable",
-    }));
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    await withRetry(() => r2Client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: fileBuffer,
+        ContentLength: file.size,
+        ContentType: file.type,
+        CacheControl: "public, max-age=31536000, immutable",
+      })), {
+        attempts: 3,
+        baseDelayMs: 150,
+        maxDelayMs: 1_000,
+      });
 
     return NextResponse.json({ publicUrl: `${publicBaseUrl}/${key}`, key });
   } catch (error: unknown) {

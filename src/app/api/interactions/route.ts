@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const rate = checkRateLimit(`interaction:${requestClientId(req)}`, 60, 60 * 1000);
+    const rate = await checkRateLimit(`interaction:${requestClientId(req)}`, 60, 60 * 1000);
     if (!rate.allowed) {
       return NextResponse.json({ error: "Too many interactions. Please try again shortly." }, { status: 429 });
     }

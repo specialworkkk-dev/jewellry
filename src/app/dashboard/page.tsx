@@ -38,9 +38,9 @@ export default async function DashboardOverviewPage() {
     const currentShop = await Shop.findOne({ _id: tenant.shopId, ownerId: tenant.session.user.id }).select("slug").lean();
     if (currentShop) revalidatePath(`/shop/${currentShop.slug}`, "layout");
     revalidatePath("/dashboard");
-    invalidatePublicStoreCache();
+    invalidatePublicStoreCache({ shopId: tenant.shopId, slug: currentShop?.slug });
     scheduleShopEvent(tenant.shopId, "shop.gold-rate.updated", "both");
-    scheduleShopPushNotification(tenant.shopId, "gold-rate.updated");
+    await scheduleShopPushNotification(tenant.shopId, "gold-rate.updated");
   }
 
   await connectToDatabase();
@@ -174,7 +174,7 @@ export default async function DashboardOverviewPage() {
                 {topProducts.map(prod => (
                   <div key={prod._id.toString()} className="flex items-center gap-3 pb-2 border-b last:border-0">
                     <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden">
-                      {prod.images?.[0] && <Image src={prod.images[0]} alt={prod.name} width={40} height={40} unoptimized className="w-full h-full object-cover" />}
+                      {prod.images?.[0] && <Image src={prod.images[0]} alt={prod.name} width={40} height={40} sizes="40px" className="w-full h-full object-cover" />}
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-sm text-gray-900 line-clamp-1">{prod.name}</p>

@@ -55,10 +55,10 @@ export async function setProductPublishedAction(productId: string, isPublished: 
   revalidatePath("/dashboard/products", "page");
   revalidatePath("/dashboard", "page");
   if (shop?.slug) revalidatePath(`/shop/${shop.slug}`, "layout");
-  invalidatePublicStoreCache();
+  invalidatePublicStoreCache({ shopId });
   scheduleShopEvent(shopId, "product.updated", "both", productId);
   if (isPublished) {
-    scheduleShopPushNotification(shopId, "product.published", {
+    await scheduleShopPushNotification(shopId, "product.published", {
       entityId: productId,
       productName: product.name,
     });
@@ -73,6 +73,6 @@ export async function deleteProductAction(productId: string) {
   if (deleted.deletedCount === 0) throw new Error("Product not found");
   revalidatePath("/dashboard/products");
   revalidatePath("/shop/[slug]", "page");
-  invalidatePublicStoreCache();
+  invalidatePublicStoreCache({ shopId });
   scheduleShopEvent(shopId, "product.deleted", "both", productId);
 }

@@ -32,10 +32,10 @@ export async function updateShopSettings(formData: FormData) {
     revalidatePath(`/shop/${shop.slug}`);
   }
   revalidatePath("/shop/[slug]", "page");
-  invalidatePublicStoreCache();
+  invalidatePublicStoreCache({ shopId, slug: shop?.slug });
   scheduleShopEvent(shopId, "shop.settings.updated", "both");
   const customerVisibleMediaChanged = shop?.logoUrl !== updates.logoUrl || shop?.coverUrl !== updates.coverUrl;
   if (customerVisibleMediaChanged) {
-    scheduleShopPushNotification(shopId, "shop.updated");
+    await scheduleShopPushNotification(shopId, "shop.updated");
   }
 }

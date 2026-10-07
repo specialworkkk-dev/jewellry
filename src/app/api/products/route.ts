@@ -207,10 +207,10 @@ export async function POST(req: Request) {
     });
 
     await newProduct.save();
-    invalidatePublicStoreCache();
+    invalidatePublicStoreCache({ shopId });
     scheduleShopEvent(shopId, 'product.created', newProduct.isPublished ? 'both' : 'owner', newProduct._id.toString());
     if (newProduct.isPublished) {
-      scheduleShopPushNotification(shopId, 'product.created', {
+      await scheduleShopPushNotification(shopId, 'product.created', {
         entityId: newProduct._id.toString(),
         productName: newProduct.name,
       });

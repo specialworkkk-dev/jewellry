@@ -6,10 +6,18 @@ import { signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
-import { MediaUploader } from "@/components/ui/media-uploader";
+import dynamic from "next/dynamic";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
 import { AtSign, Check, Copy, LoaderCircle, LogOut, MessageCircle, Share2, Users } from "lucide-react";
 import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
+
+const MediaUploader = dynamic(
+  () => import("@/components/ui/media-uploader").then((module) => module.MediaUploader),
+  {
+    ssr: false,
+    loading: () => <div className="h-11 animate-pulse rounded-md border bg-gray-50" aria-label="Loading uploader" />,
+  },
+);
 
 type ShopSettings = {
   slug?: string;
@@ -120,7 +128,7 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 bg-gray-100 rounded-full border flex items-center justify-center overflow-hidden">
                   {logoUrl ? (
-                    <Image src={logoUrl} alt="Logo" width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                    <Image src={logoUrl} alt="Logo" width={80} height={80} sizes="80px" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-gray-400 text-xs">No Logo</span>
                   )}
@@ -133,7 +141,7 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
               <label className="text-sm font-medium text-gray-700">Cover Banner</label>
               <div className="aspect-[16/7] w-full overflow-hidden rounded-xl border bg-gray-100 flex items-center justify-center">
                 {coverUrl ? (
-                  <Image src={coverUrl} alt="Cover" width={640} height={96} className="w-full h-full object-cover" unoptimized />
+                  <Image src={coverUrl} alt="Cover" width={640} height={96} sizes="(max-width: 768px) 100vw, 640px" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gray-400 text-xs">No Cover Image</span>
                 )}
@@ -155,13 +163,13 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
         <CardContent className="space-y-4">
           <div className="relative isolate overflow-hidden rounded-2xl bg-stone-950 p-5 text-white shadow-xl sm:p-6">
             {coverUrl && (
-              <Image src={coverUrl} alt="" fill sizes="(max-width: 768px) 100vw, 800px" className="-z-20 object-cover opacity-30" unoptimized />
+              <Image src={coverUrl} alt="" fill sizes="(max-width: 768px) 100vw, 800px" className="-z-20 object-cover opacity-30" />
             )}
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-stone-950 via-stone-950/90 to-amber-950/45" />
             <div className="flex items-start gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-amber-400 bg-stone-900 text-lg font-bold text-amber-300">
                 {logoUrl ? (
-                  <Image src={logoUrl} alt="" width={56} height={56} className="h-full w-full object-cover" unoptimized />
+                  <Image src={logoUrl} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
                 ) : (
                   (shop?.name || "L").charAt(0).toUpperCase()
                 )}

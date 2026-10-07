@@ -28,7 +28,7 @@ export async function POST(
 
     shop.isApproved = true;
     await shop.save();
-    invalidatePublicStoreCache();
+    invalidatePublicStoreCache({ shopId: id, slug: shop.slug });
 
     return NextResponse.json({ message: 'Shop approved successfully' });
   } catch (error) {

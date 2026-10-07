@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   let createdShopId: string | undefined;
 
   try {
-    const rate = checkRateLimit(`register:${requestClientId(req)}`, 5, 60 * 60 * 1000);
+    const rate = await checkRateLimit(`register:${requestClientId(req)}`, 5, 60 * 60 * 1000);
     if (!rate.allowed) {
       return NextResponse.json(
         { error: 'Too many registration attempts. Please try again later.' },

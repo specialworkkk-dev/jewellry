@@ -59,18 +59,19 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
     planPrice,
   };
 
-  const result = await Shop.updateOne(
+  const updatedShop = await Shop.findOneAndUpdate(
     { _id: shopId },
     planPrice === 0
       ? { $set: updates, $unset: { planEndsAt: "" } }
       : { $set: { ...updates, planEndsAt: parsePlanEndDate(formData.get("planEndsAt")) } },
-  );
-  if (result.matchedCount === 0) throw new Error("Shop not found");
+    { returnDocument: "after", runValidators: true },
+  ).select("slug").lean();
+  if (!updatedShop) throw new Error("Shop not found");
   revalidatePath("/admin/shops");
   revalidatePath(`/admin/shops/${shopId}`);
   revalidatePath("/dashboard/products/create");
   revalidatePath("/dashboard", "layout");
-  invalidatePublicStoreCache();
+  invalidatePublicStoreCache({ shopId, slug: updatedShop.slug });
   scheduleShopEvent(shopId, "shop.status.updated", "both");
   redirect("/admin/shops");
 }

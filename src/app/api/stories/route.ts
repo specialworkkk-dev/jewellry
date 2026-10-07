@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
 
     await newStory.save();
-    scheduleShopPushNotification(shopId, 'story.created');
+    await scheduleShopPushNotification(shopId, 'story.created');
 
     return NextResponse.json({ message: 'Story published successfully', story: newStory }, { status: 201 });
   } catch (error: unknown) {

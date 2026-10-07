@@ -6,10 +6,18 @@ import { useRouter } from "next/navigation";
 import { getCategoriesAction, getProductMediaPolicyAction } from "../actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MediaUploader } from "@/components/ui/media-uploader";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Video, X } from "lucide-react";
 import { calculateDiscountedAmount, type DiscountType } from "@/lib/product-pricing";
+
+const MediaUploader = dynamic(
+  () => import("@/components/ui/media-uploader").then((module) => module.MediaUploader),
+  {
+    ssr: false,
+    loading: () => <div className="h-11 animate-pulse rounded-md border bg-gray-50" aria-label="Loading uploader" />,
+  },
+);
 
 interface CategoryOption {
   _id: string;
@@ -422,7 +430,7 @@ export default function CreateProductPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {images.map((url, index) => (
                   <div key={index} className="relative group rounded-md overflow-hidden border aspect-square">
-                    <Image src={url} alt="Product" fill className="object-cover" unoptimized />
+                    <Image src={url} alt="Product" fill sizes="(max-width: 640px) 50vw, 200px" className="object-cover" />
                     <button 
                       type="button"
                       onClick={() => removeImage(index)}

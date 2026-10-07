@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     });
 
     await newPost.save();
-    scheduleShopPushNotification(shopId, 'post.created');
+    await scheduleShopPushNotification(shopId, 'post.created');
 
     return NextResponse.json({ message: 'Post created successfully', post: newPost }, { status: 201 });
   } catch (error: unknown) {
