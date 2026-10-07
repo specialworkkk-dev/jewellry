@@ -3,7 +3,8 @@ import Product from "@/models/Product";
 import "@/models/Category";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Edit } from "lucide-react";
+import { Plus, Package, Edit, Pencil } from "lucide-react";
+import { isPlanExpired } from "@/components/shop/plan-state";
 import Image from "next/image";
 import { deleteProductAction, setProductPublishedAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
@@ -20,7 +21,8 @@ function formatOwnerPrice(priceType: string, price?: number) {
 }
 
 export default async function ProductsListPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
-  const { shopId } = await requireOwnerTenant();
+  const { shopId, shop } = await requireOwnerTenant();
+  const planExpired = isPlanExpired(shop);
   await connectToDatabase();
 
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
@@ -45,21 +47,36 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Products</h1>
           <p className="text-gray-500 mt-2">Manage your jewellery inventory and catalog.</p>
         </div>
-        <Link prefetch={true} href="/dashboard/products/create" className="w-full sm:w-auto">
-          <Button className="w-full gap-2 sm:w-auto min-h-11">
+        {planExpired ? (
+          <Button disabled title="Renew your plan to add products" className="w-full gap-2 sm:w-auto min-h-11">
             <Plus className="w-4 h-4" /> Add Product
           </Button>
-        </Link>
+        ) : (
+          <Link prefetch={true} href="/dashboard/products/create" className="w-full sm:w-auto">
+            <Button className="w-full gap-2 sm:w-auto min-h-11">
+              <Plus className="w-4 h-4" /> Add Product
+            </Button>
+          </Link>
+        )}
       </div>
+      {planExpired && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Your plan has expired. Adding and editing products is disabled until you renew.
+        </div>
+      )}
 
       {products.length === 0 ? (
         <div className="border-2 border-dashed rounded-lg p-12 text-center flex flex-col items-center justify-center">
           <Package className="w-12 h-12 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No products yet</h3>
           <p className="text-gray-500 mt-1 mb-4">Get started by adding your first jewellery piece to the catalog.</p>
-          <Link prefetch={true} href="/dashboard/products/create">
-            <Button variant="outline">Add your first product</Button>
-          </Link>
+          {planExpired ? (
+            <Button variant="outline" disabled>Add your first product</Button>
+          ) : (
+            <Link prefetch={true} href="/dashboard/products/create">
+              <Button variant="outline">Add your first product</Button>
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
@@ -87,7 +104,14 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {planExpired ? (
+                    <Button variant="outline" disabled className="w-full min-h-11"><Pencil className="mr-2 h-4 w-4" /> Edit</Button>
+                  ) : (
+                    <Link href={`/dashboard/products/${product._id.toString()}/edit`} className="inline-flex min-h-11 w-full items-center justify-center rounded-md border px-3 text-sm font-medium hover:bg-gray-50">
+                      <Pencil className="mr-2 h-4 w-4" /> Edit
+                    </Link>
+                  )}
                   <form action={setProductPublishedAction.bind(null, product._id.toString(), !product.isPublished)}>
                     <ActionSubmitButton pendingLabel={product.isPublished ? "Saving Draft…" : "Publishing…"} variant="outline" className="w-full min-h-11">
                       <Edit className="mr-2 h-4 w-4" /> {product.isPublished ? "Make Draft" : "Publish"}
@@ -132,6 +156,13 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                       {formatOwnerPrice(product.priceType, product.price)}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      {planExpired ? (
+                        <span className="inline-flex h-8 w-8 items-center justify-center text-gray-300" title="Renew your plan to edit"><Pencil className="w-4 h-4" /></span>
+                      ) : (
+                        <Link href={`/dashboard/products/${product._id.toString()}/edit`} title="Edit product" aria-label={`Edit ${product.name}`} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600">
+                          <Pencil className="w-4 h-4" />
+                        </Link>
+                      )}
                       <form action={setProductPublishedAction.bind(null, product._id.toString(), !product.isPublished)} className="inline-block">
                         <ActionSubmitButton pendingLabel="" variant="ghost" size="icon" title={product.isPublished ? "Unpublish" : "Publish"} className="h-8 w-8 text-gray-500 hover:text-blue-600">
                           <Edit className="w-4 h-4" />

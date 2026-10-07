@@ -10,6 +10,7 @@ import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 import { requireOwnerTenant } from "@/lib/tenant";
+import { deleteShopObjects } from "@/lib/r2";
 
 export async function getCategoriesAction() {
   const { shopId } = await requireOwnerTenant();
@@ -69,8 +70,10 @@ export async function deleteProductAction(productId: string) {
   const shopId = await ownerShopId();
   if (!isObjectId(productId)) throw new Error("Invalid product");
   await connectToDatabase();
+  const existing = await Product.findOne({ _id: productId, shopId }).select("images videos").lean();
   const deleted = await Product.deleteOne({ _id: productId, shopId });
   if (deleted.deletedCount === 0) throw new Error("Product not found");
+  if (existing) await deleteShopObjects(shopId, [...(existing.images ?? []), ...(existing.videos ?? [])]);
   revalidatePath("/dashboard/products");
   revalidatePath("/dashboard", "page");
   revalidatePath("/shop/[slug]", "page");

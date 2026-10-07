@@ -4,6 +4,8 @@ import { r2Client } from "@/lib/r2";
 import { errorMessage } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
 import { withRetry } from "@/lib/retry";
+import { getPlanBlock } from "@/lib/plan";
+import { dailyLimit, dailyLimitMessage, releaseDailyUpload, reserveDailyUpload } from "@/lib/media-quota";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -22,6 +24,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { shopId, shop } = tenant;
+
+    const planBlock = getPlanBlock(shop);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
 
     const bucket = process.env.R2_BUCKET_NAME;
     const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, "");
@@ -68,6 +75,13 @@ export async function POST(req: Request) {
     const extension = EXTENSION_BY_TYPE[file.type] ?? (isImage ? "jpg" : "mp4");
     const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
 
+    const kind = isVideo ? "videos" : "photos";
+    const limit = dailyLimit(kind, shop);
+    if (!(await reserveDailyUpload(shopId, kind, limit))) {
+      return NextResponse.json({ error: dailyLimitMessage(kind, limit) }, { status: 429 });
+    }
+
+    try {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await withRetry(() => r2Client.send(new PutObjectCommand({
         Bucket: bucket,
@@ -81,6 +95,10 @@ export async function POST(req: Request) {
         baseDelayMs: 150,
         maxDelayMs: 1_000,
       });
+    } catch (uploadError) {
+      await releaseDailyUpload(shopId, kind);
+      throw uploadError;
+    }
 
     return NextResponse.json({ publicUrl: `${publicBaseUrl}/${key}`, key });
   } catch (error: unknown) {

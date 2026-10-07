@@ -118,7 +118,8 @@ export default async function PublicShopLayout({
     );
   }
 
-  const theme = STOREFRONT_THEMES[resolveStorefrontTemplate(shop)];
+  const templateId = resolveStorefrontTemplate(shop);
+  const theme = STOREFRONT_THEMES[templateId];
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
   const isOwnerPreview = session?.user.role === "SHOP_OWNER"
     && session.user.shopId === shop._id.toString();
@@ -155,7 +156,7 @@ export default async function PublicShopLayout({
   }
 
   return (
-    <div className={`min-h-screen ${theme.pageBg}`}>
+    <div data-storefront-template={templateId} className={`min-h-screen ${theme.pageBg}`}>
       {process.env.ABLY_API_KEY?.trim() && (
         <ShopRealtimeSync shopId={shop._id.toString()} audience="customer" />
       )}

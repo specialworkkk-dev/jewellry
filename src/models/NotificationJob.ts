@@ -17,6 +17,8 @@ const NotificationJobSchema = new Schema(
     attempts: { type: Number, default: 0, min: 0, max: 5 },
     availableAt: { type: Date, default: Date.now, required: true },
     lockedAt: { type: Date },
+    // Subscriptions that failed on the previous attempt; retries target only these.
+    retrySubscriptionIds: { type: [Schema.Types.ObjectId], default: undefined },
     deliveredAt: { type: Date },
     lastError: { type: String, maxlength: 500 },
     expiresAt: { type: Date, required: true },

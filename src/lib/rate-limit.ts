@@ -12,12 +12,34 @@ const globalRateLimits = globalThis as typeof globalThis & {
 const store = globalRateLimits.rateLimitStore ?? new Map<string, Entry>();
 globalRateLimits.rateLimitStore = store;
 
+type HeaderReader = { get(name: string): string | null };
+
+/**
+ * Forwarding headers are client-controlled unless a trusted proxy overwrites
+ * them. Vercel sets VERCEL and strips spoofed x-vercel-forwarded-for; any other
+ * proxy must opt in with TRUST_PROXY_HEADERS=1. Otherwise all callers share the
+ * "unknown" bucket (safe, and fine for local dev).
+ */
+export function clientIdFromHeaders(
+  headers: HeaderReader,
+  env: Record<string, string | undefined> = process.env,
+): string {
+  const first = (value: string | null) => value?.split(",")[0]?.trim() || "";
+  if (env.VERCEL) {
+    const vercelIp = first(headers.get("x-vercel-forwarded-for"));
+    if (vercelIp) return vercelIp;
+  }
+  if (env.VERCEL || env.TRUST_PROXY_HEADERS === "1") {
+    return first(headers.get("cf-connecting-ip"))
+      || first(headers.get("x-forwarded-for"))
+      || first(headers.get("x-real-ip"))
+      || "unknown";
+  }
+  return "unknown";
+}
+
 export function requestClientId(request: Request): string {
-  const vercelIp = request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
-  const forwardedIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = request.headers.get("x-real-ip");
-  const cloudflareIp = request.headers.get("cf-connecting-ip");
-  return vercelIp || cloudflareIp || forwardedIp || realIp || "unknown";
+  return clientIdFromHeaders(request.headers);
 }
 
 function checkLocalRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {

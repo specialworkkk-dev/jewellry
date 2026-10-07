@@ -9,6 +9,7 @@ import { scheduleShopPushNotification } from '@/lib/push-notifications';
 import { calculateDiscountedAmount, type DiscountType } from '@/lib/product-pricing';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
+import { getPlanBlock, isShopMediaUrl, priceTypeAllowsPrice, shopMediaBaseUrl } from '@/lib/plan';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
@@ -56,8 +57,9 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     // Enforce Product Limits
-    if (!shop.isActive) {
-      return NextResponse.json({ error: 'This shop is inactive' }, { status: 403 });
+    const planBlock = getPlanBlock(shop);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
     }
 
     const category = await Category.findOne({
@@ -83,6 +85,10 @@ export async function POST(req: Request) {
     const images = Array.isArray(body.images)
       ? body.images.slice(0, 12).map(safeExternalUrl).filter(Boolean)
       : [];
+    const publicBaseUrl = shopMediaBaseUrl();
+    if (images.some((url) => !isShopMediaUrl(url, publicBaseUrl, shopId, 'products'))) {
+      return NextResponse.json({ error: 'Invalid product image source' }, { status: 400 });
+    }
     const videos = Array.isArray(body.videos)
       ? body.videos.slice(0, 4).map(safeExternalUrl).filter(Boolean)
       : [];
@@ -90,9 +96,7 @@ export async function POST(req: Request) {
       if (shop.videoUploadsEnabled !== true) {
         return NextResponse.json({ error: 'Video uploads are not enabled for this shop' }, { status: 403 });
       }
-      const publicBaseUrl = process.env.NEXT_PUBLIC_R2_DEV_URL?.replace(/\/$/, '');
-      const expectedPrefix = publicBaseUrl ? `${publicBaseUrl}/shops/${shopId}/products/` : '';
-      if (!expectedPrefix || videos.some((url) => !url.startsWith(expectedPrefix))) {
+      if (videos.some((url) => !isShopMediaUrl(url, publicBaseUrl, shopId, 'products'))) {
         return NextResponse.json({ error: 'Invalid product video source' }, { status: 400 });
       }
       const maxVideosPerDay = Math.min(20, Math.max(1, Number(shop.maxVideosPerDay ?? 2)));
@@ -114,7 +118,8 @@ export async function POST(req: Request) {
     const goldPurity = typeof body.goldPurity === 'string' && GOLD_PURITIES.has(body.goldPurity)
       ? body.goldPurity
       : undefined;
-    const enteredPrice = optionalNumber(body.price);
+    const allowsPrice = priceTypeAllowsPrice(priceType);
+    const enteredPrice = allowsPrice ? optionalNumber(body.price) : undefined;
     const makingCharges = optionalNumber(body.makingCharges);
     const discountType = typeof body.discountType === 'string' && DISCOUNT_TYPES.has(body.discountType as DiscountType)
       ? body.discountType as DiscountType
@@ -123,10 +128,10 @@ export async function POST(req: Request) {
       && DISCOUNT_TYPES.has(body.makingChargesDiscountType as DiscountType)
       ? body.makingChargesDiscountType as DiscountType
       : undefined;
-    const discountValue = optionalNumber(body.discountValue) ?? 0;
+    const discountValue = allowsPrice ? (optionalNumber(body.discountValue) ?? 0) : 0;
     const makingChargesDiscountValue = optionalNumber(body.makingChargesDiscountValue) ?? 0;
 
-    if ((body.price !== '' && body.price !== undefined)
+    if (allowsPrice && (body.price !== '' && body.price !== undefined)
       && (!Number.isFinite(Number(body.price)) || Number(body.price) < 0)) {
       return NextResponse.json({ error: 'Product price must be a positive number' }, { status: 400 });
     }
@@ -134,7 +139,7 @@ export async function POST(req: Request) {
       && (!Number.isFinite(Number(body.makingCharges)) || Number(body.makingCharges) < 0)) {
       return NextResponse.json({ error: 'Making charges must be a positive number' }, { status: 400 });
     }
-    if ((body.discountValue !== '' && body.discountValue !== undefined)
+    if (allowsPrice && (body.discountValue !== '' && body.discountValue !== undefined)
       && (!Number.isFinite(Number(body.discountValue)) || Number(body.discountValue) < 0)) {
       return NextResponse.json({ error: 'Main discount must be a positive number' }, { status: 400 });
     }
@@ -211,6 +216,14 @@ export async function POST(req: Request) {
     });
 
     await newProduct.save();
+
+    // Race-safe limit: concurrent creates may all pass the pre-check, so count
+    // products up to and including this one (by _id) and roll back any excess.
+    const position = await Product.countDocuments({ shopId, _id: { $lte: newProduct._id } });
+    if (position > maxProducts) {
+      await Product.deleteOne({ _id: newProduct._id });
+      return NextResponse.json({ error: `You have reached your maximum product limit of ${maxProducts}. Please contact support.` }, { status: 403 });
+    }
     invalidatePublicStoreCache({ shopId });
     scheduleShopEvent(shopId, 'product.created', newProduct.isPublished ? 'both' : 'owner', newProduct._id.toString());
     if (newProduct.isPublished) {

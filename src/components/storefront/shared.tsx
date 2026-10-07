@@ -25,7 +25,11 @@ export function enquiryHref(ownerWhatsApp: string, product: StorefrontProduct) {
   return `https://wa.me/${ownerWhatsApp}?text=${encodeURIComponent(`Hi! I'm interested in ${product.name}. Please share more details.`)}`;
 }
 
-export function priceText(product: StorefrontProduct) {
+type PricedProduct = Pick<StorefrontProduct, "price" | "priceType">;
+type DiscountedProduct = Pick<StorefrontProduct, "price" | "originalPrice" | "discountType" | "discountValue" | "discountPercentage">;
+type MakingChargeProduct = Pick<StorefrontProduct, "makingCharges" | "makingChargesDiscountType" | "makingChargesDiscountValue">;
+
+export function priceText(product: PricedProduct) {
   if (product.price == null) return "Price on request";
   const amount = `₹${product.price.toLocaleString("en-IN")}`;
   if (product.priceType === "FIXED_PRICE") return amount;
@@ -33,7 +37,7 @@ export function priceText(product: StorefrontProduct) {
   return "Price on request";
 }
 
-export function savingsText(product: StorefrontProduct) {
+export function savingsText(product: DiscountedProduct) {
   if (product.originalPrice == null || product.price == null || product.originalPrice <= product.price) return null;
   return {
     original: `₹${product.originalPrice.toLocaleString("en-IN")}`,
@@ -41,7 +45,7 @@ export function savingsText(product: StorefrontProduct) {
   };
 }
 
-export function makingChargeText(product: StorefrontProduct) {
+export function makingChargeText(product: MakingChargeProduct) {
   if (!product.makingCharges || !product.makingChargesDiscountValue) return null;
   const discounted = calculateDiscountedAmount(
     product.makingCharges,

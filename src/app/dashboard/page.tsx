@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { GoldRateUpdater } from "@/components/admin/GoldRateUpdater";
 import Image from "next/image";
 import Link from "next/link";
+import { isPlanExpired } from "@/components/shop/plan-state";
 import { getOwnerShop } from "@/lib/owner-data";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
@@ -17,14 +18,26 @@ import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 import { requireOwnerTenant } from "@/lib/tenant";
 
 export default async function DashboardOverviewPage() {
-  const { shopId } = await requireOwnerTenant();
+  const { shopId, shop: tenantShop } = await requireOwnerTenant();
+  const planExpired = isPlanExpired(tenantShop);
 
   async function updateGoldRate(rate22k: number | null, rate24k: number | null) {
     "use server";
     const tenant = await requireOwnerTenant();
 
-    const final22K = typeof rate22k === "number" && Number.isFinite(rate22k) && rate22k > 0 ? Math.round(rate22k) : null;
-    const final24K = typeof rate24k === "number" && Number.isFinite(rate24k) && rate24k > 0 ? Math.round(rate24k) : null;
+    // null clears a rate; anything else must be a sane per-gram INR value.
+    const parseRate = (value: unknown) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 1000 || value > 200000) {
+        throw new Error("Gold rate must be between 1,000 and 200,000 per gram");
+      }
+      return Math.round(value);
+    };
+    const final22K = parseRate(rate22k);
+    const final24K = parseRate(rate24k);
+    if (final22K !== null && final24K !== null && final22K > final24K) {
+      throw new Error("22K rate cannot be higher than the 24K rate");
+    }
 
     await connectToDatabase();
     await Shop.updateOne({ _id: tenant.shopId, ownerId: tenant.session.user.id }, {
@@ -70,9 +83,15 @@ export default async function DashboardOverviewPage() {
           <p className="mt-1 text-sm text-gray-500">Update rates, add jewellery and reply to customers.</p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Link prefetch={true} href="/dashboard/products/create" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-            <Plus className="h-4 w-4" /> Add Product
-          </Link>
+          {planExpired ? (
+            <span aria-disabled="true" title="Renew your plan to add products" className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-200 px-3 py-2 text-sm font-semibold text-gray-500">
+              <Plus className="h-4 w-4" /> Add Product
+            </span>
+          ) : (
+            <Link prefetch={true} href="/dashboard/products/create" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+              <Plus className="h-4 w-4" /> Add Product
+            </Link>
+          )}
           {shop?.slug && (
             <Link href={`/shop/${shop.slug}`} target="_blank" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
               <ExternalLink className="h-4 w-4" /> View Shop

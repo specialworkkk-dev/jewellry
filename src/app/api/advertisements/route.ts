@@ -4,6 +4,7 @@ import Advertisement from '@/models/Advertisement';
 import { Types } from 'mongoose';
 import { cleanString, isRecord, safeExternalUrl } from '@/lib/validation';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
+import { getPlanBlock, isFutureDate, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
 
 const AD_TYPES = new Set(['HERO_BANNER', 'PROMO_STRIP', 'GOLD_RATE']);
 
@@ -14,7 +15,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { shopId } = tenant;
+    const { shopId, shop } = tenant;
+    const planBlock = getPlanBlock(shop);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
     const body: unknown = await req.json();
     if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
@@ -28,6 +33,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Title and message are required' }, { status: 400 });
     }
 
+    const imageUrl = safeExternalUrl(body.imageUrl);
+    if (imageUrl && !isShopMediaUrl(imageUrl, shopMediaBaseUrl(), shopId)) {
+      return NextResponse.json({ error: 'Invalid advertisement image source' }, { status: 400 });
+    }
+
+    let validUntil: Date | undefined;
+    if (typeof body.validUntil === 'string' && body.validUntil.trim()) {
+      validUntil = new Date(body.validUntil);
+      if (!isFutureDate(validUntil)) {
+        return NextResponse.json({ error: 'Valid-until date must be in the future' }, { status: 400 });
+      }
+    }
+
     await connectToDatabase();
 
     // Special logic: If they are posting a new GOLD_RATE, deactivate older gold rates automatically
@@ -38,16 +56,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const validUntil = typeof body.validUntil === 'string' ? new Date(body.validUntil) : undefined;
     const newAd = new Advertisement({
       shopId: new Types.ObjectId(shopId),
       title,
       message,
       type,
-      imageUrl: safeExternalUrl(body.imageUrl) || undefined,
+      imageUrl: imageUrl || undefined,
       linkUrl: safeExternalUrl(body.linkUrl) || undefined,
       isActive: body.isActive !== false,
-      validUntil: validUntil && !Number.isNaN(validUntil.getTime()) ? validUntil : undefined,
+      validUntil,
     });
 
     await newAd.save();

@@ -5,6 +5,8 @@ import { cleanString, isObjectId, isRecord } from "@/lib/validation";
 import PushSubscriptionModel from "@/models/PushSubscription";
 import Shop from "@/models/Shop";
 
+const MAX_SUBSCRIPTIONS_PER_SHOP = 5000;
+
 function sameOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
   return !origin || origin === request.nextUrl.origin;
@@ -60,6 +62,14 @@ export async function POST(request: NextRequest) {
   await connectToDatabase();
   const shop = await Shop.findOne({ _id: body.shopId, isApproved: true, isActive: true }).select("_id").lean();
   if (!shop) return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+
+  const alreadySubscribed = await PushSubscriptionModel.exists({ shopId: body.shopId, endpoint: subscription.endpoint });
+  if (!alreadySubscribed) {
+    const total = await PushSubscriptionModel.countDocuments({ shopId: body.shopId });
+    if (total >= MAX_SUBSCRIPTIONS_PER_SHOP) {
+      return NextResponse.json({ error: "Subscription limit reached for this shop" }, { status: 429 });
+    }
+  }
 
   await PushSubscriptionModel.updateOne(
     { shopId: body.shopId, endpoint: subscription.endpoint },

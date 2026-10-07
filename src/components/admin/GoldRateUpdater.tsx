@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Loader2 } from "lucide-react";
+import { validateGoldRates } from "./gold-rate-validation";
 
 export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K?: number, initial24K?: number, onSave: (rate22k: number | null, rate24k: number | null) => Promise<void> }) {
   const [loading, setLoading] = useState(false);
@@ -15,8 +16,13 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
     setLoading(true);
     setMessage("");
     try {
-      const parsed22 = rate22K ? parseInt(rate22K) : null;
-      const parsed24 = rate24K ? parseInt(rate24K) : null;
+      const parsed22 = rate22K.trim() ? Number(rate22K) : null;
+      const parsed24 = rate24K.trim() ? Number(rate24K) : null;
+      const invalid = validateGoldRates(parsed22, parsed24);
+      if (invalid) {
+        setMessage(`Could not update rates. ${invalid}`);
+        return;
+      }
       await onSave(parsed22, parsed24);
       setMessage("Gold rates updated on your shop.");
     } catch (error) {

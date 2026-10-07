@@ -5,6 +5,7 @@ import { Types } from 'mongoose';
 import { isRecord, safeExternalUrl } from '@/lib/validation';
 import { scheduleShopPushNotification } from '@/lib/push-notifications';
 import { getVerifiedOwnerTenant } from '@/lib/tenant';
+import { getPlanBlock, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +14,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { shopId } = tenant;
+    const { shopId, shop } = tenant;
+    const planBlock = getPlanBlock(shop);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
     const body: unknown = await req.json();
     if (!isRecord(body)) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
@@ -23,6 +28,10 @@ export async function POST(req: Request) {
 
     if (!mediaUrl) {
       return NextResponse.json({ error: 'Media URL is required' }, { status: 400 });
+    }
+
+    if (!isShopMediaUrl(mediaUrl, shopMediaBaseUrl(), shopId, 'stories')) {
+      return NextResponse.json({ error: 'Invalid story media source' }, { status: 400 });
     }
 
     await connectToDatabase();

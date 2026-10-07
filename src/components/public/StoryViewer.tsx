@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { StoreImage } from "@/components/public/StoreImage";
@@ -21,12 +21,14 @@ interface StoryViewerProps {
 export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const progressRef = useRef(0);
 
   const currentStory = stories[currentIndex];
 
   const handleNext = useCallback(() => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex((prev) => prev + 1);
+      progressRef.current = 0;
       setProgress(0);
     } else {
       onClose();
@@ -36,6 +38,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
+      progressRef.current = 0;
       setProgress(0);
     }
   };
@@ -45,13 +48,14 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
     
     // Auto advance progress bar every 50ms for a 5 second image duration
     const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          handleNext();
-          return 0;
-        }
-        return prev + (100 / (5000 / 50)); 
-      });
+      const next = progressRef.current + 100 / (5000 / 50);
+      if (next >= 100) {
+        progressRef.current = 0;
+        handleNext();
+      } else {
+        progressRef.current = next;
+        setProgress(next);
+      }
     }, 50);
 
     return () => clearInterval(timer);

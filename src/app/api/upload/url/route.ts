@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2";
 import { cleanString, isRecord } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
+import { getPlanBlock } from "@/lib/plan";
+import { dailyLimit, dailyLimitMessage, reserveDailyUpload } from "@/lib/media-quota";
 
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_TYPES = new Set([
@@ -19,6 +21,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const { shopId, shop } = tenant;
+
+    const planBlock = getPlanBlock(shop);
+    if (planBlock) {
+      return NextResponse.json({ error: planBlock.error }, { status: planBlock.status });
+    }
 
     const body: unknown = await req.json();
     if (!isRecord(body)) {
@@ -55,6 +62,12 @@ export async function POST(req: Request) {
     }
     if (!bucket || !publicBaseUrl) {
       return NextResponse.json({ error: "Media storage is not configured" }, { status: 503 });
+    }
+
+    const kind = isVideo ? "videos" : "photos";
+    const limit = dailyLimit(kind, shop);
+    if (!(await reserveDailyUpload(shopId, kind, limit))) {
+      return NextResponse.json({ error: dailyLimitMessage(kind, limit) }, { status: 429 });
     }
 
     const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");

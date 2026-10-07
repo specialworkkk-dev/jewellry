@@ -14,8 +14,11 @@ const defaultSettings = {
   allowAutoApproval: true,
 };
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ error?: string | string[]; saved?: string | string[] }> }) {
   await requirePlatformAdmin();
+  const sp = await searchParams;
+  const rawError = Array.isArray(sp.error) ? sp.error[0] : sp.error;
+  const formError = rawError?.slice(0, 600);
   await connectToDatabase();
   const settings = await PlatformSettings.findOne({ key: 'default' }).lean();
   const values = settings ? { ...defaultSettings, ...settings } : defaultSettings;
@@ -28,18 +31,20 @@ export default async function AdminSettingsPage() {
       </div>
 
       <form action={updatePlatformSettings} className="space-y-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        {formError && <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{formError}</p>}
+        {!formError && sp.saved && <p role="status" className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Settings saved.</p>}
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Platform Name</label>
-            <input name="platformName" defaultValue={values.platformName} className="w-full border rounded-md px-3 py-2" />
+            <input name="platformName" maxLength={80} defaultValue={values.platformName} className="w-full border rounded-md px-3 py-2" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Support Email</label>
-            <input name="supportEmail" type="email" defaultValue={values.supportEmail} className="w-full border rounded-md px-3 py-2" />
+            <input name="supportEmail" maxLength={254} type="email" defaultValue={values.supportEmail} className="w-full border rounded-md px-3 py-2" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Support Phone</label>
-            <input name="supportPhone" defaultValue={values.supportPhone} className="w-full border rounded-md px-3 py-2" />
+            <input name="supportPhone" maxLength={24} defaultValue={values.supportPhone} className="w-full border rounded-md px-3 py-2" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Default Max Products</label>

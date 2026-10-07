@@ -8,6 +8,7 @@ export interface IEnquiry extends Document {
   message: string;
   status: 'NEW' | 'CONTACTED' | 'CONVERTED' | 'CLOSED';
   source: 'WHATSAPP_CLICK' | 'WEBSITE_FORM';
+  dedupeKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const EnquirySchema: Schema = new Schema(
     customerName: { type: String, required: true },
     customerPhone: { type: String, required: true },
     message: { type: String, required: true },
+    dedupeKey: { type: String, select: false },
     status: { 
       type: String, 
       enum: ['NEW', 'CONTACTED', 'CONVERTED', 'CLOSED'], 
@@ -36,5 +38,9 @@ const EnquirySchema: Schema = new Schema(
 // Indexes
 EnquirySchema.index({ shopId: 1, createdAt: -1 });
 EnquirySchema.index({ shopId: 1, status: 1 });
+EnquirySchema.index(
+  { dedupeKey: 1 },
+  { unique: true, partialFilterExpression: { dedupeKey: { $type: 'string' } } },
+);
 
 export default mongoose.models.Enquiry || mongoose.model<IEnquiry>('Enquiry', EnquirySchema);

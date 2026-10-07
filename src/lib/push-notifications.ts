@@ -16,6 +16,14 @@ import { httpStatusFromError, isTransientHttpError, withRetry } from "@/lib/retr
 import NotificationJob from "@/models/NotificationJob";
 import { cleanString, isObjectId } from "@/lib/validation";
 
+export const MAX_SUBSCRIPTION_FAILURES = 10;
+
+class PartialDeliveryError extends Error {
+  constructor(readonly failedIds: string[]) {
+    super(`Push delivery failed for ${failedIds.length} subscription(s)`);
+  }
+}
+
 type PushContext = {
   entityId?: string;
   productName?: string;
@@ -51,6 +59,7 @@ async function deliverShopNotification(
   shopId: string,
   trigger: CustomerNotificationTrigger,
   context: PushContext,
+  onlySubscriptionIds?: string[],
 ) {
   if (!configureWebPush()) return;
   await connectToDatabase();
@@ -60,7 +69,7 @@ async function deliverShopNotification(
       .select("name slug")
       .lean(),
     ShopNotificationSettings.findOne({ shopId }).lean(),
-    PushSubscriptionModel.find({ shopId })
+    PushSubscriptionModel.find(onlySubscriptionIds?.length ? { shopId, _id: { $in: onlySubscriptionIds } } : { shopId })
       .select("endpoint expirationTime keys")
       .limit(5000)
       .lean<StoredSubscription[]>(),
@@ -136,7 +145,10 @@ async function deliverShopNotification(
       { $inc: { failureCount: 1 } },
     ));
   }
+  // Prune subscriptions that keep failing so they stop slowing every send.
+  updates.push(PushSubscriptionModel.deleteMany({ shopId, failureCount: { $gte: MAX_SUBSCRIPTION_FAILURES } }));
   await Promise.all(updates);
+  if (failedIds.length) throw new PartialDeliveryError(failedIds);
 }
 
 const JOB_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -169,6 +181,7 @@ export async function processNotificationJob(jobId: string) {
       job.shopId.toString(),
       job.trigger as CustomerNotificationTrigger,
       job.context || {},
+      (job.retrySubscriptionIds || []).map((id: { toString(): string }) => id.toString()),
     );
     await NotificationJob.updateOne({ _id: job._id }, {
       $set: {
@@ -176,7 +189,7 @@ export async function processNotificationJob(jobId: string) {
         deliveredAt: new Date(),
         expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
       },
-      $unset: { lockedAt: "", lastError: "" },
+      $unset: { lockedAt: "", lastError: "", retrySubscriptionIds: "" },
     });
     return true;
   } catch (error) {
@@ -189,6 +202,8 @@ export async function processNotificationJob(jobId: string) {
         availableAt: new Date(Date.now() + retryDelayMs),
         lastError: cleanString(error instanceof Error ? error.message : "Notification delivery failed", 500),
         expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
+        // Retry only the subscriptions that failed so successful ones are not re-notified.
+        ...(error instanceof PartialDeliveryError ? { retrySubscriptionIds: error.failedIds } : {}),
       },
       $unset: { lockedAt: "" },
     });

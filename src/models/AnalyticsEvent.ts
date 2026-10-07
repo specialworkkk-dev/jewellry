@@ -6,6 +6,7 @@ export interface IAnalyticsEvent extends Document {
   targetId?: mongoose.Types.ObjectId; // Product ID or Story ID
   userAgent?: string;
   ipAddress?: string;
+  dedupeKey?: string;
   createdAt: Date;
 }
 
@@ -20,12 +21,17 @@ const AnalyticsEventSchema: Schema = new Schema(
     targetId: { type: Schema.Types.ObjectId },
     userAgent: { type: String },
     ipAddress: { type: String },
+    dedupeKey: { type: String },
   },
   { timestamps: { updatedAt: false } }
 );
 
 // Indexes for fast dashboard aggregations
 AnalyticsEventSchema.index({ shopId: 1, eventType: 1, createdAt: -1 });
+AnalyticsEventSchema.index(
+  { dedupeKey: 1 },
+  { unique: true, partialFilterExpression: { dedupeKey: { $type: 'string' } } },
+);
 // Keep the free/shared database from growing forever. Dashboard analytics are a
 // rolling 90-day view; business records such as enquiries are never affected.
 AnalyticsEventSchema.index(

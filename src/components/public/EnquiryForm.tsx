@@ -27,6 +27,7 @@ export function EnquiryForm({ shopId, productId }: { shopId: string, productId: 
           customerPhone: formData.get("phone"),
           message: formData.get("message"),
           source: "WEBSITE_FORM",
+          website: formData.get("website") ?? "",
         }),
       });
       const result = await response.json() as { error?: string };
@@ -60,6 +61,11 @@ export function EnquiryForm({ shopId, productId }: { shopId: string, productId: 
       
       {error && <p className="text-red-600 text-sm">{error}</p>}
       
+      <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="enquiry-website">Website</label>
+        <input id="enquiry-website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+      </div>
+
       <div>
         <label htmlFor="enquiry-name" className="text-sm font-medium text-gray-700 block mb-1">Your Name</label>
         <input id="enquiry-name" name="name" type="text" minLength={2} maxLength={100} autoComplete="name" required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition-all" placeholder="John Doe" />

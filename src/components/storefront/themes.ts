@@ -14,6 +14,18 @@ export interface StorefrontTheme {
   footer: string;
   footerTitle: string;
   footerMuted: string;
+  /** Product detail page accents; the page background is always light. */
+  detail: {
+    heading: string;
+    body: string;
+    subtle: string;
+    accent: string;
+    rule: string;
+    panel: string;
+    primaryButton: string;
+    secondaryButton: string;
+    badge: string;
+  };
 }
 
 export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = {
@@ -30,6 +42,17 @@ export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = 
     footer: "bg-[#2a0a10] text-[#f3dfa8]/70",
     footerTitle: "text-[#f3dfa8]",
     footerMuted: "text-[#f3dfa8]/40",
+    detail: {
+      heading: "text-[#3a0f16]",
+      body: "text-[#5c4033]",
+      subtle: "text-[#7a5b4a]",
+      accent: "text-[#9a6b1f]",
+      rule: "border-[#c9a24b]/30",
+      panel: "bg-[#fff4d9]/70 border border-[#c9a24b]/30",
+      primaryButton: "bg-[#7b1e2b] hover:bg-[#5e1521] text-[#f3dfa8]",
+      secondaryButton: "bg-[#3a0f16] hover:bg-[#2a0a10] text-[#f3dfa8]",
+      badge: "bg-[#fff1cc] text-[#7b1e2b]",
+    },
   },
   2: {
     name: "Noir Couture",
@@ -44,6 +67,17 @@ export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = 
     footer: "bg-black text-white/55",
     footerTitle: "text-amber-200",
     footerMuted: "text-white/30",
+    detail: {
+      heading: "text-black",
+      body: "text-neutral-700",
+      subtle: "text-neutral-500",
+      accent: "text-amber-700",
+      rule: "border-black/10",
+      panel: "bg-white border border-black/10",
+      primaryButton: "bg-black hover:bg-neutral-800 text-amber-200",
+      secondaryButton: "bg-neutral-800 hover:bg-neutral-700 text-white",
+      badge: "bg-black text-amber-200",
+    },
   },
   3: {
     name: "Rosé Atelier",
@@ -58,6 +92,17 @@ export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = 
     footer: "bg-[#4a1b29] text-rose-100/70",
     footerTitle: "text-rose-50",
     footerMuted: "text-rose-100/35",
+    detail: {
+      heading: "text-[#5a2433]",
+      body: "text-[#6b4450]",
+      subtle: "text-[#a1707c]",
+      accent: "text-[#b4536a]",
+      rule: "border-rose-200/70",
+      panel: "bg-white/70 border border-rose-200/70",
+      primaryButton: "bg-[#b4536a] hover:bg-[#9b4358] text-white",
+      secondaryButton: "bg-[#5a2433] hover:bg-[#4a1b29] text-rose-50",
+      badge: "bg-rose-100 text-[#9b4358]",
+    },
   },
   4: {
     name: "Emerald Court",
@@ -72,6 +117,17 @@ export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = 
     footer: "bg-[#031a14] text-[#e6d49b]/60",
     footerTitle: "text-[#f1e6c0]",
     footerMuted: "text-[#e6d49b]/30",
+    detail: {
+      heading: "text-[#05261d]",
+      body: "text-[#2f453d]",
+      subtle: "text-[#5d7068]",
+      accent: "text-[#8a6d1f]",
+      rule: "border-[#05261d]/15",
+      panel: "bg-white/60 border border-[#05261d]/10",
+      primaryButton: "bg-[#05261d] hover:bg-[#031a14] text-[#f1e6c0]",
+      secondaryButton: "bg-[#8a6d1f] hover:bg-[#755a17] text-white",
+      badge: "bg-[#e9f3ec] text-[#05261d]",
+    },
   },
   5: {
     name: "Pearl Gallery",
@@ -86,5 +142,16 @@ export const STOREFRONT_THEMES: Record<StorefrontTemplateId, StorefrontTheme> = 
     footer: "bg-neutral-950 text-neutral-400",
     footerTitle: "text-white",
     footerMuted: "text-neutral-600",
+    detail: {
+      heading: "text-neutral-950",
+      body: "text-neutral-700",
+      subtle: "text-neutral-500",
+      accent: "text-neutral-900",
+      rule: "border-neutral-200",
+      panel: "bg-neutral-50 border border-neutral-200",
+      primaryButton: "bg-neutral-950 hover:bg-neutral-800 text-white",
+      secondaryButton: "bg-neutral-700 hover:bg-neutral-600 text-white",
+      badge: "bg-neutral-100 text-neutral-900",
+    },
   },
 };

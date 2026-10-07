@@ -9,10 +9,12 @@ import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { ShopPlanFields } from "@/components/admin/ShopPlanFields";
 import { requirePlatformAdmin } from "@/lib/admin-auth";
 
-export default async function AdminShopEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminShopEditPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string | string[] }> }) {
   await requirePlatformAdmin();
   await connectToDatabase();
   const resolvedParams = await params;
+  const rawError = (await searchParams).error;
+  const formError = (Array.isArray(rawError) ? rawError[0] : rawError)?.slice(0, 600);
   if (!isObjectId(resolvedParams.id)) notFound();
   const shop = await Shop.findById(resolvedParams.id).lean();
   
@@ -37,6 +39,12 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
 
       <div className="bg-white border rounded-lg shadow-sm">
         <form action={updateWithId} className="p-6 space-y-6">
+          {formError && (
+            <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <p className="font-semibold">Changes were not saved.</p>
+              <p>{formError}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Platform Limits */}
@@ -48,7 +56,8 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                 <input 
                   type="number" 
                   name="maxProducts" 
-                  defaultValue={shop.maxProducts || 50} 
+                  defaultValue={shop.maxProducts ?? 50}
+                  required min={1} step={1} 
                   className="w-full px-3 py-2 border rounded-md" 
                 />
                 <p className="text-xs text-gray-500">How many total products they can list on their store.</p>
@@ -59,7 +68,8 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                 <input 
                   type="number" 
                   name="maxPhotosPerDay" 
-                  defaultValue={shop.maxPhotosPerDay || 30} 
+                  defaultValue={shop.maxPhotosPerDay ?? 30}
+                  required min={1} step={1} 
                   className="w-full px-3 py-2 border rounded-md" 
                 />
               </div>
@@ -114,7 +124,8 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                   name="maxLinkOpens" 
                   min={1}
                   step={1}
-                  defaultValue={shop.maxLinkOpens || 500} 
+                  defaultValue={shop.maxLinkOpens ?? 500}
+                  required 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
                 />
                 <p className="text-xs text-gray-500">The storefront accepts this many unique IP addresses. Refreshes and return visits from an admitted IP do not consume another slot.</p>

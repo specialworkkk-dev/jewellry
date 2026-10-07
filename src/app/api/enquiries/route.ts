@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongoose";
 import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
-import { cleanString, isObjectId, isRecord } from "@/lib/validation";
+import { cleanString, isDuplicateKeyError, isObjectId, isRecord } from "@/lib/validation";
 import Enquiry from "@/models/Enquiry";
 import Product from "@/models/Product";
 import Shop from "@/models/Shop";
+import { enquiryDedupeKey, ENQUIRY_DEDUPE_WINDOW_MS } from "@/lib/engagement-dedupe";
 import { scheduleShopEvent } from "@/lib/realtime";
 
 export async function POST(req: Request) {
@@ -20,6 +21,11 @@ export async function POST(req: Request) {
     const body: unknown = await req.json();
     if (!isRecord(body) || !isObjectId(body.shopId)) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
+    }
+
+    // Honeypot: real users never see this field. Pretend success so bots learn nothing.
+    if (typeof body.website === "string" && body.website.trim() !== "") {
+      return NextResponse.json({ message: "Enquiry submitted successfully" }, { status: 201 });
     }
 
     const customerName = cleanString(body.customerName, 100);
@@ -51,17 +57,34 @@ export async function POST(req: Request) {
       productId = product._id;
     }
 
-    const enquiry = await Enquiry.create({
+    const ok = () => NextResponse.json({ message: "Enquiry submitted successfully" }, { status: 201 });
+    const recent = await Enquiry.exists({
       shopId: shop._id,
-      productId,
-      customerName,
       customerPhone,
       message,
-      source: body.source === "WHATSAPP_CLICK" ? "WHATSAPP_CLICK" : "WEBSITE_FORM",
+      createdAt: { $gte: new Date(Date.now() - ENQUIRY_DEDUPE_WINDOW_MS) },
     });
+    if (recent) return ok();
+
+    let enquiry;
+    try {
+      enquiry = await Enquiry.create({
+        shopId: shop._id,
+        productId,
+        customerName,
+        customerPhone,
+        message,
+        source: body.source === "WHATSAPP_CLICK" ? "WHATSAPP_CLICK" : "WEBSITE_FORM",
+        // Unique key closes the race between concurrent identical submissions.
+        dedupeKey: enquiryDedupeKey(shop._id.toString(), customerPhone, message),
+      });
+    } catch (error: unknown) {
+      if (isDuplicateKeyError(error)) return ok();
+      throw error;
+    }
     scheduleShopEvent(shop._id.toString(), "enquiry.created", "owner", enquiry._id.toString());
 
-    return NextResponse.json({ message: "Enquiry submitted successfully" }, { status: 201 });
+    return ok();
   } catch (error: unknown) {
     console.error("Submit enquiry error:", error);
     return NextResponse.json({ error: "Unable to submit enquiry" }, { status: 500 });

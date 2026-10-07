@@ -3,19 +3,28 @@ import Shop from "@/models/Shop";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { requirePlatformAdmin } from "@/lib/admin-auth";
+import { parseListParams } from "@/components/admin/list-params";
+import { AdminSearchForm, AdminPagination } from "@/components/admin/AdminListControls";
 
-export default async function AdminShopsPage() {
+export default async function AdminShopsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requirePlatformAdmin();
+  const { q, page, size, regex, skip } = parseListParams(await searchParams);
   await connectToDatabase();
-  const shops = await Shop.find()
-    .select("name slug isActive planPrice planEndsAt createdAt")
-    .sort({ createdAt: -1 })
-    .limit(500)
-    .lean();
+  const filter = regex ? { $or: [{ name: regex }, { slug: regex }, { city: regex }] } : {};
+  const [shops, total] = await Promise.all([
+    Shop.find(filter)
+      .select("name slug isActive planPrice planEndsAt createdAt")
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(skip)
+      .limit(size)
+      .lean(),
+    Shop.countDocuments(filter),
+  ]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">Manage Shops</h1>
+      <AdminSearchForm q={q} placeholder="Search name, slug or city" />
       
       <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -62,7 +71,7 @@ export default async function AdminShopsPage() {
               {shops.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    No shops registered yet.
+                    {q ? "No shops match your search." : "No shops registered yet."}
                   </td>
                 </tr>
               )}
@@ -70,6 +79,7 @@ export default async function AdminShopsPage() {
           </table>
         </div>
       </div>
+      <AdminPagination q={q} page={page} size={size} total={total} />
     </div>
   );
 }

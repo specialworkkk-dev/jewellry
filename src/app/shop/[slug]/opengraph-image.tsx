@@ -37,7 +37,7 @@ export default async function OpenGraphImage({
           fontFamily: "sans-serif",
         }}
       >
-        {shop?.coverUrl ? (
+        {shop?.coverUrl && /^https?:\/\//i.test(shop.coverUrl) ? (
           <img
             src={shop.coverUrl}
             alt=""

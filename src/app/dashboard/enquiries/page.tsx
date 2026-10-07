@@ -21,8 +21,9 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
     .limit(perPage)
     .populate({ path: "productId", match: { shopId }, select: "name sku" })
     .lean();
-  const [totalEnquiries, requestedEnquiries] = await Promise.all([
+  const [totalEnquiries, unreadEnquiries, requestedEnquiries] = await Promise.all([
     Enquiry.countDocuments({ shopId }),
+    Enquiry.countDocuments({ shopId, status: "NEW" }),
     loadEnquiries(requestedPage),
   ]);
   const page = clampOwnerPage(requestedPage, totalEnquiries, perPage);
@@ -34,6 +35,11 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Enquiries & Leads</h1>
           <p className="text-gray-500 mt-2">Manage customer messages and product requests.</p>
+          {unreadEnquiries > 0 && (
+            <p className="mt-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+              {unreadEnquiries} new {unreadEnquiries === 1 ? "enquiry" : "enquiries"} awaiting reply
+            </p>
+          )}
         </div>
       </div>
 
