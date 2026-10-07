@@ -48,10 +48,26 @@ function parsePlanEndDate(value: FormDataEntryValue | null | undefined, errors: 
   return date;
 }
 
-export async function updateShopLimits(shopId: string, formData: FormData) {
+export type ShopLimitsFormState = {
+  error: string | null;
+  // Raw submitted values, echoed back so a failed validation never loses input.
+  values: Record<string, string> | null;
+  attempt: number;
+};
+
+const FORM_FIELDS = [
+  "maxProducts", "maxPhotosPerDay", "maxVideosPerDay", "videoUploadsEnabled",
+  "maxVideoDurationSeconds", "maxLinkOpens", "isActive", "isApproved", "planPrice", "planEndsAt",
+] as const;
+
+export async function updateShopLimits(
+  shopId: string,
+  previous: ShopLimitsFormState,
+  formData: FormData,
+): Promise<ShopLimitsFormState> {
   await requirePlatformAdmin();
   if (!isObjectId(shopId)) throw new Error("Invalid shop");
-  
+
   const errors: string[] = [];
   const planPrice = parsePlanPrice(formData.get("planPrice"), errors);
   const updates = {
@@ -67,7 +83,11 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
   };
   const planEndsAt = planPrice > 0 ? parsePlanEndDate(formData.get("planEndsAt"), errors) : null;
   if (errors.length > 0) {
-    redirect(`/admin/shops/${shopId}?error=${encodeURIComponent(errors.join(" "))}`);
+    return {
+      error: errors.join(" "),
+      values: Object.fromEntries(FORM_FIELDS.map((name) => [name, formData.get(name)?.toString() ?? ""])),
+      attempt: previous.attempt + 1,
+    };
   }
 
   await connectToDatabase();

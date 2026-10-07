@@ -91,13 +91,13 @@ export async function POST(req: Request) {
 
     const existingUserByUsername = await User.findOne({ username: usernameValue });
     if (existingUserByUsername) {
-      return NextResponse.json({ error: 'This username is already taken.' }, { status: 400 });
+      return NextResponse.json({ error: 'This username is already taken.' }, { status: 409 });
     }
 
     if (emailValue) {
       const existingUserByEmail = await User.findOne({ email: emailValue });
       if (existingUserByEmail) {
-        return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 400 });
+        return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 });
       }
     }
 
