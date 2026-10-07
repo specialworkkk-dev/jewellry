@@ -12,6 +12,8 @@ import { admitUniqueShopVisitor } from "@/lib/unique-shop-visitors";
 import { ShopRealtimeSync } from "@/components/realtime/ShopRealtimeSync";
 import { ShopNotificationButton } from "@/components/public/ShopNotificationButton";
 import { getCurrentSession } from "@/lib/session";
+import { resolveStorefrontTemplate } from "@/lib/storefront-template";
+import { STOREFRONT_THEMES } from "@/components/storefront/themes";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
 
@@ -116,17 +118,21 @@ export default async function PublicShopLayout({
     );
   }
 
+  const theme = STOREFRONT_THEMES[resolveStorefrontTemplate(shop)];
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
   const isOwnerPreview = session?.user.role === "SHOP_OWNER"
     && session.user.shopId === shop._id.toString();
   const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
   const maximumUniqueVisitors = shop.maxLinkOpens || 500;
-  const admission = await admitUniqueShopVisitor(
-    shop._id.toString(),
-    maximumUniqueVisitors,
-    await headers(),
-    shop.uniqueVisitorTrackingVersion,
-  );
+  // The owner previewing their own store must never be locked out or consume a visitor slot.
+  const admission = isOwnerPreview
+    ? { allowed: true, returning: true }
+    : await admitUniqueShopVisitor(
+      shop._id.toString(),
+      maximumUniqueVisitors,
+      await headers(),
+      shop.uniqueVisitorTrackingVersion,
+    );
 
   if (!admission.allowed) {
     return (
@@ -149,7 +155,7 @@ export default async function PublicShopLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf8f3]">
+    <div className={`min-h-screen ${theme.pageBg}`}>
       {process.env.ABLY_API_KEY?.trim() && (
         <ShopRealtimeSync shopId={shop._id.toString()} audience="customer" />
       )}
@@ -178,38 +184,38 @@ export default async function PublicShopLayout({
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (
-        <div className="border-b border-amber-300/30 bg-stone-950 px-4 py-2 text-center text-amber-100">
+        <div className={`${theme.banner} px-4 py-2 text-center`}>
           <p className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold sm:gap-4 sm:text-sm">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-amber-400"></span>
               Today&apos;s Gold Rates
             </span>
             {shop.goldRate22K && <span>22K: ₹{shop.goldRate22K.toLocaleString('en-IN')}/g</span>}
-            {shop.goldRate22K && shop.goldRate24K && <span className="hidden sm:inline text-amber-300">|</span>}
+            {shop.goldRate22K && shop.goldRate24K && <span className="hidden sm:inline opacity-60">|</span>}
             {shop.goldRate24K && <span>24K: ₹{shop.goldRate24K.toLocaleString('en-IN')}/g</span>}
           </p>
         </div>
       )}
       
       {/* Public Shop Header */}
-      <header className={`z-50 border-b border-stone-200/80 bg-white/95 backdrop-blur-md sm:sticky ${isOwnerPreview ? "sm:top-12" : "sm:top-0"}`}>
+      <header className={`z-50 ${theme.header} sm:sticky ${isOwnerPreview ? "sm:top-12" : "sm:top-0"}`}>
         <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
             {/* Logo & Name */}
             <div className="flex items-center gap-4 self-start sm:self-auto w-full sm:w-auto">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-200 bg-amber-50 shadow-sm sm:h-14 sm:w-14">
+              <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border ${theme.logoRing} shadow-sm sm:h-14 sm:w-14`}>
                 {shop.logoUrl ? (
                   <StoreImage src={shop.logoUrl} alt={shop.name} sizes="56px" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-xl font-serif text-gray-400">{shop.name.charAt(0)}</span>
+                  <span className={`text-xl font-serif ${theme.muted}`}>{shop.name.charAt(0)}</span>
                 )}
               </div>
               <div>
-                <h1 className="line-clamp-1 text-lg font-serif font-semibold text-stone-900 sm:text-xl">{shop.name}</h1>
+                <h1 style={{ fontFamily: theme.display }} className={`line-clamp-1 text-lg font-semibold sm:text-xl ${theme.title}`}>{shop.name}</h1>
                 <div className="flex flex-col gap-1 mt-1">
                   {(shop.address || shop.city || shop.state) && (
-                    <p className="text-sm text-gray-500 flex items-start gap-1">
+                    <p className={`text-sm flex items-start gap-1 ${theme.muted}`}>
                       <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                       <span className="leading-tight line-clamp-2">
                         {[shop.address, shop.city, shop.state, shop.pincode].filter(Boolean).join(", ")}
@@ -217,7 +223,7 @@ export default async function PublicShopLayout({
                     </p>
                   )}
                   {(shop.businessPhone || shop.whatsappNumber) && (
-                    <a href={`tel:${(shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "")}`} className="text-sm text-gray-500 flex items-center gap-1 hover:text-gray-900">
+                    <a href={`tel:${(shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "")}`} className={`text-sm flex items-center gap-1 ${theme.muted} ${theme.iconHover}`}>
                       <Phone className="w-3.5 h-3.5 flex-shrink-0" />
                       {shop.businessPhone || shop.whatsappNumber}
                     </a>
@@ -248,19 +254,19 @@ export default async function PublicShopLayout({
                 />
               </div>
               
-              <div className="flex items-center gap-3 text-gray-400">
+              <div className={`flex items-center gap-3 ${theme.muted}`}>
                 {shop.instagramUrl && (
-                  <a href={shop.instagramUrl} target="_blank" rel="noreferrer" className="hover:text-pink-600 transition-colors">
+                  <a href={shop.instagramUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
                     <AtSign className="w-5 h-5" />
                   </a>
                 )}
                 {shop.facebookUrl && (
-                  <a href={shop.facebookUrl} target="_blank" rel="noreferrer" className="hover:text-blue-600 transition-colors">
+                  <a href={shop.facebookUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
                     <Users className="w-5 h-5" />
                   </a>
                 )}
                 {shop.websiteUrl && (
-                  <a href={shop.websiteUrl} target="_blank" rel="noreferrer" className="hover:text-gray-800 transition-colors">
+                  <a href={shop.websiteUrl} target="_blank" rel="noreferrer" className={`${theme.iconHover} transition-colors`}>
                     <Globe className="w-5 h-5" />
                   </a>
                 )}
@@ -272,15 +278,15 @@ export default async function PublicShopLayout({
       </header>
 
       {/* Main Content Area (Dynamic based on route) */}
-      <main className="pb-24">
+      <main>
         {children}
       </main>
       
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-stone-950 px-4 py-10 text-center text-sm text-white/60">
-        <p className="font-serif text-lg text-white">{shop.name}</p>
+      <footer className={`border-t border-white/10 px-4 py-10 text-center text-sm ${theme.footer}`}>
+        <p style={{ fontFamily: theme.display }} className={`text-lg ${theme.footerTitle}`}>{shop.name}</p>
         <p className="mt-2">&copy; {new Date().getFullYear()} All rights reserved.</p>
-        <p className="mt-1 text-xs text-white/35">Powered by LuxeStore</p>
+        <p className={`mt-1 text-xs ${theme.footerMuted}`}>Powered by LuxeStore</p>
       </footer>
 
     </div>

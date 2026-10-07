@@ -12,6 +12,13 @@ import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
+function formatOwnerPrice(priceType: string, price?: number) {
+  if (price === undefined || price === null) return priceType.replace(/_/g, " ");
+  if (priceType === "FIXED_PRICE") return `₹${price.toLocaleString("en-IN")}`;
+  if (priceType === "STARTING_FROM") return `From ₹${price.toLocaleString("en-IN")}`;
+  return priceType.replace(/_/g, " ");
+}
+
 export default async function ProductsListPage({ searchParams }: { searchParams: OwnerListSearchParams }) {
   const { shopId } = await requireOwnerTenant();
   await connectToDatabase();
@@ -76,7 +83,7 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                     </div>
                     <p className="mt-1 text-xs text-gray-500">SKU: {product.sku}</p>
                     <p className="mt-2 text-sm font-medium text-gray-800">
-                      {product.priceType === "FIXED_PRICE" ? `₹${product.price?.toLocaleString("en-IN")}` : product.priceType.replace(/_/g, " ")}
+                      {formatOwnerPrice(product.priceType, product.price)}
                     </p>
                   </div>
                 </div>
@@ -122,7 +129,7 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-500">
-                      {product.priceType === 'FIXED_PRICE' ? `₹${product.price}` : product.priceType.replace(/_/g, ' ')}
+                      {formatOwnerPrice(product.priceType, product.price)}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <form action={setProductPublishedAction.bind(null, product._id.toString(), !product.isPublished)} className="inline-block">

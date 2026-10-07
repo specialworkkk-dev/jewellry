@@ -9,9 +9,10 @@ export default async function AdminDashboardPage() {
   await requirePlatformAdmin();
   await connectToDatabase();
 
-  const [totalShops, pendingShops, totalUsers, recentShops] = await Promise.all([
+  const [totalShops, pendingShops, activeShops, totalUsers, recentShops] = await Promise.all([
     Shop.countDocuments(),
     Shop.countDocuments({ isApproved: false }),
+    Shop.countDocuments({ isApproved: true, isActive: true }),
     User.countDocuments(),
     Shop.find()
       .select("name city state isApproved createdAt")
@@ -61,7 +62,7 @@ export default async function AdminDashboardPage() {
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalShops - pendingShops}</div>
+            <div className="text-2xl font-bold">{activeShops}</div>
           </CardContent>
         </Card>
       </div>

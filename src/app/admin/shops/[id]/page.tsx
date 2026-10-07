@@ -140,6 +140,15 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
                 <p className="text-xs text-gray-500">Suspending the account will immediately hide their public storefront.</p>
               </div>
               
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Approval</label>
+                <select name="isApproved" defaultValue={shop.isApproved ? "true" : "false"} className="w-full px-3 py-2 border rounded-md bg-white">
+                  <option value="true">Approved</option>
+                  <option value="false">Pending / Rejected</option>
+                </select>
+                <p className="text-xs text-gray-500">Unapproved shops are not visible on the public storefront.</p>
+              </div>
+
               <div className="pt-6">
                 <ActionSubmitButton pendingLabel="Saving configuration…" className="h-auto w-full bg-gray-900 px-4 py-3 text-white hover:bg-black">
                   Save Tenant Configuration

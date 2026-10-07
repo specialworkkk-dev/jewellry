@@ -8,10 +8,10 @@ import { scheduleShopEvent } from "@/lib/realtime";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 import { requirePlatformAdmin } from "@/lib/admin-auth";
 
-const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number) => {
+const parsePositiveInt = (value: FormDataEntryValue | null | undefined, fallback: number, max = 1_000_000_000) => {
   const parsed = Number(value ?? fallback);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return Math.trunc(parsed);
+  return Math.min(max, Math.trunc(parsed));
 };
 
 const parseBoundedInt = (value: FormDataEntryValue | null | undefined, fallback: number, min: number, max: number) => {
@@ -56,6 +56,7 @@ export async function updateShopLimits(shopId: string, formData: FormData) {
     maxVideoDurationSeconds: parseBoundedInt(formData.get("maxVideoDurationSeconds"), 30, 5, 120),
     maxLinkOpens: parsePositiveInt(formData.get("maxLinkOpens"), 500),
     isActive: formData.get("isActive") === "true",
+    isApproved: formData.get("isApproved") === "true",
     planPrice,
   };
 

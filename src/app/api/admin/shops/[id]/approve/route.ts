@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/mongoose';
 import Shop from '@/models/Shop';
 import { isObjectId } from '@/lib/validation';
 import { invalidatePublicStoreCache } from '@/lib/public-store-cache';
+import { scheduleShopEvent } from '@/lib/realtime';
 import { isPlatformAdmin } from '@/lib/admin-auth';
 
 export async function POST(
@@ -29,6 +30,7 @@ export async function POST(
     shop.isApproved = true;
     await shop.save();
     invalidatePublicStoreCache({ shopId: id, slug: shop.slug });
+    scheduleShopEvent(id, 'shop.status.updated', 'both');
 
     return NextResponse.json({ message: 'Shop approved successfully' });
   } catch (error) {

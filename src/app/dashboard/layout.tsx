@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   const session = await getCurrentSession();
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?reauth=1");
   }
 
   if (session.user.role === "SUPER_ADMIN" || session.user.role === "PLATFORM_ADMIN") {
@@ -44,14 +44,14 @@ export default async function DashboardLayout({
   }
 
   if (session.user.role !== "SHOP_OWNER") {
-    redirect("/login");
+    redirect("/login?reauth=1");
   }
 
   const [tenant, platformSupport] = await Promise.all([
     getVerifiedOwnerTenant(),
     getPlatformSupport(),
   ]);
-  if (!tenant) redirect("/login");
+  if (!tenant) redirect("/login?reauth=1");
   const shop = tenant.shop;
   const planPrice = Math.max(0, Number(shop?.planPrice ?? 0));
   const planEndsAt = shop?.planEndsAt ? new Date(shop.planEndsAt) : null;

@@ -203,3 +203,27 @@
     transform: none !important;
   }
 }
+
+/* Storefront template motion */
+@keyframes sf-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes sf-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -22px, 0); }
+}
+
+@keyframes sf-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.sf-marquee { animation: sf-marquee 40s linear infinite; }
+.sf-float { animation: sf-float 11s ease-in-out infinite; }
+.sf-shimmer { background-size: 200% 100%; animation: sf-shimmer 6s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-marquee, .sf-float, .sf-shimmer { animation: none !important; }
+}

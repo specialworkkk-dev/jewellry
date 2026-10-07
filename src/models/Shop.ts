@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { STOREFRONT_TEMPLATE_COUNT } from '@/lib/storefront-template';
 
 export interface IShop extends Document {
   ownerId: mongoose.Types.ObjectId;
@@ -15,6 +16,7 @@ export interface IShop extends Document {
   logoUrl?: string;
   coverUrl?: string;
   shortDescription?: string;
+  storefrontTemplate?: number; // 1-5, customer storefront design
   
   // Socials
   instagramUrl?: string;
@@ -59,6 +61,7 @@ const ShopSchema: Schema = new Schema(
     logoUrl: { type: String },
     coverUrl: { type: String },
     shortDescription: { type: String },
+    storefrontTemplate: { type: Number, min: 1, max: STOREFRONT_TEMPLATE_COUNT },
     
     instagramUrl: { type: String },
     facebookUrl: { type: String },

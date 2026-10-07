@@ -24,10 +24,13 @@ export function useInteraction({
   const [isLoading, setIsLoading] = useState(false);
 
   const toggle = async () => {
+    if (isLoading) return;
+    const previousActive = isActive;
+    const previousCount = count;
     // 1. Optimistic UI Update
     setIsActive(!isActive);
     if (interactionType === 'LIKE') {
-      setCount(prev => isActive ? prev - 1 : prev + 1);
+      setCount(prev => isActive ? Math.max(0, prev - 1) : prev + 1);
     }
 
     setIsLoading(true);
@@ -48,16 +51,14 @@ export function useInteraction({
         throw new Error('Interaction failed');
       }
       
-      // (Optional) sync server state if needed: 
-      // const data = await res.json();
-      // setIsActive(data.state);
+      const data = await res.json() as { state?: boolean; likesCount?: number };
+      if (typeof data.state === 'boolean') setIsActive(data.state);
+      if (typeof data.likesCount === 'number') setCount(data.likesCount);
 
     } catch (error) {
       // 3. Rollback UI if request failed
-      setIsActive(isActive);
-      if (interactionType === 'LIKE') {
-        setCount(initialCount);
-      }
+      setIsActive(previousActive);
+      setCount(previousCount);
       console.error(error);
     } finally {
       setIsLoading(false);

@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/mongoose";
 import User from "@/models/User";
 import type { NextAuthOptions } from "next-auth";
 import { encode as encodeJwt } from "next-auth/jwt";
+import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 const useSecureCookies = process.env.NODE_ENV === "production";
@@ -17,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         const usernameInput = credentials?.username?.toString().trim().toLowerCase();
         const emailInput = credentials?.email?.toString().trim().toLowerCase();
 
@@ -25,7 +26,21 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        const lookupValue = usernameInput || emailInput;
+        const lookupValue = (usernameInput || emailInput || "").slice(0, 254);
+        if (credentials.password.length > 1024) return null;
+
+        // Throttle credential stuffing per IP and per targeted account.
+        const headers = new Headers(
+          Object.entries(req?.headers ?? {}).map(([k, v]): [string, string] => [k, Array.isArray(v) ? v.join(",") : String(v ?? "")]),
+        );
+        const clientId = requestClientId({ headers } as Request);
+        const [byIp, byAccount] = await Promise.all([
+          checkRateLimit(`login-ip:${clientId}`, 30, 15 * 60 * 1000),
+          checkRateLimit(`login-user:${lookupValue}`, 10, 15 * 60 * 1000),
+        ]);
+        if (!byIp.allowed || !byAccount.allowed) {
+          throw new Error("Too many login attempts. Please try again later.");
+        }
 
         await connectToDatabase();
 

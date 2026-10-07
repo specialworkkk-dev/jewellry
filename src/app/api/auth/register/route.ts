@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import connectToDatabase from '@/lib/mongoose';
 import User from '@/models/User';
 import Shop from '@/models/Shop';
+import { pickRandomStorefrontTemplate } from '@/lib/storefront-template';
 import PlatformSettings from '@/models/PlatformSettings';
 import { generateUniqueShopSlug } from '@/lib/slugify';
 import { checkRateLimit, requestClientId } from '@/lib/rate-limit';
@@ -59,6 +60,13 @@ export async function POST(req: Request) {
 
     if (passwordValue.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters long.' }, { status: 400 });
+    }
+    // bcrypt silently truncates at 72 bytes; reject instead of weakening the password.
+    if (Buffer.byteLength(passwordValue, 'utf8') > 72) {
+      return NextResponse.json({ error: 'Password must be at most 72 bytes long.' }, { status: 400 });
+    }
+    if (nameValue.length > 100 || emailValue.length > 254 || shopNameValue.length > 100) {
+      return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 });
     }
 
     const normalizedMobile = mobileValue.replace(/\s+/g, '');
@@ -124,12 +132,13 @@ export async function POST(req: Request) {
           ownerId: savedUser._id,
           name: shopNameValue,
           slug,
-          address: typeof address === 'string' ? address : '',
-          city: typeof city === 'string' ? city : '',
-          state: typeof state === 'string' ? state : '',
-          pincode: typeof pincode === 'string' ? pincode : '',
-          whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber : normalizedMobile,
-          businessPhone: typeof businessPhone === 'string' ? businessPhone : '',
+          address: typeof address === 'string' ? address.trim().slice(0, 300) : '',
+          city: typeof city === 'string' ? city.trim().slice(0, 100) : '',
+          state: typeof state === 'string' ? state.trim().slice(0, 100) : '',
+          pincode: typeof pincode === 'string' ? pincode.trim().slice(0, 12) : '',
+          whatsappNumber: typeof whatsappNumber === 'string' ? whatsappNumber.trim().slice(0, 20) : normalizedMobile,
+          businessPhone: typeof businessPhone === 'string' ? businessPhone.trim().slice(0, 20) : '',
+          storefrontTemplate: pickRandomStorefrontTemplate(),
           isApproved: platformSettings ? platformSettings.allowAutoApproval !== false : true,
         }).save();
         createdShopId = savedShop._id.toString();

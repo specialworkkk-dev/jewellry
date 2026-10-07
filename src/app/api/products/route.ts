@@ -167,6 +167,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Making-charge fixed discount cannot exceed making charges' }, { status: 400 });
     }
 
+    if ((priceType === 'FIXED_PRICE' || priceType === 'STARTING_FROM') && (!enteredPrice || enteredPrice <= 0)) {
+      return NextResponse.json({ error: 'Enter a price for fixed or starting-from pricing' }, { status: 400 });
+    }
+
     const hasMainDiscount = Boolean(discountType && discountValue > 0 && enteredPrice !== undefined);
     const finalPrice = enteredPrice === undefined
       ? undefined

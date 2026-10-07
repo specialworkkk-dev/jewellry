@@ -8,6 +8,10 @@ import { withRetry } from "@/lib/retry";
 const ALLOWED_FOLDERS = new Set(["products", "logos", "covers", "posts", "stories"]);
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const ALLOWED_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const EXTENSION_BY_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif",
+  "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov",
+};
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
@@ -61,7 +65,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `File must be smaller than ${maxMb} MB` }, { status: 413 });
     }
 
-    const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || (isImage ? "jpg" : "mp4");
+    const extension = EXTENSION_BY_TYPE[file.type] ?? (isImage ? "jpg" : "mp4");
     const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());

@@ -72,6 +72,7 @@ export async function deleteProductAction(productId: string) {
   const deleted = await Product.deleteOne({ _id: productId, shopId });
   if (deleted.deletedCount === 0) throw new Error("Product not found");
   revalidatePath("/dashboard/products");
+  revalidatePath("/dashboard", "page");
   revalidatePath("/shop/[slug]", "page");
   invalidatePublicStoreCache({ shopId });
   scheduleShopEvent(shopId, "product.deleted", "both", productId);

@@ -33,7 +33,10 @@ export async function proxy(request: NextRequest) {
   // Installed PWAs can reopen either the platform start URL or their last
   // /login URL. Resolve the signed cookie before rendering so a valid session
   // resumes the correct dashboard without flashing the hero or login page.
-  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/login") {
+  // `?reauth=1` is set by guards whose DB check rejected an otherwise valid
+  // cookie (deleted user/shop); redirecting back would loop forever.
+  const skipResume = request.nextUrl.searchParams.has("reauth");
+  if (!skipResume && (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/login")) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,

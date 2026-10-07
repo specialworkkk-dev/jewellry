@@ -10,12 +10,28 @@ function sameOrigin(request: NextRequest) {
   return !origin || origin === request.nextUrl.origin;
 }
 
+// The server POSTs to this URL when sending pushes, so reject anything that is
+// not a public https hostname (IP literals, localhost, credentials, odd ports).
+function isSafePushEndpoint(endpoint: string) {
+  try {
+    const url = new URL(endpoint);
+    const host = url.hostname.toLowerCase();
+    if (url.protocol !== "https:" || url.username || url.password) return false;
+    if (url.port && url.port !== "443") return false;
+    if (!host.includes(".") || host.startsWith("[") || /^[\d.]+$/.test(host)) return false;
+    if (host === "localhost" || /\.(local|localhost|internal|lan|home|corp)$/.test(host)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function subscriptionDetails(value: unknown) {
   if (!isRecord(value) || !isRecord(value.keys)) return null;
   const endpoint = cleanString(value.endpoint, 2048);
   const p256dh = cleanString(value.keys.p256dh, 512);
   const auth = cleanString(value.keys.auth, 512);
-  if (!endpoint.startsWith("https://") || !p256dh || !auth) return null;
+  if (!isSafePushEndpoint(endpoint) || !p256dh || !auth) return null;
   return {
     endpoint,
     p256dh,

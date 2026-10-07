@@ -1,12 +1,19 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { collectAndStoreInfrastructureReport } from "@/lib/infrastructure-monitor";
 import { drainPendingNotificationJobs } from "@/lib/push-notifications";
 
 export const dynamic = "force-dynamic";
 
+function safeEqual(a: string, b: string) {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || !safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

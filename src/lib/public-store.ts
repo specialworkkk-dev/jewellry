@@ -42,7 +42,7 @@ export const getPublicShopBySlug = cache(async (slug: string) => unstable_cache(
   async () => {
     await connectToDatabase();
     return Shop.findOne({ slug, isApproved: true })
-      .select("name slug logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
+      .select("name slug storefrontTemplate logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
       .lean();
   },
   ["public-shop-by-slug", PUBLIC_STORE_CACHE_NAMESPACE, slug],
@@ -68,6 +68,10 @@ export const getPublicProductById = cache(async (shopId: string, productId: stri
 export const getPublicCatalogue = cache(async (shopId: string, activeCategory?: string, after?: string) => {
   if (!isObjectId(shopId)) return { categories: [], products: [], nextCursor: null };
   const categorySlug = activeCategory && activeCategory !== "all" ? activeCategory : "all";
+  // Reject junk slugs before they can mint unbounded Data Cache entries.
+  if (categorySlug !== "all" && !/^[a-z0-9][a-z0-9-]{0,79}$/i.test(categorySlug)) {
+    return { categories: [], products: [], nextCursor: null };
+  }
   const decodedCursor = decodeCatalogueCursor(after);
   const safeCursor = decodedCursor
     ? Buffer.from(`${decodedCursor.createdAt.toISOString()}|${decodedCursor.id.toString()}`).toString("base64url")
@@ -119,7 +123,9 @@ export const getPublicCatalogue = cache(async (shopId: string, activeCategory?: 
 
       const categories = await categoriesPromise;
       const selectedCategory = categories.find((category) => category.slug === categorySlug)?._id;
-      if (selectedCategory) query.categoryId = selectedCategory;
+      // An unknown category must show nothing, not silently fall back to every product.
+      if (!selectedCategory) return pageResult(categories, []);
+      query.categoryId = selectedCategory;
       const products = await findProducts();
       return pageResult(categories, products);
     },
