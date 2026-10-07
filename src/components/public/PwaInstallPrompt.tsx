@@ -45,19 +45,22 @@ export function PwaInstallPrompt({
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [showManualSteps, setShowManualSteps] = useState(false);
   const storageSuffix = appId.replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
-  const installStorageKey = `luxestore-pwa-${storageSuffix}-installed`;
+  // Older builds stored installation as a permanent boolean. Browsers do not
+  // send websites an uninstall event, so that value became stale forever after
+  // an uninstall. Keep the key only to remove the legacy state.
+  const legacyInstallStorageKey = `luxestore-pwa-${storageSuffix}-installed`;
   const dismissedStorageKey = `luxestore-pwa-${storageSuffix}-dismissed-at`;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     let revealTimer: number | undefined;
     let installSignalTimer: number | undefined;
+    let installedDuringThisMount = false;
 
     const promptIsSuppressed = () => {
-      const installed = localStorage.getItem(installStorageKey) === "true" || isStandaloneMode();
       const dismissedAt = Number(localStorage.getItem(dismissedStorageKey) || 0);
       const recentlyDismissed = Number.isFinite(dismissedAt) && Date.now() - dismissedAt < dismissDurationMs;
-      return installed || recentlyDismissed;
+      return isStandaloneMode() || installedDuringThisMount || recentlyDismissed;
     };
 
     const revealPrompt = () => {
@@ -67,20 +70,50 @@ export function PwaInstallPrompt({
     };
 
     const handleBeforeInstallPrompt = () => {
+      // A fresh browser install event is authoritative evidence that the app is
+      // not currently installed, even if an older version left a stored flag.
+      installedDuringThisMount = false;
+      localStorage.removeItem(legacyInstallStorageKey);
       setDeferredPrompt(getCapturedInstallPrompt() || null);
       if (installSignalTimer) window.clearTimeout(installSignalTimer);
       revealPrompt();
     };
 
     const handleAppInstalled = () => {
-      localStorage.setItem(installStorageKey, "true");
+      installedDuringThisMount = true;
+      localStorage.removeItem(legacyInstallStorageKey);
       setIsVisible(false);
+    };
+
+    const recheckInstallState = () => {
+      if (document.visibilityState === "hidden") return;
+      if (isStandaloneMode()) {
+        setIsVisible(false);
+        return;
+      }
+
+      // A normal browser visit must never be suppressed by a stale historical
+      // install flag. After uninstall, Chrome will normally provide a new
+      // beforeinstallprompt event, which immediately reveals the prompt.
+      localStorage.removeItem(legacyInstallStorageKey);
+      const capturedPrompt = getCapturedInstallPrompt();
+      if (capturedPrompt) {
+        installedDuringThisMount = false;
+        setDeferredPrompt(capturedPrompt);
+        revealPrompt();
+      }
     };
 
     window.addEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
     window.addEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
+    window.addEventListener("focus", recheckInstallState);
+    window.addEventListener("pageshow", recheckInstallState);
+    document.addEventListener("visibilitychange", recheckInstallState);
+    const displayModeQuery = window.matchMedia("(display-mode: standalone)");
+    displayModeQuery.addEventListener?.("change", recheckInstallState);
 
     const initializePrompt = window.setTimeout(() => {
+      if (!isStandaloneMode()) localStorage.removeItem(legacyInstallStorageKey);
       if (promptIsSuppressed()) return;
 
       const capturedPrompt = getCapturedInstallPrompt();
@@ -110,11 +143,15 @@ export function PwaInstallPrompt({
       if (revealTimer) window.clearTimeout(revealTimer);
       window.removeEventListener(PWA_INSTALL_READY_EVENT, handleBeforeInstallPrompt);
       window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleAppInstalled);
+      window.removeEventListener("focus", recheckInstallState);
+      window.removeEventListener("pageshow", recheckInstallState);
+      document.removeEventListener("visibilitychange", recheckInstallState);
+      displayModeQuery.removeEventListener?.("change", recheckInstallState);
     };
-  }, [dismissedStorageKey, dismissDurationMs, installStorageKey, showDelayMs]);
+  }, [dismissedStorageKey, dismissDurationMs, legacyInstallStorageKey, showDelayMs]);
 
   const markInstalled = () => {
-    localStorage.setItem(installStorageKey, "true");
+    localStorage.removeItem(legacyInstallStorageKey);
     setIsVisible(false);
   };
 

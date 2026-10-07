@@ -29,6 +29,19 @@ export function PwaInstallCard({ appName }: { appName: string }) {
   const [installSignalSettled, setInstallSignalSettled] = useState(false);
 
   useEffect(() => {
+    const recheckInstallState = () => {
+      if (document.visibilityState === "hidden") return;
+      if (isStandalone()) {
+        setHidden(true);
+        return;
+      }
+      const capturedPrompt = getCapturedInstallPrompt() || null;
+      if (capturedPrompt) {
+        setPrompt(capturedPrompt);
+        setHidden(false);
+        setInstallSignalSettled(true);
+      }
+    };
     const initialize = window.setTimeout(() => {
       const environment = getPwaBrowserEnvironment();
       const capturedPrompt = getCapturedInstallPrompt() || null;
@@ -54,11 +67,20 @@ export function PwaInstallCard({ appName }: { appName: string }) {
     };
     window.addEventListener(PWA_INSTALL_READY_EVENT, handlePrompt);
     window.addEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
+    window.addEventListener("focus", recheckInstallState);
+    window.addEventListener("pageshow", recheckInstallState);
+    document.addEventListener("visibilitychange", recheckInstallState);
+    const displayModeQuery = window.matchMedia("(display-mode: standalone)");
+    displayModeQuery.addEventListener?.("change", recheckInstallState);
     return () => {
       window.clearTimeout(initialize);
       window.clearTimeout(signalTimeout);
       window.removeEventListener(PWA_INSTALL_READY_EVENT, handlePrompt);
       window.removeEventListener(PWA_APP_INSTALLED_EVENT, handleInstalled);
+      window.removeEventListener("focus", recheckInstallState);
+      window.removeEventListener("pageshow", recheckInstallState);
+      document.removeEventListener("visibilitychange", recheckInstallState);
+      displayModeQuery.removeEventListener?.("change", recheckInstallState);
     };
   }, []);
 
