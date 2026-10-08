@@ -142,7 +142,14 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
         if (!confirmed) throw new Error(confirmError);
         result = { publicUrl: prepared.publicUrl, key: prepared.key };
       } catch (directUploadError) {
-        if (isVideo) throw directUploadError;
+        if (isVideo) {
+          // A TypeError from fetch() means the browser never got a response: network loss, or the
+          // storage bucket rejecting this site's origin (CORS). Say so instead of "Failed to fetch".
+          if (directUploadError instanceof TypeError) {
+            throw new Error("Video upload could not reach storage. Check your connection and try again. If it keeps failing, the storage bucket's CORS rule must allow this website.");
+          }
+          throw directUploadError;
+        }
         const formData = new FormData();
         formData.append("file", uploadFile);
         formData.append("folder", folder);

@@ -10,6 +10,11 @@ if (process.env.NODE_ENV !== "test" && (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !
 
 export const r2Client = new S3Client({
   region: "auto",
+  // Recent AWS SDKs add a CRC32 checksum to every request. For a presigned PUT the checksum of an
+  // empty body ends up signed into the URL, so the browser's real upload then fails verification.
+  // Only compute checksums when an operation requires them.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
   endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: R2_ACCESS_KEY_ID || "",
