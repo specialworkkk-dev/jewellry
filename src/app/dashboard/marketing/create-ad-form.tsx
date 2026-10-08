@@ -12,7 +12,7 @@ const MediaUploader = dynamic(
   { ssr: false, loading: () => <div className="h-11 animate-pulse rounded-md border bg-gray-50" aria-label="Loading uploader" /> },
 );
 
-const inputClass = "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-500 focus:outline-none";
+const inputClass = "block min-h-11 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-500 focus:outline-none";
 
 const TYPES = [
   { value: "GOLD_RATE", label: "Gold rate", hint: "Shown as a rate strip. Replaces your previous gold-rate ad." },
@@ -67,20 +67,20 @@ export function CreateAdForm() {
         <>
           <MediaUploader folder="posts" onUploadSuccess={(url) => setImageUrl(url)} />
           {imageUrl && (
-            <div className="relative h-20 w-20 overflow-hidden rounded-md border">
+            <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-gray-100">
               <Image src={imageUrl} alt="Banner" fill sizes="80px" className="object-cover" />
-              <button type="button" onClick={() => setImageUrl("")} aria-label="Remove image" className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white"><X className="h-3 w-3" /></button>
+              <button type="button" onClick={() => setImageUrl("")} aria-label="Remove image" className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-white"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/60"><X className="h-3 w-3" /></span></button>
             </div>
           )}
         </>
       )}
       <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="Optional link (https://...)" className={inputClass} />
-      <label className="block text-xs text-gray-600">Valid until (optional)
+      <label className="block min-w-0 text-xs text-gray-600">Valid until (optional)
         <input type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className={`${inputClass} mt-1`} />
       </label>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {done && <p role="status" className="text-sm font-medium text-green-700">Published to your storefront.</p>}
-      <Button type="submit" disabled={busy || !title.trim() || !message.trim()} className="w-full">
+      <Button type="submit" disabled={busy || !title.trim() || !message.trim()} className="min-h-11 w-full">
         {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : "Publish"}
       </Button>
     </form>

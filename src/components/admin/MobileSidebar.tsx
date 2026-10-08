@@ -30,9 +30,9 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
   return (
     <div className="md:hidden">
       {/* Mobile Top Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100">
-        <span className="font-bold text-lg text-gray-900">{mode === "admin" ? "Admin Panel" : "Shop Owner Panel"}</span>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 bg-white px-4 py-2 border-b border-gray-100">
+        <span className="min-w-0 truncate font-bold text-lg text-gray-900">{mode === "admin" ? "Admin Panel" : "Shop Owner Panel"}</span>
+        <div className="flex shrink-0 items-center gap-2">
           {mode === "shop" && <LanguageSwitcher compact className="min-h-11 px-3" />}
           <button type="button" aria-label="Open navigation" onClick={() => setIsOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 hover:text-black">
             <Menu className="w-6 h-6" />
@@ -44,20 +44,18 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
       {isOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
-              <button
-                type="button"
-                aria-label="Close navigation"
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                onClick={() => setIsOpen(false)}
-              >
-                <X className="w-6 h-6 text-white" />
-              </button>
-            </div>
-            
+          <div className="relative flex w-[85vw] max-w-xs flex-col bg-white shadow-xl">
+            <button
+              type="button"
+              aria-label="Close navigation"
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              onClick={() => setIsOpen(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-              <div className="flex-shrink-0 flex items-center px-4 font-bold text-xl text-gray-900 mb-5">
+              <div className="flex-shrink-0 flex items-center px-4 pr-16 font-bold text-xl text-gray-900 mb-5">
                 LuxeStore SaaS
               </div>
               {mode === "shop" && (

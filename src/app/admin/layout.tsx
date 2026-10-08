@@ -53,7 +53,7 @@ export default async function AdminLayout({
       />
       <MobileSidebar mode="admin" />
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r flex flex-col hidden md:flex">
+      <aside className="w-64 shrink-0 bg-white border-r flex flex-col hidden md:flex">
         <div className="h-16 flex items-center px-6 border-b border-gray-100 font-bold text-xl text-gray-800">
           Admin Panel
         </div>
@@ -92,21 +92,21 @@ export default async function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex min-w-0 flex-1 flex-col">
         <header className="h-16 bg-white border-b border-gray-100 hidden md:flex items-center px-6 justify-between">
           <h2 className="font-medium text-gray-600">Jewellery SaaS Platform</h2>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <UserProfileDropdown name={displayName} email={displayEmail} />
           </div>
         </header>
-        <div className="p-4 md:p-8">
+        <div className="min-w-0 p-4 md:p-8">
           {infrastructureAlerts.length > 0 && (
             <Link
               prefetch={true}
               href="/admin/infrastructure"
-              className={`mb-5 flex items-center justify-between gap-4 rounded-lg border p-3 text-sm ${criticalAlerts.length > 0 ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}
+              className={`mb-5 flex min-h-11 items-center justify-between gap-3 rounded-lg border p-3 text-sm ${criticalAlerts.length > 0 ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex min-w-0 items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 {criticalAlerts.length > 0
                   ? `${criticalAlerts.length} critical infrastructure alert${criticalAlerts.length === 1 ? "" : "s"} require action.`

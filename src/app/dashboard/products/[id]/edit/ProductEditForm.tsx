@@ -171,7 +171,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link prefetch={true} href="/dashboard/products">
-            <Button variant="ghost" size="icon" type="button" className="shrink-0">
+            <Button variant="ghost" size="icon" type="button" aria-label="Back to products" className="size-10 shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
@@ -180,7 +180,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
             <p className="text-sm sm:text-base text-gray-500 mt-1">Update this jewellery piece. Changes go live immediately if published.</p>
           </div>
         </div>
-        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto text-sm sm:text-base">
+        <Button type="submit" disabled={isSubmitting} className="min-h-11 w-full sm:w-auto text-sm sm:text-base">
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Changes
         </Button>
@@ -207,7 +207,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Bridal Diamond Necklace" 
-                  className="w-full px-3 py-2 border rounded-md" 
+                  className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                   required
                 />
               </div>
@@ -219,14 +219,14 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="e.g. BDN-001" 
-                    className="w-full px-3 py-2 border rounded-md" 
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category</label>
                   <select 
-                    className="w-full px-3 py-2 border rounded-md bg-white"
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md bg-white"
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                   >
@@ -243,7 +243,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the jewellery..." 
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md"
                 />
               </div>
             </CardContent>
@@ -261,7 +261,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                   <select 
                     value={goldPurity}
                     onChange={(e) => setGoldPurity(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md bg-white"
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md bg-white"
                   >
                     <option value="">Select Purity</option>
                     <option value="14K">14K</option>
@@ -278,7 +278,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     value={goldWeight}
                     onChange={(e) => setGoldWeight(e.target.value)}
                     placeholder="0.00" 
-                    className="w-full px-3 py-2 border rounded-md" 
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -289,7 +289,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     value={diamondWeight}
                     onChange={(e) => setDiamondWeight(e.target.value)}
                     placeholder="0.00" 
-                    className="w-full px-3 py-2 border rounded-md" 
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -299,7 +299,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     value={stoneType}
                     onChange={(e) => setStoneType(e.target.value)}
                     placeholder="e.g. Ruby, Emerald" 
-                    className="w-full px-3 py-2 border rounded-md" 
+                    className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                   />
                 </div>
               </div>
@@ -307,7 +307,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {/* Pricing */}
           <Card>
             <CardHeader>
@@ -319,7 +319,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                 <select 
                   value={priceType}
                   onChange={(e) => setPriceType(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md bg-white"
                 >
                   <option value="FIXED_PRICE">Fixed Price</option>
                   <option value="STARTING_FROM">Starting From</option>
@@ -334,16 +334,16 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0.00" 
-                  className="w-full px-3 py-2 border rounded-md" 
+                  className="w-full min-h-11 min-w-0 px-3 py-2 text-base sm:text-sm border rounded-md" 
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Main Discount</label>
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1">
                   <select
                     value={discountType}
                     onChange={(event) => setDiscountType(event.target.value as DiscountType)}
-                    className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+                    className="min-h-11 w-full min-w-0 rounded-md border bg-white px-3 text-base sm:text-sm"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
                     <option value="FIXED_AMOUNT">Fixed amount (₹)</option>
@@ -357,7 +357,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     onChange={(event) => setDiscountValue(event.target.value)}
                     placeholder={discountType === "PERCENTAGE" ? "e.g. 10" : "e.g. 1000"}
                     aria-label="Main discount value"
-                    className="min-h-11 w-full rounded-md border px-3"
+                    className="min-h-11 w-full min-w-0 rounded-md border px-3 text-base sm:text-sm"
                   />
                 </div>
               </div>
@@ -370,16 +370,16 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                   value={makingCharges}
                   onChange={(event) => setMakingCharges(event.target.value)}
                   placeholder="0.00"
-                  className="min-h-11 w-full rounded-md border px-3"
+                  className="min-h-11 w-full min-w-0 rounded-md border px-3 text-base sm:text-sm"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Making Charges Discount</label>
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1">
                   <select
                     value={makingChargesDiscountType}
                     onChange={(event) => setMakingChargesDiscountType(event.target.value as DiscountType)}
-                    className="min-h-11 w-full rounded-md border bg-white px-3 text-sm"
+                    className="min-h-11 w-full min-w-0 rounded-md border bg-white px-3 text-base sm:text-sm"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
                     <option value="FIXED_AMOUNT">Fixed amount (₹)</option>
@@ -393,7 +393,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     onChange={(event) => setMakingChargesDiscountValue(event.target.value)}
                     placeholder={makingChargesDiscountType === "PERCENTAGE" ? "e.g. 25" : "e.g. 500"}
                     aria-label="Making charges discount value"
-                    className="min-h-11 w-full rounded-md border px-3"
+                    className="min-h-11 w-full min-w-0 rounded-md border px-3 text-base sm:text-sm"
                   />
                 </div>
               </div>
@@ -422,9 +422,10 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     <button 
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      aria-label={`Remove image ${index + 1}`}
+                      className="absolute right-0 top-0 z-10 flex h-10 w-10 items-center justify-center opacity-100 transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     >
-                      <X className="w-4 h-4" />
+                      <span className="rounded-full bg-red-500 p-1.5 text-white shadow"><X className="w-4 h-4" /></span>
                     </button>
                   </div>
                 ))}
@@ -457,9 +458,9 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
                     type="button"
                     onClick={() => removeVideo(index)}
                     aria-label={`Remove video ${index + 1}`}
-                    className="absolute right-2 top-2 rounded-full bg-red-600 p-1.5 text-white shadow"
+                    className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center"
                   >
-                    <X className="h-4 w-4" />
+                    <span className="rounded-full bg-red-600 p-1.5 text-white shadow"><X className="h-4 w-4" /></span>
                   </button>
                 </div>
               ))}

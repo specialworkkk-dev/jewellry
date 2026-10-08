@@ -111,24 +111,25 @@ export function ShopNotificationButton({
   if (status === "unsupported") return null;
   if (status === "blocked") {
     return (
-      <span title="Enable notifications in your browser settings" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-stone-200 bg-stone-100 px-3 text-xs font-semibold text-stone-500">
-        <BellOff className="h-4 w-4" /> Notifications blocked
+      <span role="img" aria-label="Notifications blocked" title="Notifications are blocked. Enable them in your browser settings." className="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full border border-stone-200 bg-stone-100 text-xs font-semibold text-stone-500 sm:w-auto sm:px-3">
+        <BellOff className="h-4 w-4" /> <span className="hidden sm:inline">Notifications blocked</span>
       </span>
     );
   }
   if (status === "loading") {
-    return <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white"><Loader2 className="h-4 w-4 animate-spin" /></span>;
+    return <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-white"><Loader2 className="h-4 w-4 animate-spin" /></span>;
   }
   return (
     <button
       type="button"
       onClick={() => void (status === "on" ? unsubscribe() : subscribe())}
       aria-pressed={status === "on"}
+      aria-label={status === "on" ? `Stop ${shopName} updates` : `Get ${shopName} updates`}
       title={status === "on" ? `Stop ${shopName} updates` : `Get ${shopName} updates`}
-      className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-xs font-bold transition ${status === "on" ? "border-amber-300 bg-amber-50 text-amber-800" : "border-stone-200 bg-white text-stone-700 hover:border-amber-300"}`}
+      className={`inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full border text-xs font-bold transition sm:w-auto sm:px-3 ${status === "on" ? "border-amber-300 bg-amber-50 text-amber-800" : "border-stone-200 bg-white text-stone-700 hover:border-amber-300"}`}
     >
       {status === "on" ? <Bell className="h-4 w-4 fill-current" /> : <Bell className="h-4 w-4" />}
-      {status === "on" ? "Updates on" : "Get updates"}
+      <span className="hidden sm:inline">{status === "on" ? "Updates on" : "Get updates"}</span>
     </button>
   );
 }

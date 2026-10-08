@@ -64,8 +64,8 @@ export function NotificationSettingsCard({
     <Card className="border-violet-200 shadow-sm">
       <CardHeader className="bg-gradient-to-r from-violet-50 to-amber-50">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2"><BellRing className="h-5 w-5 text-violet-600" /> Customer Notifications</CardTitle>
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 break-words"><BellRing className="h-5 w-5 text-violet-600" /> Customer Notifications</CardTitle>
             <CardDescription className="mt-1">Choose automatic, shop-specific alerts. Customers receive them only after opting in.</CardDescription>
           </div>
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-violet-700 ring-1 ring-violet-200">
@@ -79,7 +79,7 @@ export function NotificationSettingsCard({
             Add VAPID keys in Vercel to activate customer push delivery. Your templates can be configured now.
           </div>
         )}
-        <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+        <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50/60 p-3 sm:p-4">
           <p className="text-sm font-bold text-gray-900">Owner alerts: new enquiries</p>
           <p className="mb-3 mt-1 text-xs text-gray-600">Get a push notification on this device whenever a customer sends an enquiry. Enable it on each phone or computer you use.</p>
           {configured && publicVapidKey
@@ -88,11 +88,11 @@ export function NotificationSettingsCard({
         </div>
         <form action={updateNotificationSettings} className="space-y-5">
           <label className="flex min-h-12 items-center justify-between gap-4 rounded-xl border bg-gray-50 px-4 py-3">
-            <span>
+            <span className="min-w-0">
               <span className="block text-sm font-bold text-gray-900">Enable automatic customer notifications</span>
               <span className="block text-xs text-gray-500">Turn this off to pause every automatic alert for this shop.</span>
             </span>
-            <input name="notificationsEnabled" type="checkbox" defaultChecked={initialEnabled} className="h-5 w-5 accent-violet-600" />
+            <input name="notificationsEnabled" type="checkbox" defaultChecked={initialEnabled} className="h-6 w-6 shrink-0 accent-violet-600" />
           </label>
 
           <div className="space-y-3">
@@ -102,12 +102,12 @@ export function NotificationSettingsCard({
               return (
                 <details key={trigger} className="group overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-gray-900">
-                    <span>{triggerLabels[trigger]}</span>
-                    <ChevronDown className="h-4 w-4 text-gray-400 transition group-open:rotate-180" />
+                    <span className="min-w-0 break-words">{triggerLabels[trigger]}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition group-open:rotate-180" />
                   </summary>
-                  <div className="space-y-4 border-t bg-gray-50/60 p-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                      <input name={`${trigger}:enabled`} type="checkbox" defaultChecked={initialMap.get(trigger)?.enabled ?? true} className="h-4 w-4 accent-violet-600" />
+                  <div className="min-w-0 space-y-4 border-t bg-gray-50/60 p-3 sm:p-4">
+                    <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-gray-800">
+                      <input name={`${trigger}:enabled`} type="checkbox" defaultChecked={initialMap.get(trigger)?.enabled ?? true} className="h-5 w-5 shrink-0 accent-violet-600" />
                       Send this notification automatically
                     </label>
                     <div>
@@ -116,12 +116,12 @@ export function NotificationSettingsCard({
                         name={`${trigger}:templateId`}
                         value={selections[trigger]}
                         onChange={(event) => setSelections((current) => ({ ...current, [trigger]: event.target.value }))}
-                        className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                        className="block min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base sm:text-sm"
                       >
                         {templates.map((template) => <option key={template.id} value={template.id}>{template.label}</option>)}
                       </select>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid min-w-0 gap-3 md:grid-cols-2">
                       <div>
                         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">Custom title (optional)</label>
                         <input
@@ -130,7 +130,7 @@ export function NotificationSettingsCard({
                           onChange={(event) => setCustomTitles((current) => ({ ...current, [trigger]: event.target.value }))}
                           maxLength={100}
                           placeholder="Use {shopName} for the shop name"
-                          className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                          className="block min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base sm:text-sm"
                         />
                       </div>
                       <div>
@@ -142,14 +142,14 @@ export function NotificationSettingsCard({
                           maxLength={240}
                           rows={2}
                           placeholder="Use {productName} and {shopName}"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                          className="block w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-base sm:text-sm"
                         />
                       </div>
                     </div>
                     <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
                       <p className="text-xs font-bold uppercase tracking-wide text-violet-600">Customer preview</p>
-                      <p className="mt-2 text-sm font-bold text-gray-950">{currentPreview.title}</p>
-                      <p className="mt-1 text-sm text-gray-600">{currentPreview.body}</p>
+                      <p className="mt-2 break-words text-sm font-bold text-gray-950">{currentPreview.title}</p>
+                      <p className="mt-1 break-words text-sm text-gray-600">{currentPreview.body}</p>
                     </div>
                   </div>
                 </details>
@@ -158,7 +158,7 @@ export function NotificationSettingsCard({
           </div>
 
           <div className="flex justify-end">
-            <ActionSubmitButton pendingLabel="Saving notifications…">Save Notification Settings</ActionSubmitButton>
+            <ActionSubmitButton pendingLabel="Saving notifications…" className="min-h-11 w-full sm:w-auto">Save Notification Settings</ActionSubmitButton>
           </div>
         </form>
       </CardContent>

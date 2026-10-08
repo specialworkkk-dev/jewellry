@@ -100,7 +100,7 @@ export function PremiumRenewalNotice({
       href={paymentHref}
       target={paymentHref.startsWith("http") ? "_blank" : undefined}
       rel={paymentHref.startsWith("http") ? "noreferrer" : undefined}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-black"
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gray-950 sm:w-auto px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-black"
     >
       <MessageCircle className="h-4 w-4" /> Pay / Renew Premium
     </a>
@@ -115,7 +115,7 @@ export function PremiumRenewalNotice({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-bold text-gray-950 sm:text-lg">{heading}</h2>
+              <h2 className="min-w-0 break-words text-base font-bold text-gray-950 sm:text-lg">{heading}</h2>
               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-amber-800 ring-1 ring-amber-200">₹{formattedPrice}</span>
             </div>
             <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 sm:text-sm">
@@ -128,20 +128,20 @@ export function PremiumRenewalNotice({
       </section>
 
       {showTimedReminder && (
-        <aside role="alert" className="fixed inset-x-3 bottom-4 z-[75] mx-auto max-w-md overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-2xl shadow-black/25">
+        <aside role="alert" className="fixed inset-x-3 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[75] mx-auto max-w-md overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-2xl shadow-black/25">
           <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500" />
           <div className="p-4">
             <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-amber-100 p-2 text-amber-700"><BellRing className="h-5 w-5" /></div>
+              <div className="shrink-0 rounded-xl bg-amber-100 p-2 text-amber-700"><BellRing className="h-5 w-5" /></div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-gray-950">Premium payment reminder</h3>
                 <p className="mt-1 text-sm leading-5 text-gray-600">{heading}. Renew now to keep your shop&apos;s Premium service running smoothly.</p>
               </div>
-              <button type="button" onClick={() => setShowTimedReminder(false)} aria-label="Dismiss reminder" className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+              <button type="button" onClick={() => setShowTimedReminder(false)} aria-label="Dismiss reminder" className="-m-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               <button type="button" onClick={() => setShowTimedReminder(false)} className="min-h-11 rounded-xl border border-gray-200 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">Remind later</button>
               {action}
             </div>

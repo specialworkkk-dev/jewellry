@@ -28,12 +28,13 @@ export function QrShare({ url, shopName }: QrShareProps) {
   };
 
   return (
-    <div className="flex flex-col items-center p-6 bg-white border rounded-xl shadow-sm">
-      <div className="p-4 bg-white border-2 border-gray-100 rounded-2xl mb-6 shadow-sm">
+    <div className="flex min-w-0 flex-col items-center p-4 sm:p-6 bg-white border rounded-xl shadow-sm">
+      <div className="max-w-full p-3 sm:p-4 bg-white border-2 border-gray-100 rounded-2xl mb-6 shadow-sm">
         <QRCodeCanvas
           id="shop-qr-code"
           value={url}
           size={200}
+          style={{ width: "100%", maxWidth: 200, height: "auto" }}
           bgColor={"#ffffff"}
           fgColor={"#000000"}
           level={"Q"}

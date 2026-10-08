@@ -12,7 +12,7 @@ const MediaUploader = dynamic(
   { ssr: false, loading: () => <div className="h-11 animate-pulse rounded-md border bg-gray-50" aria-label="Loading uploader" /> },
 );
 
-const inputClass = "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-500 focus:outline-none";
+const inputClass = "block min-h-11 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-500 focus:outline-none";
 
 async function submitJson(url: string, payload: unknown) {
   const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -26,8 +26,8 @@ function Preview({ url, isVideo, onRemove }: { url: string; isVideo: boolean; on
       {isVideo
         ? <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
         : <Image src={url} alt="Selected media" fill sizes="80px" className="object-cover" />}
-      <button type="button" onClick={onRemove} aria-label="Remove media" className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white">
-        <X className="h-3 w-3" />
+      <button type="button" onClick={onRemove} aria-label="Remove media" className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center text-white">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/60"><X className="h-3 w-3" /></span>
       </button>
     </div>
   );
@@ -79,9 +79,9 @@ export function CreatePostForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       {videoEnabled && (
-        <div className="flex gap-2" role="group" aria-label="Post type">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Post type">
           {(["image", "video"] as const).map((option) => (
-            <Button key={option} type="button" size="sm" variant={kind === option ? "default" : "outline"} onClick={() => { setKind(option); setUrls([]); }}>
+            <Button key={option} type="button" size="sm" className="min-h-11 flex-1 sm:flex-none" variant={kind === option ? "default" : "outline"} onClick={() => { setKind(option); setUrls([]); }}>
               {option === "image" ? "Photo post" : "Video reel"}
             </Button>
           ))}
@@ -93,7 +93,7 @@ export function CreatePostForm({
           {urls.map((url) => <Preview key={url} url={url} isVideo={kind === "video"} onRemove={() => setUrls((prev) => prev.filter((item) => item !== url))} />)}
         </div>
       )}
-      <textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={3} placeholder="Write a caption..." className={inputClass} />
+      <textarea value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2200} rows={3} placeholder="Write a caption..." className={`${inputClass} min-h-24`} />
       <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={inputClass} />
       {products.length > 0 && (
         <select value={productId} onChange={(e) => setProductId(e.target.value)} className={inputClass} aria-label="Linked product">
@@ -103,7 +103,7 @@ export function CreatePostForm({
       )}
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {done && <p role="status" className="text-sm font-medium text-green-700">Post published.</p>}
-      <Button type="submit" disabled={busy || urls.length === 0} className="w-full">
+      <Button type="submit" disabled={busy || urls.length === 0} className="min-h-11 w-full">
         {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : "Publish post"}
       </Button>
     </form>
@@ -135,9 +135,9 @@ export function CreateStoryForm({ videoEnabled, maxVideoSeconds }: { videoEnable
   return (
     <form onSubmit={submit} className="space-y-4">
       {videoEnabled && (
-        <div className="flex gap-2" role="group" aria-label="Story type">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Story type">
           {(["image", "video"] as const).map((option) => (
-            <Button key={option} type="button" size="sm" variant={kind === option ? "default" : "outline"} onClick={() => { setKind(option); setUrl(""); }}>
+            <Button key={option} type="button" size="sm" className="min-h-11 flex-1 sm:flex-none" variant={kind === option ? "default" : "outline"} onClick={() => { setKind(option); setUrl(""); }}>
               {option === "image" ? "Photo" : "Video"}
             </Button>
           ))}
@@ -149,7 +149,7 @@ export function CreateStoryForm({ videoEnabled, maxVideoSeconds }: { videoEnable
       <p className="text-xs text-gray-500">Stories disappear automatically after 24 hours.</p>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {done && <p role="status" className="text-sm font-medium text-green-700">Story published.</p>}
-      <Button type="submit" disabled={busy || !url} className="w-full">
+      <Button type="submit" disabled={busy || !url} className="min-h-11 w-full">
         {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : "Publish story"}
       </Button>
     </form>

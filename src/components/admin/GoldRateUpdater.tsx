@@ -42,7 +42,7 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 items-end">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end">
           <div className="flex-1 w-full space-y-1">
             <label htmlFor="gold-rate-22k" className="text-xs font-medium text-amber-800">22K Gold (per gram)</label>
             <input 
@@ -51,7 +51,7 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
               value={rate22K}
               onChange={(e) => setRate22K(e.target.value)}
               placeholder="e.g. 6500" 
-              className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+              className="min-h-11 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-base shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 sm:text-sm"
             />
           </div>
           <div className="flex-1 w-full space-y-1">
@@ -62,13 +62,13 @@ export function GoldRateUpdater({ initial22K, initial24K, onSave }: { initial22K
               value={rate24K}
               onChange={(e) => setRate24K(e.target.value)}
               placeholder="e.g. 7000" 
-              className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+              className="min-h-11 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-base shadow-sm outline-none transition-colors hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 sm:text-sm"
             />
           </div>
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center min-w-[100px]"
+            className="min-h-11 w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center min-w-[100px]"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Banner"}
           </button>

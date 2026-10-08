@@ -284,16 +284,23 @@ export function useLocale() {
   return context;
 }
 
-export function LanguageSwitcher({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+export function LanguageSwitcher({ className = "", compact = false, responsive = false }: { className?: string; compact?: boolean; responsive?: boolean }) {
   const { locale, setLocale, t } = useLocale();
   const activeLocale = supportedLocales.find((item) => item.code === locale) ?? supportedLocales[0];
   const compactLabels: Record<LocaleCode, string> = { en: "EN", hi: "हिं", gu: "ગુ", marvadi: "मा" };
 
   return (
-    <label className={`relative inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-amber-300 ${className}`}>
+    <label className={`relative inline-flex min-h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-amber-300 ${responsive ? "min-h-11" : ""} ${className}`}>
       <span className="sr-only">{t("language")}</span>
       <Languages className="h-4 w-4 text-amber-600" />
-      <span>{compact ? compactLabels[locale] : activeLocale.label}</span>
+      {responsive ? (
+        <>
+          <span className="sm:hidden">{compactLabels[locale]}</span>
+          <span className="hidden sm:inline">{activeLocale.label}</span>
+        </>
+      ) : (
+        <span>{compact ? compactLabels[locale] : activeLocale.label}</span>
+      )}
       <ChevronDown className="h-4 w-4 text-gray-400" aria-hidden="true" />
       <select
         value={locale}

@@ -178,7 +178,7 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 max-w-full flex-col gap-2">
       <input
         type="file"
         id={inputId}
@@ -191,13 +191,13 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
         type="button"
         variant="outline"
         disabled={isUploading}
-        className="min-h-11 gap-2"
+        className="min-h-11 w-full gap-2 sm:w-auto"
         onClick={() => document.getElementById(inputId)?.click()}
       >
         {isUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</> : mediaType === "video" ? <><Video className="h-4 w-4" /> Choose Video</> : <><ImageUp className="h-4 w-4" /> Choose Photo</>}
       </Button>
-      {success && <p role="status" className="flex items-center gap-1 text-sm font-medium text-green-700"><CheckCircle2 className="h-4 w-4" /> Uploaded successfully.</p>}
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {success && <p role="status" className="flex items-start gap-1 text-sm font-medium text-green-700"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> Uploaded successfully.</p>}
+      {error && <p role="alert" className="break-words text-sm text-red-600 [overflow-wrap:anywhere]">{error}</p>}
     </div>
   );
 }

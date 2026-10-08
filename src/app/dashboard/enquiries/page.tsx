@@ -32,8 +32,8 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Enquiries & Leads</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Enquiries & Leads</h1>
           <p className="text-gray-500 mt-2">Manage customer messages and product requests.</p>
           {unreadEnquiries > 0 && (
             <p className="mt-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
@@ -56,12 +56,12 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
             {enquiries.map((enquiry) => {
               const whatsappPhone = enquiry.customerPhone.replace(/\D/g, "");
               return (
-                <article key={enquiry._id.toString()} className="space-y-3 p-4">
+                <article key={enquiry._id.toString()} className="min-w-0 space-y-3 p-4 [overflow-wrap:anywhere]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="font-semibold text-gray-900">{enquiry.customerName}</h2>
-                      <a href={`tel:${enquiry.customerPhone.replace(/[^\d+]/g, "")}`} className="mt-1 flex items-center gap-1 text-sm text-blue-700">
-                        <Phone className="h-3.5 w-3.5" /> {enquiry.customerPhone}
+                      <h2 className="font-semibold text-gray-900 break-words">{enquiry.customerName}</h2>
+                      <a href={`tel:${enquiry.customerPhone.replace(/[^\d+]/g, "")}`} className="-ml-1 mt-0.5 flex min-h-11 items-center gap-1.5 px-1 text-sm text-blue-700 break-all">
+                        <Phone className="h-3.5 w-3.5 shrink-0" /> {enquiry.customerPhone}
                       </a>
                     </div>
                     <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium
@@ -71,22 +71,22 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
                       ${enquiry.status === "CLOSED" ? "bg-gray-100 text-gray-700" : ""}
                     `}>{enquiry.status}</span>
                   </div>
-                  <p className="rounded-lg bg-gray-50 p-3 text-sm leading-6 text-gray-700">{enquiry.message}</p>
+                  <p className="rounded-lg bg-gray-50 p-3 text-sm leading-6 text-gray-700 break-words whitespace-pre-line">{enquiry.message}</p>
                   {enquiry.productId && (
-                    <p className="text-xs font-medium text-amber-700">
+                    <p className="text-xs font-medium text-amber-700 break-words">
                       Product: {typeof enquiry.productId === "object" && "name" in enquiry.productId ? String(enquiry.productId.name) : "Product"}
                     </p>
                   )}
                   <p className="text-xs text-gray-500">Received {new Date(enquiry.createdAt).toLocaleDateString("en-IN")}</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
                     {enquiry.status === "NEW" ? (
                       <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())}>
                         <ActionSubmitButton pendingLabel="Updating…" variant="outline" className="w-full min-h-11 border-green-200 text-green-700 hover:bg-green-50">
                           <CheckCircle className="mr-1.5 h-4 w-4" /> Contacted
                         </ActionSubmitButton>
                       </form>
-                    ) : <div />}
-                    <a href={`https://wa.me/${whatsappPhone}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-md border border-green-200 bg-green-50 px-3 text-sm font-medium text-green-700">
+                    ) : null}
+                    <a href={`https://wa.me/${whatsappPhone}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-md border border-green-200 bg-green-50 px-3 text-center text-sm font-medium text-green-700 min-[400px]:col-start-2">
                       Reply on WhatsApp
                     </a>
                   </div>
@@ -108,9 +108,9 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
               <tbody className="divide-y">
                 {enquiries.map((enquiry) => (
                   <tr key={enquiry._id.toString()} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 max-w-[14rem] break-words">
                       <div className="font-medium text-gray-900">{enquiry.customerName}</div>
-                      <div className="text-gray-500 flex items-center gap-1 mt-1">
+                      <div className="text-gray-500 flex items-center gap-1 mt-1 break-all">
                         <Phone className="w-3 h-3" /> {enquiry.customerPhone}
                       </div>
                     </td>
@@ -138,13 +138,13 @@ export default async function EnquiriesDashboardPage({ searchParams }: { searchP
                     <td className="px-6 py-4 text-right space-x-2">
                       {enquiry.status === 'NEW' && (
                         <form action={markEnquiryContactedAction.bind(null, enquiry._id.toString())} className="inline-block">
-                          <ActionSubmitButton pendingLabel="Updating…" variant="outline" size="sm" className="h-8 border-green-200 text-green-700 hover:bg-green-50">
+                          <ActionSubmitButton pendingLabel="Updating…" variant="outline" size="sm" className="h-10 border-green-200 text-green-700 hover:bg-green-50">
                             <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Contacted
                           </ActionSubmitButton>
                         </form>
                       )}
-                      <a href={`https://wa.me/${enquiry.customerPhone}`} target="_blank" rel="noreferrer">
-                        <Button variant="outline" size="sm" className="h-8 bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20">
+                      <a href={`https://wa.me/${enquiry.customerPhone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                        <Button variant="outline" size="sm" className="h-10 bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20">
                            Reply on WA
                         </Button>
                       </a>

@@ -126,11 +126,17 @@
     @apply font-sans;
     font-size: 16px;
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
     min-height: 100vh;
-    overflow-x: hidden;
+    min-height: 100dvh;
+    /* clip (not hidden) keeps position:sticky working and creates no scroll container */
+    overflow-x: clip;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   img, svg, video {
     display: block;
@@ -139,12 +145,20 @@
   input, textarea, select, button {
     font: inherit;
   }
-  button, a {
+  button, a, summary, label, [role="button"] {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
+  h1, h2, h3, h4, p, li { overflow-wrap: break-word; }
 }
 
 @layer utilities {
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .min-h-dvh-safe { min-height: 100vh; min-height: 100dvh; }
+
   .storefront-content {
     content-visibility: auto;
     contain-intrinsic-size: 900px;
@@ -226,4 +240,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sf-marquee, .sf-float, .sf-shimmer { animation: none !important; }
+}
+
+/* Unlayered on purpose so it beats Tailwind's text-sm on form fields: on phones, 16px minimum
+   stops iOS Safari zooming the page when a field is focused. */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select, textarea {
+    font-size: 16px;
+  }
 }

@@ -42,18 +42,18 @@ export function RowActions({
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex min-w-0 flex-col items-end gap-1">
       <div className="flex items-center gap-1">
         {toggle && (
-          <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run("toggle")}>
+          <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run("toggle")} className="min-h-11 min-w-11 px-3">
             {busy === "toggle" ? <Loader2 className="h-4 w-4 animate-spin" /> : toggle.value ? toggle.offLabel : toggle.onLabel}
           </Button>
         )}
-        <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run("delete")} className="text-red-600 hover:text-red-700" aria-label={`Delete ${noun}`}>
+        <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run("delete")} className="min-h-11 min-w-11 px-3 text-red-600 hover:text-red-700" aria-label={`Delete ${noun}`}>
           {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </Button>
       </div>
-      {error && <p role="alert" className="max-w-56 text-right text-xs text-red-600">{error}</p>}
+      {error && <p role="alert" className="max-w-56 break-words text-right text-xs text-red-600">{error}</p>}
     </div>
   );
 }

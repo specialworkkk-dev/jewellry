@@ -16,16 +16,16 @@ export function ConfirmDeleteProductButton({ compact = false }: { compact?: bool
       disabled={pending}
       aria-busy={pending}
       className={compact
-        ? "h-8 w-8 text-gray-500 hover:text-red-600"
-        : "w-full min-h-11 border-red-200 text-red-700 hover:bg-red-50"}
+        ? "h-10 w-10 text-gray-500 hover:text-red-600"
+        : "w-full min-h-11 gap-2 px-2 border-red-200 text-red-700 hover:bg-red-50"}
       onClick={(event) => {
         if (!window.confirm("Delete this product permanently? This cannot be undone.")) event.preventDefault();
       }}
     >
       {pending ? (
-        <Loader2 className={compact ? "h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />
+        <Loader2 className={compact ? "h-4 w-4 animate-spin" : "h-4 w-4 animate-spin"} />
       ) : (
-        <Trash2 className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+        <Trash2 className={compact ? "h-4 w-4" : "h-4 w-4"} />
       )}
       {!compact && (pending ? "Deleting…" : "Delete")}
     </Button>

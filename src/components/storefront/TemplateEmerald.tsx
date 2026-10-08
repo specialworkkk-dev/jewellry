@@ -38,10 +38,10 @@ export function TemplateEmerald(props: TemplateProps) {
         </div>
         <div className="flex flex-1 flex-col p-4 text-[#f1e6c0]">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#d8c288]">{purityText(product)}</p>
-          <h3 className="mt-2 line-clamp-2 min-h-11 text-base font-semibold leading-[1.35] tracking-wide">
+          <h3 className="[overflow-wrap:anywhere] mt-2 line-clamp-2 min-h-11 text-base font-semibold leading-[1.35] tracking-wide">
             <Link href={productHref(shop, product)} className="hover:text-[#e6d49b]">{product.name}</Link>
           </h3>
-          <p className="mt-2 text-lg font-bold text-[#e6d49b]">{priceText(product)}</p>
+          <p className="[overflow-wrap:anywhere] mt-2 text-lg font-bold text-[#e6d49b]">{priceText(product)}</p>
           {savings && <p className="text-[11px] text-[#f1e6c0]/70"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-300">{savings.label}</span></p>}
           <div className="mt-auto flex gap-2 pt-4">
             <Link href={productHref(shop, product)} className="inline-flex min-h-11 flex-1 items-center justify-center border border-[#d8c288]/50 text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6d49b] transition hover:bg-[#e6d49b] hover:text-[#031a14]">View</Link>
@@ -76,7 +76,7 @@ export function TemplateEmerald(props: TemplateProps) {
             <p className="storefront-hero-reveal flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.45em] text-[#e6d49b] [animation-delay:80ms]">
               <Sparkles className="h-4 w-4" /> The heritage house
             </p>
-            <h1 className="storefront-hero-reveal mt-5 break-words text-4xl font-semibold uppercase leading-[1.08] tracking-[0.12em] text-[#fbf1cf] drop-shadow-xl sm:text-6xl lg:text-7xl [animation-delay:220ms]">
+            <h1 className="storefront-hero-reveal mt-5 [overflow-wrap:anywhere] text-4xl font-semibold uppercase leading-[1.08] tracking-[0.12em] text-[#fbf1cf] drop-shadow-xl sm:text-6xl lg:text-7xl [animation-delay:220ms]">
               {shop.name}
             </h1>
             <div className="storefront-hero-reveal mt-6 h-px w-32 bg-gradient-to-r from-[#e6d49b] to-transparent [animation-delay:340ms]" />
@@ -135,9 +135,9 @@ export function TemplateEmerald(props: TemplateProps) {
               </div>
               <div className="flex flex-col justify-center p-7 sm:p-12">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-[#d8c288]">Spotlight · {purityText(spotlight)}</p>
-                <h3 className="mt-4 text-3xl font-semibold leading-tight tracking-wide sm:text-4xl">{spotlight.name}</h3>
+                <h3 className="[overflow-wrap:anywhere] mt-4 text-3xl font-semibold leading-tight tracking-wide sm:text-4xl">{spotlight.name}</h3>
                 {productTags(spotlight).length > 0 && <p className="mt-3 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">{productTags(spotlight).join(" · ")}</p>}
-                <p className="mt-6 text-3xl font-bold text-[#e6d49b]">{priceText(spotlight)}</p>
+                <p className="[overflow-wrap:anywhere] mt-6 text-3xl font-bold text-[#e6d49b]">{priceText(spotlight)}</p>
                 {spotSavings && <p className="mt-1 font-sans text-sm text-[#f1e6c0]/55"><span className="line-through">{spotSavings.original}</span> <span className="font-semibold text-emerald-300">{spotSavings.label}</span></p>}
                 {spotMaking && <p className="mt-1 font-sans text-xs font-semibold text-emerald-300">Making: <span className="text-[#f1e6c0]/45 line-through">{spotMaking.original}</span> {spotMaking.discounted} · {spotMaking.label}</p>}
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -164,7 +164,7 @@ export function TemplateEmerald(props: TemplateProps) {
           <div className="mt-24 flex flex-col items-start justify-between gap-7 border border-[#d8c288]/30 bg-gradient-to-r from-[#073526] to-[#031a14] px-7 py-12 sm:flex-row sm:items-center sm:px-14">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-[#d8c288]">Private viewing</p>
-              <h3 className="mt-3 max-w-xl text-2xl font-semibold uppercase leading-snug tracking-[0.08em] sm:text-4xl">Speak with {shop.name}</h3>
+              <h3 className="[overflow-wrap:anywhere] mt-3 max-w-xl text-2xl font-semibold uppercase leading-snug tracking-[0.08em] sm:text-4xl">Speak with {shop.name}</h3>
             </div>
             <a href={chatHref(shop, ownerWhatsApp)} target="_blank" rel="noreferrer" className="inline-flex min-h-13 shrink-0 items-center gap-3 bg-[#e6d49b] px-9 py-4 text-xs font-bold uppercase tracking-[0.26em] text-[#031a14] hover:bg-white"><MessageCircle className="h-4 w-4" /> Chat now</a>
           </div>

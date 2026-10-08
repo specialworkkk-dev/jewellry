@@ -108,7 +108,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-dvh bg-gray-50 flex flex-col justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[30%] -right-[10%] w-[70%] h-[70%] rounded-full bg-amber-200/20 blur-3xl" />
         <div className="absolute -bottom-[30%] -left-[10%] w-[70%] h-[70%] rounded-full bg-amber-500/10 blur-3xl" />
@@ -116,57 +116,57 @@ export default function RegisterPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center mb-6">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-serif font-bold text-gray-900">
+          <Link href="/" className="flex min-h-11 items-center gap-2 text-2xl font-serif font-bold text-gray-900">
             <Sparkles className="w-6 h-6 text-amber-500" />
             LuxeStore
           </Link>
         </div>
         <div className="flex justify-end mb-2">
-          <LanguageSwitcher />
+          <LanguageSwitcher compact />
         </div>
-        <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
+        <h1 className="mt-2 text-center text-2xl font-extrabold text-gray-900 sm:text-3xl">
           {t("openYourStore")}
-        </h2>
+        </h1>
         <p className="mt-2 text-center text-sm text-gray-600">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-amber-600 hover:text-amber-500">
+          <Link href="/login" className="inline-flex min-h-11 min-w-11 items-center justify-center font-medium text-amber-600 hover:text-amber-500">
             {t("login")}
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-xl shadow-amber-900/5 sm:rounded-2xl sm:px-10 border border-white">
+        <div className="bg-white/80 backdrop-blur-xl py-6 px-4 shadow-xl shadow-amber-900/5 rounded-2xl sm:py-8 sm:px-10 border border-white">
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 text-sm">{error}</div>
+              <div role="alert" className="break-words rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-600 [overflow-wrap:anywhere]">{error}</div>
             )}
             {success && (
-              <div className="bg-green-50 text-green-600 p-3 rounded-xl border border-green-100 text-sm">{success}</div>
+              <div role="status" className="break-words rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-700 [overflow-wrap:anywhere]">{success}</div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Owner Name</label>
-                <input required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700">Owner Name</label>
+                <input id="reg-name" autoComplete="name" enterKeyHint="next" required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="John Doe" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <input required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <label htmlFor="reg-username" className="block text-sm font-medium text-gray-700">Username</label>
+                <input id="reg-username" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value.replace(/\s+/g, "")})} placeholder="johnjewels" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email Address (optional)</label>
-                <input type="email" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700">Email Address (optional)</label>
+                <input id="reg-email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} enterKeyHint="next" type="email" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value.trimStart()})} placeholder="shop@example.com" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Mobile Number (WhatsApp)</label>
-                <input required type="tel" inputMode="numeric" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <label htmlFor="reg-mobile" className="block text-sm font-medium text-gray-700">Mobile Number (WhatsApp)</label>
+                <input id="reg-mobile" autoComplete="tel" enterKeyHint="next" required type="tel" inputMode="tel" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/[^\d+\s]/g, "")})} placeholder="+1 234 567 8900" />
               </div>
             </div>
@@ -180,6 +180,7 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   minLength={8}
                   autoComplete="new-password"
+                  aria-describedby="register-password-hint"
                   className="block w-full py-3 pl-3 pr-12 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -191,7 +192,7 @@ export default function RegisterPage() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                   title={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-gray-500 transition-colors hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
+                  className="absolute inset-y-0 right-0 flex w-12 min-w-12 items-center justify-center rounded-r-xl text-gray-500 transition-colors hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
                 >
                   {showPassword ? (
                     <EyeOff aria-hidden="true" className="h-5 w-5" />
@@ -200,6 +201,7 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
+              <p id="register-password-hint" className="mt-1.5 text-xs text-gray-500">At least 8 characters.</p>
             </div>
 
             <div className="border-t border-gray-200 pt-5 mt-5">
@@ -207,25 +209,25 @@ export default function RegisterPage() {
                 <Store className="w-5 h-5 text-amber-500" /> Shop Details
               </h3>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Brand / Shop Name</label>
-                <input required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
+                <label htmlFor="reg-shop" className="block text-sm font-medium text-gray-700">Brand / Shop Name</label>
+                <input id="reg-shop" autoComplete="organization" enterKeyHint="go" required type="text" className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
                   value={formData.shopName} onChange={handleShopNameChange} placeholder="Royal Jewellers" />
               </div>
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700">Storefront URL</label>
-                <div className="mt-1 flex rounded-xl shadow-sm">
-                  <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                <label htmlFor="reg-slug" className="block text-sm font-medium text-gray-700">Storefront URL</label>
+                <div className="mt-1 flex min-w-0 rounded-xl shadow-sm">
+                  <span className="inline-flex shrink-0 items-center px-2 sm:px-3 rounded-l-xl border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
                     luxe.com/shop/
                   </span>
-                  <input type="text" disabled className="flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-xl focus:ring-amber-500 focus:border-amber-500 sm:text-sm border-gray-300 bg-gray-100"
+                  <input id="reg-slug" type="text" disabled className="flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-xl focus:ring-amber-500 focus:border-amber-500 sm:text-sm border-gray-300 bg-gray-100"
                     value={formData.slug} />
                 </div>
               </div>
             </div>
 
             <div className="pt-2">
-              <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-black transition-all disabled:opacity-70">
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("launchYourStore")}
+              <button type="submit" disabled={loading} className="w-full flex min-h-12 items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-black transition-all disabled:opacity-70">
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" aria-label="Creating account" /> : t("launchYourStore")}
               </button>
             </div>
           </form>

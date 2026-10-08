@@ -148,7 +148,7 @@ export default async function PublicShopLayout({
     { href: shop.facebookUrl, label: "Facebook", Icon: Users },
     { href: shop.websiteUrl, label: "Website", Icon: Globe },
   ].filter((link) => Boolean(link.href));
-  const socials = (visibility: string) => socialLinks.length > 0 && (
+  const socials = (visibility: string, size = "h-10 w-10") => socialLinks.length > 0 && (
     <div className={`${visibility} shrink-0 items-center gap-1 ${theme.muted}`}>
       {socialLinks.map(({ href, label, Icon }) => (
         <a
@@ -157,7 +157,7 @@ export default async function PublicShopLayout({
           target="_blank"
           rel="noreferrer"
           aria-label={label}
-          className={`${theme.iconHover} inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors`}
+          className={`${theme.iconHover} inline-flex ${size} items-center justify-center rounded-full transition-colors`}
         >
           <Icon className="h-5 w-5" />
         </a>
@@ -208,13 +208,13 @@ export default async function PublicShopLayout({
         </div>
       )}
       
-      {/* Public Shop Header */}
-      <header className={`z-50 ${theme.header} sm:sticky ${isOwnerPreview ? "sm:top-12" : "sm:top-0"}`}>
-        <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            
+      {/* Public Shop Header: identity row, then ONE compact action row on phones. */}
+      <header className={`relative z-50 ${theme.header} lg:sticky ${isOwnerPreview ? "lg:top-12" : "lg:top-0"}`}>
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+          <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center lg:gap-4">
+
             {/* Logo & Name */}
-            <div className="flex w-full min-w-0 items-center gap-4 self-start sm:w-auto sm:flex-1 sm:self-auto">
+            <div className="flex w-full min-w-0 items-center gap-3 sm:gap-4 lg:w-auto lg:flex-1">
               <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border ${theme.logoRing} shadow-sm sm:h-14 sm:w-14`}>
                 {shop.logoUrl ? (
                   <StoreImage src={shop.logoUrl} alt={shop.name} sizes="56px" className="h-full w-full object-cover" />
@@ -223,31 +223,32 @@ export default async function PublicShopLayout({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <h1 style={{ fontFamily: theme.display }} className={`line-clamp-2 text-lg font-semibold sm:text-xl ${theme.title}`}>{shop.name}</h1>
-                <div className="flex flex-col gap-1 mt-1">
+                <h1 style={{ fontFamily: theme.display }} className={`line-clamp-2 [overflow-wrap:anywhere] text-base font-semibold leading-tight sm:text-xl ${theme.title}`}>{shop.name}</h1>
+                <div className="mt-1 flex flex-col gap-0.5">
                   {(shop.address || shop.city || shop.state) && (
-                    <p className={`text-sm flex items-start gap-1 ${theme.muted}`}>
-                      <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                      <span className="leading-tight line-clamp-2">
+                    <p className={`flex items-start gap-1 text-xs sm:text-sm ${theme.muted}`}>
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="line-clamp-1 [overflow-wrap:anywhere] leading-tight sm:line-clamp-2">
                         {[shop.address, shop.city, shop.state, shop.pincode].filter(Boolean).join(", ")}
                       </span>
                     </p>
                   )}
                   {(shop.businessPhone || shop.whatsappNumber) && (
-                    <a href={`tel:${(shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "")}`} className={`text-sm flex items-center gap-1 ${theme.muted} ${theme.iconHover}`}>
-                      <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                      {shop.businessPhone || shop.whatsappNumber}
+                    <a href={`tel:${(shop.businessPhone || shop.whatsappNumber || "").replace(/[^\d+]/g, "")}`} className={`-my-2 flex min-w-0 items-center gap-1 py-2.5 text-xs sm:my-0 sm:py-0 sm:text-sm ${theme.muted} ${theme.iconHover}`}>
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{shop.businessPhone || shop.whatsappNumber}</span>
                     </a>
                   )}
                 </div>
               </div>
-              {socials("flex sm:hidden")}
+              {/* Phones 400px and wider keep socials beside the name; narrower ones get them in the footer. */}
+              {socials("hidden min-[400px]:flex lg:hidden", "h-10 w-10")}
             </div>
 
-            {/* Quick Actions & Socials */}
-            <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto">
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
-                <LanguageSwitcher />
+            {/* Quick actions: icon-only secondary buttons on phones so everything fits one row. */}
+            <div className="flex w-full shrink-0 items-center justify-between gap-3 lg:w-auto">
+              <div className="flex w-full min-w-0 items-center gap-2 lg:w-auto">
+                <LanguageSwitcher responsive />
                 {publicVapidKey && (
                   <ShopNotificationButton
                     shopId={shop._id.toString()}
@@ -256,8 +257,8 @@ export default async function PublicShopLayout({
                   />
                 )}
                 {whatsappNumber && (
-                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-green-700 hover:bg-green-800 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2 shadow-sm min-h-11">
-                    <Phone className="w-4 h-4" /> WhatsApp
+                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-green-700 px-3 sm:px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-800 sm:flex-none">
+                    <Phone className="h-4 w-4 shrink-0" /> <span className="truncate max-[359px]:hidden">WhatsApp</span><span className="min-[360px]:hidden">Chat</span>
                   </a>
                 )}
                 <ShareButton
@@ -265,8 +266,8 @@ export default async function PublicShopLayout({
                   text={`You are invited to explore ${shop.name}'s latest jewellery collection. Discover beautiful designs, live gold rates and enquire directly on WhatsApp.`}
                 />
               </div>
-              
-              {socials("hidden sm:flex")}
+
+              {socials("hidden lg:flex")}
             </div>
 
           </div>
@@ -280,7 +281,8 @@ export default async function PublicShopLayout({
       
       {/* Footer */}
       <footer className={`border-t border-white/10 px-4 py-10 text-center text-sm ${theme.footer}`}>
-        <p style={{ fontFamily: theme.display }} className={`text-lg ${theme.footerTitle}`}>{shop.name}</p>
+        <p style={{ fontFamily: theme.display }} className={`text-lg [overflow-wrap:anywhere] ${theme.footerTitle}`}>{shop.name}</p>
+        {socials("mt-4 flex justify-center min-[400px]:hidden", "h-11 w-11")}
         <p className="mt-2">&copy; {new Date().getFullYear()} All rights reserved.</p>
         <p className={`mt-1 text-xs ${theme.footerMuted}`}>Powered by LuxeStore</p>
       </footer>

@@ -78,7 +78,7 @@ export default async function DashboardOverviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Your Shop Today</h1>
           <p className="mt-1 text-sm text-gray-500">Update rates, add jewellery and reply to customers.</p>
         </div>
@@ -107,7 +107,7 @@ export default async function DashboardOverviewPage() {
       />
       
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Card className="shadow-sm">
+        <Card className="min-w-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Products</CardTitle>
             <Package className="h-4 w-4 text-blue-600" />
@@ -118,7 +118,7 @@ export default async function DashboardOverviewPage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm">
+        <Card className="min-w-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Profile Views</CardTitle>
             <Eye className="h-4 w-4 text-purple-600" />
@@ -131,7 +131,7 @@ export default async function DashboardOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className="min-w-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Product Likes</CardTitle>
             <Heart className="h-4 w-4 text-rose-500" />
@@ -142,7 +142,7 @@ export default async function DashboardOverviewPage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm">
+        <Card className="min-w-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">New Enquiries</CardTitle>
             <MessageSquare className="h-4 w-4 text-green-600" />
@@ -154,8 +154,8 @@ export default async function DashboardOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
-        <Card className="md:col-span-1 lg:col-span-4 shadow-sm">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-4 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-gray-800">Recent Enquiries</CardTitle>
           </CardHeader>
@@ -167,19 +167,19 @@ export default async function DashboardOverviewPage() {
             ) : (
               <div className="space-y-4">
                 {recentEnquiries.map(enq => (
-                  <div key={enq._id.toString()} className="flex justify-between items-center pb-2 border-b last:border-0">
-                    <div>
+                  <div key={enq._id.toString()} className="flex items-center justify-between gap-3 border-b pb-2 last:border-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm text-gray-900">{enq.customerName}</p>
-                      <p className="text-xs text-gray-500 truncate max-w-[200px]">{enq.message}</p>
+                      <p className="text-xs text-gray-500 truncate">{enq.message}</p>
                     </div>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{enq.status}</span>
+                    <span className="shrink-0 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{enq.status}</span>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
-        <Card className="md:col-span-1 lg:col-span-3 shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-3 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-gray-800">Top Performing Products</CardTitle>
           </CardHeader>
@@ -192,11 +192,11 @@ export default async function DashboardOverviewPage() {
               <div className="space-y-4">
                 {topProducts.map(prod => (
                   <div key={prod._id.toString()} className="flex items-center gap-3 pb-2 border-b last:border-0">
-                    <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-100">
                       {prod.images?.[0] && <Image src={prod.images[0]} alt={prod.name} width={40} height={40} sizes="40px" className="w-full h-full object-cover" />}
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-900 line-clamp-1">{prod.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-1 break-all text-sm font-medium text-gray-900">{prod.name}</p>
                       <p className="text-xs text-gray-500">{prod.viewsCount} views • {prod.likesCount} likes</p>
                     </div>
                   </div>

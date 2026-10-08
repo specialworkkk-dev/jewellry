@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+      <h1 className="text-2xl font-bold sm:text-3xl tracking-tight">Overview</h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -67,21 +67,21 @@ export default async function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 lg:grid-cols-7">
+        <Card className="min-w-0 lg:col-span-4">
           <CardHeader>
             <CardTitle>Recent Registrations</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {recentShops.map((shop) => (
-                <div key={shop._id.toString()} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold">{shop.name}</h3>
-                    <p className="text-sm text-gray-500">{shop.city}, {shop.state}</p>
+                <div key={shop._id.toString()} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 sm:p-4">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-semibold">{shop.name}</h3>
+                    <p className="break-words text-sm text-gray-500">{shop.city}, {shop.state}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${shop.isApproved ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                    <span className={`whitespace-nowrap px-2 py-1 text-xs rounded-full ${shop.isApproved ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                       {shop.isApproved ? 'Approved' : 'Pending'}
                     </span>
                   </div>

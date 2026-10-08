@@ -107,13 +107,13 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t("shopSettings")}</h1>
+    <div className="min-w-0 space-y-6 max-w-4xl">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">{t("shopSettings")}</h1>
           <p className="text-gray-500 mt-2">{t("shopSettingsDescription")}</p>
         </div>
-        <LanguageSwitcher />
+        <LanguageSwitcher className="min-h-11 shrink-0" />
       </div>
 
       <Card>
@@ -122,23 +122,23 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
           <CardDescription>Upload your brand logo and a beautiful cover image for the hero section.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-700">Shop Logo</label>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-gray-100 rounded-full border flex items-center justify-center overflow-hidden">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+            <div className="min-w-0 space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Shop Logo</label>
+              <div className="flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:gap-4">
+                <div className="h-20 w-20 shrink-0 bg-gray-100 rounded-full border flex items-center justify-center overflow-hidden">
                   {logoUrl ? (
                     <Image src={logoUrl} alt="Logo" width={80} height={80} sizes="80px" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-gray-400 text-xs">No Logo</span>
                   )}
                 </div>
-                <MediaUploader folder="logos" onUploadSuccess={(publicUrl) => setLogoUrl(publicUrl)} />
+                <div className="min-w-0 w-full flex-1"><MediaUploader folder="logos" onUploadSuccess={(publicUrl) => setLogoUrl(publicUrl)} /></div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-700">Cover Banner</label>
+            <div className="min-w-0 space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Cover Banner</label>
               <div className="aspect-[16/7] w-full overflow-hidden rounded-xl border bg-gray-100 flex items-center justify-center">
                 {coverUrl ? (
                   <Image src={coverUrl} alt="Cover" width={640} height={96} sizes="(max-width: 768px) 100vw, 640px" className="w-full h-full object-cover" />
@@ -175,13 +175,13 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-300">Your customer share preview</p>
-                <h3 className="mt-1 truncate font-serif text-xl font-semibold sm:text-2xl">{shop?.name || "Your Jewellery Store"}</h3>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.22em] text-amber-300">Your customer share preview</p>
+                <h3 className="mt-1 break-words font-serif text-xl font-semibold sm:text-2xl">{shop?.name || "Your Jewellery Store"}</h3>
                 <p className="mt-1 line-clamp-2 text-sm leading-5 text-stone-300">{invitationBody}</p>
               </div>
             </div>
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-              <span className="truncate text-xs text-stone-400">{readableShopUrl || t("shopUrlPlaceholder")}</span>
+            <div className="mt-5 flex min-w-0 items-center justify-between gap-3 border-t border-white/10 pt-4">
+              <span className="min-w-0 truncate text-xs text-stone-400">{readableShopUrl || t("shopUrlPlaceholder")}</span>
               <span className="shrink-0 rounded-full bg-amber-400 px-3 py-1.5 text-xs font-bold text-stone-950">Explore collection</span>
             </div>
           </div>
@@ -192,24 +192,24 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("shopUrl")}</p>
                 <p className="text-sm sm:text-base text-gray-900 break-all font-medium">{readableShopUrl || t("shopUrlPlaceholder")}</p>
               </div>
-              <Button type="button" variant="outline" onClick={handleCopyLink} className="shrink-0 gap-2">
+              <Button type="button" variant="outline" onClick={handleCopyLink} className="min-h-11 w-full shrink-0 gap-2 sm:w-auto">
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? t("copied") : t("copyLink")}
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+            <a href={whatsappShareUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
               <MessageCircle className="w-4 h-4" /> {t("whatsapp")}
             </a>
-            <a href={shop?.instagramUrl || "https://www.instagram.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700">
+            <a href={shop?.instagramUrl || "https://www.instagram.com/"} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700">
               <AtSign className="w-4 h-4" /> {t("instagram")}
             </a>
-            <a href={shop?.facebookUrl || "https://www.facebook.com/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            <a href={shop?.facebookUrl || "https://www.facebook.com/"} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
               <Users className="w-4 h-4" /> {t("facebook")}
             </a>
-            <Button type="button" variant="outline" onClick={handleShareLink} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <Button type="button" variant="outline" onClick={handleShareLink} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
               <Share2 className="w-4 h-4" /> {t("shareLink")}
             </Button>
           </div>
@@ -227,59 +227,59 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
             <input type="hidden" name="coverUrl" value={coverUrl} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Shop Name</label>
-                <input type="text" defaultValue={shop?.name} className="w-full px-3 py-2 border rounded-md" disabled />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Shop Name</label>
+                <input type="text" defaultValue={shop?.name} title={shop?.name} className="block min-h-11 w-full min-w-0 truncate px-3 py-2 border rounded-md text-base sm:text-sm" disabled />
                 <p className="text-xs text-gray-500">Contact admin to change shop name.</p>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Short Description</label>
-                <input name="shortDescription" type="text" defaultValue={shop?.shortDescription} placeholder="e.g. Premium Gold & Diamond Jewellery" className="w-full px-3 py-2 border rounded-md" />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Short Description</label>
+                <input name="shortDescription" type="text" defaultValue={shop?.shortDescription} placeholder="e.g. Premium Gold & Diamond Jewellery" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">WhatsApp Number</label>
-                <input name="whatsappNumber" type="text" defaultValue={shop?.whatsappNumber} className="w-full px-3 py-2 border rounded-md" />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">WhatsApp Number</label>
+                <input name="whatsappNumber" type="text" defaultValue={shop?.whatsappNumber} className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Instagram URL</label>
-                <input name="instagramUrl" type="url" defaultValue={shop?.instagramUrl} placeholder="https://instagram.com/..." className="w-full px-3 py-2 border rounded-md" />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Instagram URL</label>
+                <input name="instagramUrl" type="url" defaultValue={shop?.instagramUrl} placeholder="https://instagram.com/..." className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Facebook URL</label>
-                <input name="facebookUrl" type="url" defaultValue={shop?.facebookUrl} placeholder="https://facebook.com/..." className="w-full px-3 py-2 border rounded-md" />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Facebook URL</label>
+                <input name="facebookUrl" type="url" defaultValue={shop?.facebookUrl} placeholder="https://facebook.com/..." className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Website URL</label>
-                <input name="websiteUrl" type="url" defaultValue={shop?.websiteUrl} placeholder="https://yourwebsite.com" className="w-full px-3 py-2 border rounded-md" />
+              <div className="min-w-0 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Website URL</label>
+                <input name="websiteUrl" type="url" defaultValue={shop?.websiteUrl} placeholder="https://yourwebsite.com" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
               </div>
             </div>
 
             <div className="border-t pt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Physical Location</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Street Address</label>
-                  <input name="address" type="text" defaultValue={shop?.address} placeholder="123 Gold Market, Main Street" className="w-full px-3 py-2 border rounded-md" />
+                <div className="min-w-0 space-y-2 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700">Street Address</label>
+                  <input name="address" type="text" defaultValue={shop?.address} placeholder="123 Gold Market, Main Street" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">City</label>
-                  <input name="city" type="text" defaultValue={shop?.city} placeholder="Mumbai" className="w-full px-3 py-2 border rounded-md" />
+                <div className="min-w-0 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">City</label>
+                  <input name="city" type="text" defaultValue={shop?.city} placeholder="Mumbai" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
                 </div>
-                <div className="space-y-2 flex gap-4">
-                  <div className="flex-1 space-y-2">
-                    <label className="text-sm font-medium text-gray-700">State</label>
-                    <input name="state" type="text" defaultValue={shop?.state} placeholder="MH" className="w-full px-3 py-2 border rounded-md" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="min-w-0 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">State</label>
+                    <input name="state" type="text" defaultValue={shop?.state} placeholder="MH" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Pincode</label>
-                    <input name="pincode" type="text" defaultValue={shop?.pincode} placeholder="400001" className="w-full px-3 py-2 border rounded-md" />
+                  <div className="min-w-0 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Pincode</label>
+                    <input name="pincode" type="text" defaultValue={shop?.pincode} placeholder="400001" className="block min-h-11 w-full min-w-0 px-3 py-2 border rounded-md text-base sm:text-sm" />
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="pt-4 flex justify-end">
-              <ActionSubmitButton pendingLabel="Saving changes…">Save Changes</ActionSubmitButton>
+              <ActionSubmitButton pendingLabel="Saving changes…" className="min-h-11 w-full sm:w-auto">Save Changes</ActionSubmitButton>
             </div>
           </form>
         </CardContent>

@@ -87,7 +87,7 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+        className="fixed inset-0 z-[100] flex items-center justify-center overscroll-contain bg-black"
       >
         <div role="dialog" aria-modal="true" aria-label={`${shopName} stories`} className="relative w-full max-w-md h-full sm:h-[90vh] bg-gray-900 sm:rounded-xl overflow-hidden shadow-2xl flex flex-col">
           
@@ -106,12 +106,12 @@ export function StoryViewer({ stories, shopLogo, shopName, onClose }: StoryViewe
           </div>
 
           {/* Header */}
-          <div className="absolute top-6 inset-x-0 z-20 flex items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <StoreImage src={shopLogo} alt={shopName} sizes="32px" className="w-8 h-8 rounded-full border border-white/20" />
-              <span className="text-white font-medium text-sm drop-shadow-md">{shopName}</span>
+          <div className="absolute inset-x-0 top-6 z-20 flex items-center justify-between gap-2 px-4 pr-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <StoreImage src={shopLogo} alt={shopName} sizes="32px" className="h-8 w-8 shrink-0 rounded-full border border-white/20 object-cover" />
+              <span className="truncate text-white font-medium text-sm drop-shadow-md">{shopName}</span>
             </div>
-            <button type="button" aria-label="Close stories" onClick={onClose} className="text-white p-1 hover:bg-white/10 rounded-full">
+            <button type="button" aria-label="Close stories" onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/10">
               <X className="w-6 h-6" />
             </button>
           </div>

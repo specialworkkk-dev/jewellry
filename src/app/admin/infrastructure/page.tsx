@@ -116,13 +116,13 @@ function ablyServiceReport(): InfrastructureServiceReport {
 
 function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <section className="min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 basis-56 items-center gap-3">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
             <ServiceLogo serviceKey={service.key} />
           </span>
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">Third-party service</p>
             <h2 className="font-semibold text-gray-900">{service.name}</h2>
             <p className="mt-1 text-sm text-gray-500">{service.summary}</p>
@@ -136,8 +136,8 @@ function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
       <div className="mt-5 space-y-4">
         {service.metrics.map((metric) => (
           <div key={metric.label}>
-            <div className="flex justify-between gap-4 text-sm">
-              <span className="text-gray-600">{metric.label}</span>
+            <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 text-sm">
+              <span className="min-w-0 break-words text-gray-600">{metric.label}</span>
               <span className="font-medium text-gray-900">
                 {formatMetric(metric)}{metric.limit ? ` / ${formatMetric({ ...metric, value: metric.limit })}` : ""}
               </span>
@@ -160,9 +160,9 @@ function ServiceCard({ service }: { service: InfrastructureServiceReport }) {
       {service.details.length > 0 && (
         <dl className="mt-4 grid gap-2 text-sm">
           {service.details.map((detail) => (
-            <div key={`${detail.label}-${detail.value}`} className="flex justify-between gap-4">
+            <div key={`${detail.label}-${detail.value}`} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5">
               <dt className="text-gray-500">{detail.label}</dt>
-              <dd className="break-all text-right font-medium text-gray-800">{detail.value}</dd>
+              <dd className="min-w-0 break-words text-right font-medium text-gray-800">{detail.value}</dd>
             </div>
           ))}
         </dl>
@@ -182,14 +182,14 @@ export default async function InfrastructurePage() {
   const criticalCount = report?.alerts.filter((alert) => alert.severity === "critical").length ?? 0;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto min-w-0 max-w-7xl space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Infrastructure monitor</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl tracking-tight text-gray-900">Infrastructure monitor</h1>
           <p className="mt-2 text-gray-500">MongoDB, Cloudflare R2, Vercel and Ably service status, allowance, usage and cost alerts.</p>
         </div>
         <form action={refreshInfrastructureReport}>
-          <ActionSubmitButton pendingLabel="Checking services…" className="h-auto bg-gray-900 px-4 py-2.5 text-white hover:bg-black">
+          <ActionSubmitButton pendingLabel="Checking services…" className="h-auto min-h-11 w-full bg-gray-900 px-4 py-2.5 text-white hover:bg-black sm:w-auto">
             <RefreshCw className="h-4 w-4" /> Run live check
           </ActionSubmitButton>
         </form>
@@ -204,17 +204,17 @@ export default async function InfrastructurePage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
+            <div className="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center gap-2 text-sm text-gray-500"><CircleDollarSign className="h-4 w-4" /> Tracked cost this month</div>
               <p className="mt-2 text-2xl font-bold text-gray-900">₹{formatNumber(report.projectedMonthlyCostInr)}</p>
               <p className="mt-1 text-xs text-gray-500">Budget alert level: ₹{formatNumber(report.budgetInr)}</p>
             </div>
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
+            <div className="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center gap-2 text-sm text-gray-500"><AlertTriangle className="h-4 w-4" /> Active alerts</div>
               <p className="mt-2 text-2xl font-bold text-gray-900">{report.alerts.length}</p>
               <p className="mt-1 text-xs text-gray-500">{criticalCount} critical</p>
             </div>
-            <div className="rounded-xl border bg-white p-5 shadow-sm">
+            <div className="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center gap-2 text-sm text-gray-500"><CheckCircle2 className="h-4 w-4" /> Last checked</div>
               <p className="mt-2 text-base font-semibold text-gray-900">{new Date(report.checkedAt).toLocaleString("en-IN")}</p>
               <p className="mt-1 text-xs text-gray-500">Daily automatic check plus manual refresh</p>
@@ -228,7 +228,7 @@ export default async function InfrastructurePage() {
                 <div key={`${alert.service}-${alert.title}-${index}`} className={`rounded-lg border p-4 ${severityStyles[alert.severity]}`}>
                   <div className="flex gap-3">
                     {alert.severity === "critical" ? <XCircle className="mt-0.5 h-5 w-5 shrink-0" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />}
-                    <div>
+                    <div className="min-w-0 break-words">
                       <p className="font-semibold">{alert.title}</p>
                       <p className="mt-1 text-sm">{alert.message}</p>
                       <p className="mt-2 text-sm font-medium">Next step: {alert.action}</p>
@@ -243,7 +243,7 @@ export default async function InfrastructurePage() {
             </div>
           )}
 
-          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-4">
+          <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-4">
             {[...Object.values(report.services), ablyServiceReport()].map((service) => <ServiceCard key={service.key} service={service} />)}
           </div>
         </>
@@ -258,8 +258,8 @@ export default async function InfrastructurePage() {
               <tbody className="divide-y">
                 {history.map((item) => (
                   <tr key={String(item._id)}>
-                    <td className="py-3 text-gray-700">{new Date(item.checkedAt).toLocaleString("en-IN")}</td>
-                    <td className="py-3 capitalize text-gray-600">{item.source}</td>
+                    <td className="py-3 pr-2 text-gray-700">{new Date(item.checkedAt).toLocaleString("en-IN")}</td>
+                    <td className="py-3 pr-2 capitalize text-gray-600">{item.source}</td>
                     <td className="py-3 text-right font-medium text-gray-900">{item.alerts?.length ?? 0}</td>
                   </tr>
                 ))}

@@ -85,16 +85,16 @@ export default async function ProductDetailPage({
   const savings = savingsText(product);
   const makingCharge = makingChargeText(product);
 
-  const specRow = "flex justify-between gap-4 border-b pb-2 " + d.rule;
+  const specRow = "flex min-w-0 justify-between gap-4 border-b pb-2 [&>dd]:min-w-0 [&>dd]:text-right [&>dd]:[overflow-wrap:anywhere] " + d.rule;
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-24 pt-4 sm:px-6 sm:pb-24 sm:pt-10 lg:px-8">
       <StorefrontAnalytics shopId={shop._id.toString()} eventType="PRODUCT_VIEW" targetId={product._id.toString()} />
 
       {/* Breadcrumb / Back button */}
-      <div className="mb-4 sm:mb-8">
-        <Link href={`/shop/${shop.slug}`} className={`inline-flex items-center text-sm font-medium transition-colors hover:opacity-70 ${d.subtle}`}>
-          <ArrowLeft className="w-4 h-4 mr-2 shrink-0" /> Back to {shop.name}
+      <div className="mb-2 sm:mb-8">
+        <Link href={`/shop/${shop.slug}`} className={`inline-flex min-h-11 items-center py-2 text-sm font-medium transition-colors hover:opacity-70 ${d.subtle}`}>
+          <ArrowLeft className="w-4 h-4 mr-2 shrink-0" /> <span className="min-w-0 [overflow-wrap:anywhere]">Back to {shop.name}</span>
         </Link>
       </div>
 
@@ -106,7 +106,7 @@ export default async function ProductDetailPage({
         {/* Right: Product Details */}
         <div className="flex min-w-0 flex-col pt-2">
           <div className="flex items-center justify-between gap-3">
-            <p className={`text-sm font-medium tracking-widest uppercase ${d.accent}`}>{product.goldPurity || 'Premium'} Jewellery</p>
+            <p className={`min-w-0 truncate text-xs font-medium uppercase tracking-widest sm:text-sm ${d.accent}`}>{product.goldPurity || 'Premium'} Jewellery</p>
             <ProductActionButtons
               productName={product.name}
               productId={product._id.toString()}
@@ -116,11 +116,11 @@ export default async function ProductDetailPage({
             />
           </div>
 
-          <h1 style={{ fontFamily: theme.display }} className={`mt-2 break-words text-3xl sm:text-4xl ${d.heading}`}>{product.name}</h1>
+          <h1 style={{ fontFamily: theme.display }} className={`mt-2 [overflow-wrap:anywhere] text-2xl leading-tight min-[400px]:text-3xl sm:text-4xl ${d.heading}`}>{product.name}</h1>
           <p className={`mt-2 break-all font-mono text-sm ${d.subtle}`}>SKU: {product.sku}</p>
 
           <div className={`mt-6 border-b pb-6 ${d.rule}`}>
-            <p className={`text-2xl font-medium ${d.heading}`}>
+            <p className={`[overflow-wrap:anywhere] text-2xl font-medium ${d.heading}`}>
               {priceLabel}
             </p>
             {savings && (
@@ -135,7 +135,7 @@ export default async function ProductDetailPage({
           {/* Action Buttons */}
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8">
             {normalizedPhone && (
-              <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0f7a3d] hover:bg-[#0b6633] text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14">
+              <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0f7a3d] hover:bg-[#0b6633] text-white px-3 py-4 rounded-lg font-medium transition-colors shadow-sm min-h-14 min-w-0 text-center">
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </a>
             )}
@@ -147,7 +147,7 @@ export default async function ProductDetailPage({
           </div>
 
           {/* Details Grid */}
-          <div className="mt-12">
+          <div className="mt-10 sm:mt-12">
             <h2 style={{ fontFamily: theme.display }} className={`mb-4 border-b pb-2 text-lg font-medium ${d.heading} ${d.rule}`}>Product Specifications</h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
               {product.goldPurity && (
@@ -195,12 +195,12 @@ export default async function ProductDetailPage({
           {product.description && (
             <div className={`mt-8 text-sm ${d.body}`}>
               <h2 style={{ fontFamily: theme.display }} className={`mb-2 text-lg font-medium ${d.heading}`}>Description</h2>
-              <p className="whitespace-pre-line break-words">{product.description}</p>
+              <p className="whitespace-pre-line [overflow-wrap:anywhere]">{product.description}</p>
             </div>
           )}
 
           {/* Trust Badges */}
-          <div className={`mt-10 flex flex-col gap-6 rounded-lg p-6 sm:flex-row ${d.panel}`}>
+          <div className={`mt-10 flex flex-col gap-5 rounded-lg p-4 sm:flex-row sm:gap-6 sm:p-6 ${d.panel}`}>
             <div className="flex items-center gap-3">
               <ShieldCheck className={`w-8 h-8 flex-shrink-0 ${d.accent}`} />
               <div>

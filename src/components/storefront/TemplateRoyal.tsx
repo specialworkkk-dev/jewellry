@@ -42,7 +42,7 @@ export function TemplateRoyal(props: TemplateProps) {
           <p className="storefront-hero-reveal inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.42em] text-[#e9cf88] [animation-delay:80ms]">
             <Crown className="h-4 w-4" /> Since generations
           </p>
-          <h1 className="storefront-hero-reveal mt-6 text-5xl font-medium leading-[1.02] tracking-[0.04em] text-[#fff4d9] drop-shadow-[0_4px_24px_rgba(0,0,0,.5)] [animation-delay:220ms] sm:text-7xl lg:text-8xl">
+          <h1 className="[overflow-wrap:anywhere] storefront-hero-reveal mt-6 text-5xl font-medium leading-[1.02] tracking-[0.04em] text-[#fff4d9] drop-shadow-[0_4px_24px_rgba(0,0,0,.5)] [animation-delay:220ms] max-[400px]:text-4xl sm:text-7xl lg:text-8xl">
             {shop.name}
           </h1>
           <Ornament className="storefront-hero-reveal mt-7 [animation-delay:380ms]" />
@@ -60,9 +60,9 @@ export function TemplateRoyal(props: TemplateProps) {
           {[[ShieldCheck, "Hallmarked purity"], [Gem, "Master craftsmanship"], [MessageCircle, "Personal concierge"]].map(([Icon, label], index) => {
             const I = Icon as typeof Gem;
             return (
-              <div key={index} className="flex flex-col items-center gap-2 px-2 py-5 sm:flex-row sm:justify-center sm:gap-3">
+              <div key={index} className="flex min-w-0 flex-col items-center gap-2 px-1 py-5 sm:flex-row sm:justify-center sm:gap-3 sm:px-2">
                 <I className="h-5 w-5 text-[#9a7420]" />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] sm:text-xs">{label as string}</span>
+                <span className="min-w-0 text-center text-[10px] max-[359px]:text-[9px] font-semibold uppercase tracking-[0.08em] max-[359px]:tracking-[0.02em] [overflow-wrap:anywhere] min-[400px]:text-[11px] min-[400px]:tracking-[0.14em] sm:text-xs sm:tracking-[0.18em]">{label as string}</span>
               </div>
             );
           })}
@@ -115,13 +115,13 @@ export function TemplateRoyal(props: TemplateProps) {
                   </div>
                   <div className="mt-6 flex flex-col items-center px-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a7420]">{purityText(product)}</p>
-                    <h3 className="mt-2 line-clamp-2 min-h-[3.25rem] break-words text-2xl font-medium leading-[1.2]">
+                    <h3 className="mt-2 line-clamp-2 min-h-[3.25rem] [overflow-wrap:anywhere] text-2xl font-medium leading-[1.2]">
                       <Link href={productHref(shop, product)} className="hover:text-[#7b1e2b]">{product.name}</Link>
                     </h3>
                     {productTags(product).length > 0 && (
                       <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7b1e2b]">{productTags(product).join(" · ")}</p>
                     )}
-                    <p className="mt-3 text-2xl font-semibold text-[#7b1e2b]">{priceText(product)}</p>
+                    <p className="[overflow-wrap:anywhere] mt-3 text-2xl font-semibold text-[#7b1e2b]">{priceText(product)}</p>
                     {savings && <p className="mt-1 text-xs text-[#7a5b4a]"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-800">{savings.label}</span></p>}
                     {making && <p className="mt-1 text-[11px] font-semibold text-emerald-800">Making: <span className="text-[#7a5b4a] line-through">{making.original}</span> {making.discounted} · {making.label}</p>}
                     <div className="mt-5 flex w-full max-w-[22rem] gap-2">
@@ -152,7 +152,7 @@ export function TemplateRoyal(props: TemplateProps) {
           <div className="relative mt-24 overflow-hidden bg-[#3a0f16] px-6 py-14 text-center text-[#f6e7c1] sm:px-16">
             <div className="pointer-events-none absolute inset-3 border border-[#c9a24b]/50" />
             <Crown className="mx-auto h-7 w-7 text-[#e9cf88]" />
-            <h3 className="mt-4 text-3xl font-medium tracking-[0.06em] sm:text-5xl">An audience with {shop.name}</h3>
+            <h3 className="[overflow-wrap:anywhere] mt-4 text-3xl font-medium tracking-[0.06em] sm:text-5xl">An audience with {shop.name}</h3>
             <p className="mx-auto mt-4 max-w-lg text-base italic leading-7 text-[#f6e7c1]/75">Private consultations for bridal sets, heirlooms and bespoke commissions — a message away.</p>
             <a href={chatHref(shop, ownerWhatsApp)} target="_blank" rel="noreferrer" className="mt-8 inline-flex min-h-12 items-center gap-3 bg-[#e9cf88] px-8 text-xs font-semibold uppercase tracking-[0.28em] text-[#3a0f16] transition hover:bg-white">
               <MessageCircle className="h-4 w-4" /> Request a consultation

@@ -38,16 +38,16 @@ export default async function SocialFeedDashboard({ searchParams }: { searchPara
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Social Feed</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Social Feed</h1>
           <p className="text-gray-500 mt-2">Manage your Instagram-style shop posts and updates.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Post Creation Prompt / Quick Stats */}
-        <div className="md:col-span-1 space-y-6">
+        <div className="min-w-0 lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">New Post</CardTitle>
@@ -67,19 +67,19 @@ export default async function SocialFeedDashboard({ searchParams }: { searchPara
         </div>
 
         {/* Feed Preview */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           {stories.length > 0 && (
             <Card>
               <CardHeader><CardTitle className="text-lg">Live Stories ({stories.length})</CardTitle></CardHeader>
-              <CardContent className="flex gap-3 overflow-x-auto">
+              <CardContent className="flex gap-3 overflow-x-auto pb-4">
                 {stories.map((story) => (
-                  <div key={story._id.toString()} className="w-28 shrink-0 space-y-1">
+                  <div key={story._id.toString()} className="flex w-28 shrink-0 flex-col space-y-1">
                     <div className="relative aspect-[9/16] overflow-hidden rounded-md bg-gray-100">
                       {story.mediaType === "VIDEO"
                         ? <video src={story.mediaUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                         : <Image src={story.mediaUrl} alt="Story" fill sizes="112px" className="object-cover" />}
                     </div>
-                    <p className="flex items-center gap-1 text-[11px] text-gray-500"><Clock className="h-3 w-3" /> until {new Date(story.expiresAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>
+                    <p className="flex items-start gap-1 text-[11px] text-gray-500"><Clock className="mt-0.5 h-3 w-3 shrink-0" /> until {new Date(story.expiresAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>
                     <RowActions endpoint={`/api/stories/${story._id.toString()}`} noun="story" />
                   </div>
                 ))}
@@ -115,12 +115,12 @@ export default async function SocialFeedDashboard({ searchParams }: { searchPara
                       </div>
                     </div>
                     {post.caption && (
-                      <p className="text-sm text-gray-700 line-clamp-2">
+                      <p className="text-sm text-gray-700 line-clamp-2 break-words">
                         {post.caption}
                       </p>
                     )}
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-xs text-gray-400">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2">
+                      <p className="min-w-0 text-xs text-gray-400">
                         {new Date(post.createdAt).toLocaleDateString()}{post.isPublished === false ? " · Hidden" : ""}
                       </p>
                       <RowActions

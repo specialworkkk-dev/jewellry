@@ -35,12 +35,12 @@ export default async function AdminShopEditPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/shops" className="text-gray-400 hover:text-gray-900 transition-colors">
+      <div className="flex items-start gap-2 sm:gap-4">
+        <Link href="/admin/shops" aria-label="Back to shops" className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:text-gray-900">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Manage Tenant: {shop.name}</h1>
+        <div className="min-w-0 pt-1.5">
+          <h1 className="break-words text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">Manage Tenant: {shop.name}</h1>
           <p className="text-gray-500 mt-1">Configure subscription limits and access control for this shop.</p>
         </div>
       </div>

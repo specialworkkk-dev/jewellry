@@ -26,7 +26,7 @@ export function TemplateRose(props: TemplateProps) {
             <p className="storefront-hero-reveal inline-flex items-center gap-2 rounded-full border border-rose-300/60 bg-white/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-700 backdrop-blur [animation-delay:60ms]">
               <Sparkles className="h-3.5 w-3.5" /> Fine jewellery atelier
             </p>
-            <h1 className="storefront-hero-reveal mt-6 break-words text-5xl font-medium italic leading-[1.02] tracking-tight sm:text-7xl [animation-delay:200ms]">
+            <h1 className="storefront-hero-reveal mt-6 [overflow-wrap:anywhere] text-5xl font-medium italic leading-[1.02] tracking-tight sm:text-7xl [animation-delay:200ms]">
               {shop.name}
             </h1>
             <p className="storefront-hero-reveal mt-6 max-w-md text-lg leading-8 text-[#8a5461] [animation-delay:360ms]">
@@ -103,15 +103,15 @@ export function TemplateRose(props: TemplateProps) {
                       </div>
                       <div className="absolute inset-x-5 bottom-10 text-white">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-100/90">{purityText(product)}</p>
-                        <h3 className="mt-1 line-clamp-2 text-2xl font-medium italic leading-tight drop-shadow">{product.name}</h3>
+                        <h3 className="[overflow-wrap:anywhere] mt-1 line-clamp-2 text-2xl font-medium italic leading-tight drop-shadow">{product.name}</h3>
                       </div>
                     </Link>
                     <ProductCardFavorite productId={id} shopId={shop._id.toString()} initialSaved={saved.has(id)} />
                   </div>
                   <div className="mx-3 -mt-6 rounded-3xl border border-white bg-white/90 p-4 shadow-xl shadow-rose-900/10 backdrop-blur sm:mx-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xl font-semibold text-[#b4536a]">{priceText(product)}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-[11rem] flex-1">
+                        <p className="[overflow-wrap:anywhere] text-xl font-semibold text-[#b4536a]">{priceText(product)}</p>
                         {savings && <p className="text-xs text-[#a1707c]"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-700">{savings.label}</span></p>}
                         {making && <p className="text-[11px] font-semibold text-emerald-700">Making: <span className="text-[#a1707c] line-through">{making.original}</span> {making.discounted}</p>}
                       </div>
@@ -144,7 +144,7 @@ export function TemplateRose(props: TemplateProps) {
           <div className="relative mt-24 overflow-hidden rounded-[3rem] bg-gradient-to-br from-[#b4536a] via-[#c96b7f] to-[#e3a1ad] px-7 py-14 text-center text-white shadow-2xl shadow-rose-500/30 sm:px-16">
             <div className="sf-float absolute -left-10 -top-10 h-44 w-44 rounded-full bg-white/15 blur-2xl" />
             <Heart className="mx-auto h-8 w-8 fill-white/90" />
-            <h3 className="mt-4 text-3xl font-medium italic sm:text-5xl">Find something made for you</h3>
+            <h3 className="[overflow-wrap:anywhere] mt-4 text-3xl font-medium italic sm:text-5xl">Find something made for you</h3>
             <p className="mx-auto mt-3 max-w-md text-white/85">Share the occasion — we’ll curate designs, prices and availability on WhatsApp.</p>
             <a href={chatHref(shop, ownerWhatsApp)} target="_blank" rel="noreferrer" className="mt-8 inline-flex min-h-13 items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-bold text-[#b4536a] shadow-xl transition hover:scale-105">
               <MessageCircle className="h-4 w-4" /> Chat with us

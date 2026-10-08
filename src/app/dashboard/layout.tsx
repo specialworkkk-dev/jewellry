@@ -106,16 +106,16 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-gray-100 flex items-center px-4 sm:px-6 justify-between sticky top-0 z-40 hidden md:flex">
-          <div className="font-medium text-gray-800 truncate pr-4">
+          <div className="min-w-0 flex-1 truncate pr-4 font-medium text-gray-800 max-lg:invisible">
             Welcome back, {session.user.name}
           </div>
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-2 lg:gap-4">
              <span className={`rounded-full px-3 py-1 text-xs font-bold ${planPrice > 0 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-600"}`}>
                {planPrice > 0 ? "Premium" : "Free plan"}
              </span>
              <LanguageSwitcher />
              {shop && (
-               <Link href={`/shop/${shop.slug}`} target="_blank" className="flex items-center gap-2 text-sm text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
+               <Link href={`/shop/${shop.slug}`} target="_blank" className="flex min-h-10 items-center gap-2 text-sm text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors">
                  View Live Shop <ExternalLink className="w-4 h-4" />
                </Link>
              )}

@@ -100,13 +100,13 @@ export function OwnerPushButton({ publicVapidKey }: { publicVapidKey: string }) 
     return <p className="flex items-center gap-2 text-sm text-gray-500"><BellOff className="h-4 w-4" /> Notifications are blocked. Allow them in your browser settings, then reload.</p>;
   }
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <button
         type="button"
         disabled={status === "loading"}
         onClick={() => void (status === "on" ? disable() : enable())}
         aria-pressed={status === "on"}
-        className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-4 text-sm font-bold transition disabled:opacity-60 ${status === "on" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-violet-300 bg-white text-violet-800 hover:bg-violet-50"}`}
+        className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-center text-sm sm:w-auto font-bold transition disabled:opacity-60 ${status === "on" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-violet-300 bg-white text-violet-800 hover:bg-violet-50"}`}
       >
         {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : status === "on" ? <Bell className="h-4 w-4 fill-current" /> : <Smartphone className="h-4 w-4" />}
         {status === "on" ? "Enquiry alerts on for this device" : "Enable enquiry alerts on this device"}

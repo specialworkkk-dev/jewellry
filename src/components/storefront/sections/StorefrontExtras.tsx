@@ -61,8 +61,8 @@ export function StorefrontExtras({
         <div className="mx-auto max-w-6xl space-y-3">
           {goldRate && (
             <div className={`${glass} flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5`}>
-              <span className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${theme.muted}`}>{goldRate.title}</span>
-              <span className={`text-sm font-semibold ${theme.title}`}>{goldRate.message}</span>
+              <span className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${theme.detail.subtle}`}>{goldRate.title}</span>
+              <span className={`min-w-0 [overflow-wrap:anywhere] text-sm font-semibold ${theme.detail.heading}`}>{goldRate.message}</span>
             </div>
           )}
           {promos.map((ad) => (
@@ -73,9 +73,9 @@ export function StorefrontExtras({
                 </div>
               )}
               <div className="min-w-0 flex-1 px-4 py-3">
-                <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${theme.muted}`}>Offer</p>
-                <h3 className={`mt-0.5 text-lg font-semibold leading-snug ${theme.title}`} style={{ fontFamily: theme.display }}>{ad.title}</h3>
-                <p className={`mt-1 text-sm ${theme.muted}`}>{ad.message}</p>
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${theme.detail.subtle}`}>Offer</p>
+                <h3 className={`mt-0.5 [overflow-wrap:anywhere] text-lg font-semibold leading-snug ${theme.detail.heading}`} style={{ fontFamily: theme.display }}>{ad.title}</h3>
+                <p className={`mt-1 [overflow-wrap:anywhere] text-sm ${theme.detail.subtle}`}>{ad.message}</p>
               </div>
             </AdLink>
           ))}
@@ -87,7 +87,7 @@ export function StorefrontExtras({
                 shopName={shop.name}
                 shopLogo={shop.logoUrl || ""}
                 ringClass="border-amber-500"
-                labelClass={theme.muted}
+                labelClass={theme.detail.subtle}
               />
             </div>
           )}
@@ -100,7 +100,7 @@ export function StorefrontExtras({
   return (
     <section aria-label="Latest posts" className={`${theme.pageBg} px-4 py-10`}>
       <div className="mx-auto max-w-6xl">
-        <h2 className={`mb-5 text-2xl ${theme.title}`} style={{ fontFamily: theme.display }}>Latest from {shop.name}</h2>
+        <h2 className={`mb-5 [overflow-wrap:anywhere] text-xl sm:text-2xl ${theme.detail.heading}`} style={{ fontFamily: theme.display }}>Latest from {shop.name}</h2>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => {
             const first = post.mediaUrls[0];
@@ -118,12 +118,12 @@ export function StorefrontExtras({
                   )}
                 </div>
                 <div className="space-y-2 p-4">
-                  {post.caption && <p className={`line-clamp-4 whitespace-pre-line text-sm ${theme.title}`}>{post.caption}</p>}
+                  {post.caption && <p className={`line-clamp-4 whitespace-pre-line [overflow-wrap:anywhere] text-sm ${theme.detail.heading}`}>{post.caption}</p>}
                   {post.tags.length > 0 && (
-                    <p className={`text-xs ${theme.muted}`}>{post.tags.slice(0, 5).map((tag) => `#${tag.replace(/^#/, "")}`).join(" ")}</p>
+                    <p className={`[overflow-wrap:anywhere] text-xs ${theme.detail.subtle}`}>{post.tags.slice(0, 5).map((tag) => `#${tag.replace(/^#/, "")}`).join(" ")}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <time dateTime={post.createdAt} className={`text-xs ${theme.muted}`}>
+                    <time dateTime={post.createdAt} className={`text-xs ${theme.detail.subtle}`}>
                       {new Date(post.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </time>
                     {post.linkedProductId && (

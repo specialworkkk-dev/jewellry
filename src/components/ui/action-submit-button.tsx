@@ -13,8 +13,15 @@ export function ActionSubmitButton({ children, pendingLabel = "Saving…", disab
 
   return (
     <Button type="submit" disabled={disabled || pending} aria-busy={pending} {...props}>
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-      {pending ? pendingLabel : children}
+      {/* Both states are laid out in one grid cell so the button keeps the width of the wider
+          label and does not jump when the form is submitted. */}
+      <span className="inline-grid items-center justify-items-center">
+        <span className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-1.5 ${pending ? "invisible" : ""}`}>{children}</span>
+        <span aria-hidden={!pending} className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-1.5 ${pending ? "" : "invisible"}`}>
+          <Loader2 className="size-4 shrink-0 animate-spin" />
+          {pendingLabel}
+        </span>
+      </span>
     </Button>
   );
 }

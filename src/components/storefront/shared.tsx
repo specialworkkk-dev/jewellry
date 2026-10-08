@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import Link from "next/link";
+import { CategoryScroller } from "./CategoryScroller";
 import { calculateDiscountedAmount, discountLabel } from "@/lib/product-pricing";
 import type { getPublicCatalogue, getPublicShopBySlug } from "@/lib/public-store";
 
@@ -90,18 +91,21 @@ export function CategoryNav({
 }) {
   const { shop, categories, activeCategory } = props;
   const isAll = !activeCategory || activeCategory === "all";
+  // On phones the filter is one swipeable line (many/long categories never stack into a wall of links).
+  const phone = "max-sm:flex-nowrap! max-sm:justify-start! max-sm:overflow-x-auto max-sm:snap-x max-sm:pb-2 max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden";
+  const chip = "max-sm:inline-flex max-sm:min-h-11 max-sm:min-w-11 max-sm:justify-center max-sm:max-w-[75vw] max-sm:shrink-0 max-sm:snap-start max-sm:items-center max-sm:whitespace-nowrap";
   return (
-    <nav aria-label="Collections" className={wrap}>
-      <Link href={collectionHref(shop)} className={`${item} ${isAll ? active : idle}`}>All</Link>
+    <CategoryScroller label="Collections" className={`${wrap} ${phone}`}>
+      <Link href={collectionHref(shop)} aria-current={isAll ? "page" : undefined} className={`${item} ${chip} ${isAll ? active : idle}`}>All</Link>
       {categories.map((category) => (
         <Fragment key={category._id.toString()}>
           {separator}
-          <Link href={collectionHref(shop, category.slug)} className={`${item} ${activeCategory === category.slug ? active : idle}`}>
-            {category.name}
+          <Link href={collectionHref(shop, category.slug)} aria-current={activeCategory === category.slug ? "page" : undefined} title={category.name} className={`${item} ${chip} ${activeCategory === category.slug ? active : idle}`}>
+            <span className="max-sm:truncate">{category.name}</span>
           </Link>
         </Fragment>
       ))}
-    </nav>
+    </CategoryScroller>
   );
 }
 

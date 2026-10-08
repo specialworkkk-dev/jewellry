@@ -30,17 +30,17 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
 
   return (
       <div className="bg-white border rounded-lg shadow-sm">
-        <form action={formAction} className="p-6 space-y-6">
+        <form action={formAction} className="p-4 sm:p-6 space-y-6">
           {state.error && (
             <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               <p className="font-semibold">Changes were not saved.</p>
               <p>{state.error}</p>
             </div>
           )}
-          <div key={state.attempt} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div key={state.attempt} className="grid grid-cols-1 gap-6 md:grid-cols-2">
             
             {/* Platform Limits */}
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Plan Limits</h3>
               
               <div className="space-y-2">
@@ -50,7 +50,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                   name="maxProducts" 
                   defaultValue={v("maxProducts", shop.maxProducts)}
                   required min={1} step={1} 
-                  className="w-full px-3 py-2 border rounded-md" 
+                  className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border rounded-md" 
                 />
                 <p className="text-xs text-gray-500">How many total products they can list on their store.</p>
               </div>
@@ -62,7 +62,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                   name="maxPhotosPerDay" 
                   defaultValue={v("maxPhotosPerDay", shop.maxPhotosPerDay)}
                   required min={1} step={1} 
-                  className="w-full px-3 py-2 border rounded-md" 
+                  className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border rounded-md" 
                 />
               </div>
 
@@ -74,11 +74,11 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                   min={1}
                   max={20}
                   defaultValue={v("maxVideosPerDay", shop.maxVideosPerDay)}
-                  className="w-full px-3 py-2 border rounded-md" 
+                  className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border rounded-md" 
                 />
               </div>
 
-              <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-4">
+              <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4 space-y-4">
                 <div>
                   <h4 className="font-semibold text-violet-950">Product video access</h4>
                   <p className="mt-1 text-xs text-violet-700">Control whether this shop can upload product reels and how long each reel may be.</p>
@@ -88,7 +88,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                   <select
                     name="videoUploadsEnabled"
                     defaultValue={v("videoUploadsEnabled", shop.videoUploadsEnabled ? "true" : "false")}
-                    className="w-full rounded-md border bg-white px-3 py-2"
+                    className="min-h-11 w-full rounded-md border bg-white px-3 py-2 text-base sm:text-sm"
                   >
                     <option value="false">Disabled</option>
                     <option value="true">Enabled</option>
@@ -103,7 +103,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                     max={120}
                     step={1}
                     defaultValue={v("maxVideoDurationSeconds", shop.maxVideoDurationSeconds)}
-                    className="w-full rounded-md border bg-white px-3 py-2"
+                    className="min-h-11 w-full rounded-md border bg-white px-3 py-2 text-base sm:text-sm"
                   />
                   <p className="text-xs text-violet-700">Recommended: 15–30 seconds. Allowed admin range: 5–120 seconds.</p>
                 </div>
@@ -118,7 +118,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
                   step={1}
                   defaultValue={v("maxLinkOpens", shop.maxLinkOpens)}
                   required 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
+                  className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-md font-medium text-blue-600 bg-blue-50" 
                 />
                 <p className="text-xs text-gray-500">The storefront accepts this many unique IP addresses. Refreshes and return visits from an admitted IP do not consume another slot.</p>
                 <p className="text-xs text-amber-600 font-medium">Currently admitted: {shop.currentLinkOpens} unique IPs.</p>
@@ -126,7 +126,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
             </div>
 
             {/* Access Control */}
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Access Control</h3>
 
               <ShopPlanFields
@@ -136,7 +136,7 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Account Status</label>
-                <select name="isActive" defaultValue={v("isActive", shop.isActive ? "true" : "false")} className="w-full px-3 py-2 border rounded-md bg-white">
+                <select name="isActive" defaultValue={v("isActive", shop.isActive ? "true" : "false")} className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border rounded-md bg-white">
                   <option value="true">Active (Live)</option>
                   <option value="false">Suspended (Disabled)</option>
                 </select>
@@ -145,15 +145,15 @@ export function ShopLimitsForm({ shop }: { shop: ShopFormValues }) {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Approval</label>
-                <select name="isApproved" defaultValue={v("isApproved", shop.isApproved ? "true" : "false")} className="w-full px-3 py-2 border rounded-md bg-white">
+                <select name="isApproved" defaultValue={v("isApproved", shop.isApproved ? "true" : "false")} className="min-h-11 w-full px-3 py-2 text-base sm:text-sm border rounded-md bg-white">
                   <option value="true">Approved</option>
                   <option value="false">Pending / Rejected</option>
                 </select>
                 <p className="text-xs text-gray-500">Unapproved shops are not visible on the public storefront.</p>
               </div>
 
-              <div className="pt-6">
-                <ActionSubmitButton pendingLabel="Saving configuration…" className="h-auto w-full bg-gray-900 px-4 py-3 text-white hover:bg-black">
+              <div className="pt-2 md:pt-6">
+                <ActionSubmitButton pendingLabel="Saving configuration…" className="h-auto min-h-11 w-full bg-gray-900 px-4 py-3 text-white hover:bg-black">
                   Save Tenant Configuration
                 </ActionSubmitButton>
               </div>

@@ -119,21 +119,21 @@ export function PwaInstallCard({ appName }: { appName: string }) {
   return (
     <section className="mx-auto mt-8 max-w-5xl px-4 sm:px-6">
       <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-sm sm:p-7">
-        <button type="button" onClick={() => setHidden(true)} aria-label="Hide install suggestion" className="absolute right-3 top-3 rounded-full p-1.5 text-stone-400 hover:bg-white hover:text-stone-700">
+        <button type="button" onClick={() => setHidden(true)} aria-label="Hide install suggestion" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-stone-400 hover:bg-white hover:text-stone-700">
           <X className="h-4 w-4" />
         </button>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-4">
+          <div className="flex min-w-0 gap-4 pr-8 sm:pr-0">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-900 text-amber-300 shadow-md">
               <Smartphone className="h-6 w-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-amber-700"><Zap className="h-3.5 w-3.5" /> Faster access</p>
-              <h2 className="mt-1 text-xl font-serif font-semibold text-stone-900">Keep {appName} on your phone</h2>
+              <h2 className="mt-1 text-lg font-serif font-semibold text-stone-900 [overflow-wrap:anywhere] sm:text-xl">Keep {appName} on your phone</h2>
               <p className="mt-1 text-sm leading-6 text-stone-600">Install this shop for one-tap access to new jewellery, gold rates and WhatsApp enquiries.</p>
             </div>
           </div>
-          <button type="button" onClick={install} disabled={installing || !installSignalSettled} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/15 transition hover:-translate-y-0.5 hover:bg-stone-800 disabled:cursor-wait disabled:opacity-70">
+          <button type="button" onClick={install} disabled={installing || !installSignalSettled} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-stone-900 px-6 max-sm:w-full py-3 text-sm font-bold text-white shadow-lg shadow-stone-900/15 transition hover:-translate-y-0.5 hover:bg-stone-800 disabled:cursor-wait disabled:opacity-70">
             {installing || !installSignalSettled ? <LoaderCircle className="h-4 w-4 animate-spin" /> : prompt ? <Download className="h-4 w-4" /> : <Share className="h-4 w-4" />}
             {installing ? "Opening…" : !installSignalSettled ? "Getting ready…" : prompt ? "Install in one tap" : isIOS ? "Add to iPhone" : "How to install"}
           </button>
@@ -147,7 +147,7 @@ export function PwaInstallCard({ appName }: { appName: string }) {
                 ? <>Open this page in Chrome, tap the three-dot menu and choose <strong>Install app</strong>.</>
                 : <>Tap the browser&apos;s three-dot menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</>}</p>
             {isAndroid && !isChrome && !prompt && (
-              <button type="button" onClick={openInChrome} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-stone-900 px-5 py-2 text-xs font-bold text-white">
+              <button type="button" onClick={openInChrome} className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-stone-900 px-5 py-2 text-xs font-bold text-white">
                 Open in Chrome to install
               </button>
             )}

@@ -40,23 +40,23 @@ export default function DemoStorePage() {
   const { t } = useLocale();
 
   return (
-    <div className="min-h-screen bg-[#f9f6f2] text-gray-900">
+    <div className="min-h-dvh bg-[#f9f6f2] text-gray-900">
       <header className="border-b border-amber-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">L</div>
+        <div className="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 sm:py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="w-10 h-10 shrink-0 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">L</div>
             <div>
               <p className="font-serif text-xl font-semibold">{brandName}</p>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-            <a href="#collection" className="hover:text-gray-900">{t("collection")}</a>
-            <a href="#about" className="hover:text-gray-900">About</a>
-            <a href="#contact" className="hover:text-gray-900">Contact</a>
+            <a href="#collection" className="inline-flex min-h-10 items-center hover:text-gray-900">{t("collection")}</a>
+            <a href="#about" className="inline-flex min-h-10 items-center hover:text-gray-900">About</a>
+            <a href="#contact" className="inline-flex min-h-10 items-center hover:text-gray-900">Contact</a>
           </nav>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex min-w-0 items-center gap-2 flex-wrap justify-end">
             <LanguageSwitcher />
-            <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about a jewellery piece.`)}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
+            <a href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi ${brandName}, I want to enquire about a jewellery piece.`)}`} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-amber-500 text-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-amber-600">
               <MessageCircle className="w-4 h-4" /> {t("whatsapp")}
             </a>
             <ShareButton title={brandName} />
@@ -67,22 +67,22 @@ export default function DemoStorePage() {
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.18),_transparent_50%)]" />
-          <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center relative z-10">
+          <div className="max-w-6xl mx-auto px-4 py-10 sm:py-16 md:py-24 grid md:grid-cols-2 gap-10 items-center relative z-10">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                 <Sparkles className="w-3.5 h-3.5" /> {t("premiumHandcraftedJewellery")}
               </span>
-              <h1 className="mt-6 text-4xl md:text-6xl font-serif font-bold tracking-tight">
+              <h1 className="mt-6 text-3xl sm:text-4xl md:text-6xl font-serif font-bold tracking-tight">
                 {t("craftedForLifeMoments").split(" ").slice(0, 3).join(" ")} <span className="text-amber-600">{t("craftedForLifeMoments").split(" ").slice(3).join(" ")}</span>
               </h1>
-              <p className="mt-5 text-lg text-gray-600 max-w-xl">
+              <p className="mt-5 text-base sm:text-lg text-gray-600 max-w-xl">
                 {t("discoverHeirloom")}
               </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <a href="#collection" className="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-6 py-3 font-medium hover:bg-black">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+                <a href="#collection" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gray-900 text-white px-6 py-3 font-medium hover:bg-black">
                   <ShoppingBag className="w-4 h-4" /> {t("exploreCollection")}
                 </a>
-                <Link href="/register" className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 hover:border-gray-400">
+                <Link href="/register" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 hover:border-gray-400">
                   {t("openYourShop")} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -92,14 +92,14 @@ export default function DemoStorePage() {
               <StoreImage
                 src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80"
                 alt="Jewellery showcase"
-                className="w-full h-[520px] object-cover rounded-[1.5rem]"
+                className="w-full h-72 sm:h-96 md:h-[520px] object-cover rounded-[1.5rem]"
               />
             </div>
           </div>
         </section>
 
-        <section id="collection" className="max-w-6xl mx-auto px-4 py-16">
-          <div className="flex items-center justify-between gap-4 mb-8">
+        <section id="collection" className="max-w-6xl mx-auto px-4 py-10 sm:py-16">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 mb-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600">{t("collection")}</p>
               <h2 className="mt-2 text-3xl font-serif font-bold">{t("featuredDesigns")}</h2>
@@ -154,9 +154,9 @@ export default function DemoStorePage() {
       <footer id="contact" className="border-t border-amber-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600">
           <p>© 2026 {brandName}. Crafted for every celebration.</p>
-          <div className="flex items-center gap-4">
-            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-gray-900">{t("whatsapp")}</a>
-            <a href={`mailto:${supportEmail}`} className="hover:text-gray-900">Email</a>
+          <div className="flex items-center gap-2">
+            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center px-3 hover:text-gray-900">{t("whatsapp")}</a>
+            <a href={`mailto:${supportEmail}`} className="inline-flex min-h-11 items-center px-3 hover:text-gray-900">Email</a>
           </div>
         </div>
       </footer>

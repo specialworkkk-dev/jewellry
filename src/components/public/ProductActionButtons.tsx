@@ -109,14 +109,14 @@ export function ProductActionButtons({
   };
 
   return (
-    <div className="flex items-center gap-2 relative">
+    <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-2">
       <button
         type="button"
         aria-label={isLiked ? "Remove from saved products" : "Save product"}
         aria-pressed={isLiked}
         onClick={handleLikeToggle}
         disabled={isLiking}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+        className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-colors ${
           isLiked
             ? 'bg-rose-100 text-rose-500'
             : 'bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-500'
@@ -125,7 +125,7 @@ export function ProductActionButtons({
         <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-current' : 'stroke-current'}`} />
       </button>
       <span className="text-xs font-medium text-gray-500" aria-label={`${likesCount} saves`}>{likesCount}</span>
-      {likeError && <span role="alert" className="absolute right-0 top-12 z-20 w-40 rounded-lg bg-slate-900 px-3 py-2 text-center text-xs text-white shadow-lg">{likeError}</span>}
+      {likeError && <span role="alert" className="absolute right-0 top-12 z-20 w-40 max-w-[calc(100vw-2rem)] rounded-lg bg-slate-900 px-3 py-2 text-center text-xs text-white shadow-lg">{likeError}</span>}
 
       <button
         type="button"
@@ -133,23 +133,23 @@ export function ProductActionButtons({
         title="Share Product"
         aria-label="Share product"
         aria-expanded={isShareMenuOpen}
-        className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+        className="h-11 w-11 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
       >
         {copied ? <Check className="w-5 h-5 text-green-600" /> : <Share2 className="w-5 h-5" />}
       </button>
 
       {isShareMenuOpen && (
-        <div className="absolute right-0 top-12 z-10 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
-          <button type="button" onClick={() => openShareTarget("whatsapp")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
+        <div className="absolute right-0 top-12 z-10 w-52 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+          <button type="button" onClick={() => openShareTarget("whatsapp")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
             <MessageCircle className="w-4 h-4" /> WhatsApp
           </button>
-          <button type="button" onClick={() => openShareTarget("facebook")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+          <button type="button" onClick={() => openShareTarget("facebook")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
             <Globe className="w-4 h-4" /> Facebook
           </button>
-          <button type="button" onClick={() => openShareTarget("instagram")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700">
+          <button type="button" onClick={() => openShareTarget("instagram")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700">
             <AtSign className="w-4 h-4" /> Instagram
           </button>
-          <button type="button" onClick={copyLink} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <button type="button" onClick={copyLink} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
             <Copy className="w-4 h-4" /> Copy Link
           </button>
         </div>

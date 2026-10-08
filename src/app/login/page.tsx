@@ -49,7 +49,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-dvh bg-gray-50 flex flex-col justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8 relative overflow-hidden">
       {/* Decorative background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[30%] -right-[10%] w-[70%] h-[70%] rounded-full bg-amber-200/20 blur-3xl" />
@@ -58,30 +58,30 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center mb-6">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-serif font-bold text-gray-900">
+          <Link href="/" className="flex min-h-11 items-center gap-2 text-2xl font-serif font-bold text-gray-900">
             <Sparkles className="w-6 h-6 text-amber-500" />
             LuxeStore
           </Link>
         </div>
-        <div className="flex justify-end mb-2">
-          <LanguageSwitcher />
+        <div className="flex justify-end mb-2 max-w-full">
+          <LanguageSwitcher compact />
         </div>
-        <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
+        <h1 className="mt-2 text-center text-2xl font-extrabold text-gray-900 sm:text-3xl">
           {t("welcomeBack")}
-        </h2>
+        </h1>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{" "}
-          <Link href="/register" className="font-medium text-amber-600 hover:text-amber-500 transition-colors">
+          <Link href="/register" className="inline-flex min-h-11 items-center font-medium text-amber-600 hover:text-amber-500 transition-colors">
             {t("openYourStore")}
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl py-8 px-4 shadow-xl shadow-amber-900/5 sm:rounded-2xl sm:px-10 border border-white">
+        <div className="bg-white/80 backdrop-blur-xl py-6 px-4 shadow-xl shadow-amber-900/5 rounded-2xl sm:py-8 sm:px-10 border border-white">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-lg text-sm">
+              <div role="alert" className="break-words rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600 [overflow-wrap:anywhere]">
                 {error}
               </div>
             )}
@@ -94,12 +94,17 @@ export default function LoginPage() {
                 <input
                   id="login-username"
                   type="text"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  enterKeyHint="next"
                   required
                   value={usernameOrEmail}
                   onChange={(e) => setUsernameOrEmail(e.target.value)}
                   autoComplete="username"
                   className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
-                  placeholder="Enter your username or email"
+                  placeholder="Username or email"
                 />
               </div>
             </div>
@@ -116,6 +121,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
+                  enterKeyHint="go"
                   className="appearance-none block w-full py-3 pl-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 sm:text-sm bg-white/50"
                 />
                 <button
@@ -125,7 +131,7 @@ export default function LoginPage() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                   title={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-gray-500 transition-colors hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
+                  className="absolute inset-y-0 right-0 flex w-12 min-w-12 items-center justify-center rounded-r-xl text-gray-500 transition-colors hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500"
                 >
                   {showPassword ? (
                     <EyeOff aria-hidden="true" className="h-5 w-5" />
@@ -140,10 +146,10 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full flex min-h-12 items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-label="Signing in" />
                 ) : (
                   t("login")
                 )}

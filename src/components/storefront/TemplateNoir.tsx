@@ -27,7 +27,7 @@ export function TemplateNoir(props: TemplateProps) {
             <p className="storefront-hero-reveal flex items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.5em] text-amber-300 [animation-delay:60ms]">
               <span className="h-px w-12 bg-amber-300" /> Maison de joaillerie
             </p>
-            <h1 className="storefront-hero-reveal mt-7 text-5xl font-normal leading-[0.98] tracking-tight sm:text-7xl xl:text-8xl [animation-delay:200ms]">
+            <h1 className="[overflow-wrap:anywhere] storefront-hero-reveal mt-7 text-5xl font-normal leading-[0.98] tracking-tight sm:text-7xl xl:text-8xl [animation-delay:200ms]">
               <span className="bg-gradient-to-br from-white via-amber-100 to-amber-400 bg-clip-text text-transparent">{shop.name}</span>
             </h1>
             <p className="storefront-hero-reveal mt-7 max-w-lg text-base leading-8 text-white/60 sm:text-lg [animation-delay:380ms]">
@@ -43,18 +43,18 @@ export function TemplateNoir(props: TemplateProps) {
                 </a>
               )}
             </div>
-            <dl className="storefront-hero-reveal mt-14 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-8 [animation-delay:700ms]">
+            <dl className="storefront-hero-reveal mt-14 grid max-w-md grid-cols-3 gap-3 sm:gap-6 border-t border-white/10 pt-8 [animation-delay:700ms]">
               {[["22K·24K", "Hallmarked"], [products.length > 0 ? `${products.length}+` : "New", "New designs"], ["1:1", "Concierge"]].map(([value, label]) => (
-                <div key={label}>
+                <div key={label} className="min-w-0">
                   <dt className="text-2xl text-amber-200 sm:text-3xl">{value}</dt>
-                  <dd className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/60">{label}</dd>
+                  <dd className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60 sm:tracking-[0.25em]">{label}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="absolute -bottom-5 -right-5 h-full w-full border border-amber-300/50" />
+            <div className="absolute -bottom-3 -right-3 h-full w-full border sm:-bottom-5 sm:-right-5 border-amber-300/50" />
             <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-amber-900/40 to-black">
               {shop.coverUrl ? (
                 <StoreImage src={shop.coverUrl} alt={shop.name} sizes="(max-width: 1023px) 90vw, 45vw" preload className="storefront-hero-cover h-full w-full object-cover" />
@@ -123,10 +123,10 @@ export function TemplateNoir(props: TemplateProps) {
                       <span className="text-amber-300">{purityText(product)}</span>
                       <span className="truncate text-white/60">{productTags(product).join(" · ")}</span>
                     </div>
-                    <h3 className="mt-3 line-clamp-2 min-h-[3.4rem] break-words text-2xl font-normal leading-[1.15]">
+                    <h3 className="mt-3 line-clamp-2 min-h-[3.4rem] [overflow-wrap:anywhere] text-2xl font-normal leading-[1.15]">
                       <Link href={productHref(shop, product)} className="transition hover:text-amber-200">{product.name}</Link>
                     </h3>
-                    <p className="mt-3 bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-2xl font-semibold text-transparent">{priceText(product)}</p>
+                    <p className="[overflow-wrap:anywhere] mt-3 bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-2xl font-semibold text-transparent">{priceText(product)}</p>
                     {savings && <p className="mt-1 text-xs text-white/60"><span className="line-through">{savings.original}</span> <span className="font-semibold text-emerald-400">{savings.label}</span></p>}
                     {making && <p className="mt-1 text-[11px] font-semibold text-emerald-400">Making: <span className="text-white/55 line-through">{making.original}</span> {making.discounted} · {making.label}</p>}
                     <div className="mt-auto flex gap-2 pt-6">
@@ -157,7 +157,7 @@ export function TemplateNoir(props: TemplateProps) {
           <div className="relative mt-24 overflow-hidden border border-amber-300/25 bg-gradient-to-br from-[#17120a] to-black px-6 py-14 sm:px-14">
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-400/15 blur-3xl" />
             <p className="text-[11px] font-semibold uppercase tracking-[0.5em] text-amber-300">By appointment</p>
-            <h3 className="mt-4 max-w-2xl text-3xl leading-tight sm:text-5xl">Let our jewellers guide you to <em className="text-amber-200">the one.</em></h3>
+            <h3 className="[overflow-wrap:anywhere] mt-4 max-w-2xl text-3xl leading-tight sm:text-5xl">Let our jewellers guide you to <em className="text-amber-200">the one.</em></h3>
             <a href={chatHref(shop, ownerWhatsApp)} target="_blank" rel="noreferrer" className="mt-8 inline-flex min-h-12 items-center gap-3 bg-amber-300 px-8 text-[11px] font-bold uppercase tracking-[0.26em] text-black hover:bg-amber-200">
               <MessageCircle className="h-4 w-4" /> Begin on WhatsApp
             </a>

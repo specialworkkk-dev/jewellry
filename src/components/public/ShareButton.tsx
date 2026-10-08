@@ -24,8 +24,17 @@ export function ShareButton({ title, text }: ShareButtonProps) {
       }
     };
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside as unknown as EventListener, { passive: true });
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside as unknown as EventListener);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
   const copyLink = async () => {
@@ -79,25 +88,28 @@ export function ShareButton({ title, text }: ShareButtonProps) {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        type="button"
         onClick={handlePrimaryShare}
-        className="flex-1 sm:flex-none justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-full transition-colors flex items-center gap-2"
+        aria-label="Share this shop"
+        aria-expanded={isOpen}
+        className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full bg-gray-100 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-200 sm:w-auto sm:px-4"
       >
         {copied ? <Check className="w-4 h-4 text-green-600" /> : <Share2 className="w-4 h-4" />}
-        {copied ? "Copied!" : "Share"}
+        <span className="hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-lg z-50">
-          <button type="button" onClick={() => openShare("whatsapp")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
+        <div className="absolute right-0 mt-2 w-52 max-w-[calc(100vw-2rem)] rounded-xl border border-gray-200 bg-white p-2 shadow-lg z-50">
+          <button type="button" onClick={() => openShare("whatsapp")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">
             <MessageCircle className="w-4 h-4" /> WhatsApp
           </button>
-          <button type="button" onClick={() => openShare("facebook")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+          <button type="button" onClick={() => openShare("facebook")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
             <Globe className="w-4 h-4" /> Facebook
           </button>
-          <button type="button" onClick={() => openShare("instagram")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700">
+          <button type="button" onClick={() => openShare("instagram")} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700">
             <AtSign className="w-4 h-4" /> Instagram
           </button>
-          <button type="button" onClick={copyLink} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <button type="button" onClick={copyLink} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
             <Copy className="w-4 h-4" /> Copy Link
           </button>
         </div>

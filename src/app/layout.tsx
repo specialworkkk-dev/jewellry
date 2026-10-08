@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { PwaServiceWorker } from "@/components/public/PwaServiceWorker";
 import { LocaleProvider } from "@/i18n/useLocale";
@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#111827",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +37,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="theme-color" content="#111827" />
         <Script id="luxestore-pwa-install-capture" strategy="beforeInteractive">
           {`(function(){
             if(window.__luxestorePwaCaptureReady)return;
@@ -54,7 +60,7 @@ export default function RootLayout({
           })();`}
         </Script>
       </head>
-      <body className="font-sans antialiased h-full flex flex-col min-h-screen">
+      <body className="font-sans antialiased flex min-h-dvh flex-col">
         <LocaleProvider>
           {children}
           <PwaServiceWorker />
