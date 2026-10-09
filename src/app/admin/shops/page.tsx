@@ -18,12 +18,14 @@ function PlanBadge({ shop }: { shop: { planPrice?: number; planEndsAt?: Date | s
   return <span className="inline-block rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">Free</span>;
 }
 
-function StatusBadge({ active }: { active: boolean }) {
-  return (
-    <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
-      {active ? "Active" : "Inactive"}
-    </span>
-  );
+function StatusBadge({ active, approved }: { active: boolean; approved?: boolean }) {
+  // Not approved (pending or rejected) takes precedence: such shops are not live regardless of isActive.
+  const [label, tone] = approved !== true
+    ? ["Not approved", "bg-amber-100 text-amber-800"]
+    : active
+      ? ["Active", "bg-green-100 text-green-700"]
+      : ["Suspended", "bg-red-100 text-red-700"];
+  return <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${tone}`}>{label}</span>;
 }
 
 export default async function AdminShopsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -33,7 +35,7 @@ export default async function AdminShopsPage({ searchParams }: { searchParams: P
   const filter = regex ? { $or: [{ name: regex }, { slug: regex }, { city: regex }] } : {};
   const [shops, total] = await Promise.all([
     Shop.find(filter)
-      .select("name slug isActive planPrice planEndsAt createdAt")
+      .select("name slug isActive isApproved planPrice planEndsAt createdAt")
       .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(size)
@@ -54,7 +56,7 @@ export default async function AdminShopsPage({ searchParams }: { searchParams: P
             <p className="mt-0.5 break-all text-sm text-gray-500">/{shop.slug}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <PlanBadge shop={shop} />
-              <StatusBadge active={shop.isActive} />
+              <StatusBadge active={shop.isActive} approved={shop.isApproved} />
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Link href={`/shop/${shop.slug}`} target="_blank" className="inline-flex min-h-11 items-center justify-center gap-1 rounded-md border text-sm text-gray-700 hover:bg-gray-50">
@@ -90,7 +92,7 @@ export default async function AdminShopsPage({ searchParams }: { searchParams: P
                   <td className="max-w-[16rem] break-words px-4 py-4 font-medium text-gray-900 lg:px-6">{shop.name}</td>
                   <td className="max-w-[12rem] break-all px-4 py-4 text-gray-500 lg:px-6">{shop.slug}</td>
                   <td className="px-4 py-4 lg:px-6"><PlanBadge shop={shop} /></td>
-                  <td className="px-4 py-4 lg:px-6"><StatusBadge active={shop.isActive} /></td>
+                  <td className="px-4 py-4 lg:px-6"><StatusBadge active={shop.isActive} approved={shop.isApproved} /></td>
                   <td className="px-4 py-4 text-right lg:px-6">
                     <div className="flex flex-wrap items-center justify-end gap-x-2">
                       <Link href={`/shop/${shop.slug}`} target="_blank" className="inline-flex min-h-10 items-center gap-1 px-2 text-gray-500 hover:text-gray-700">

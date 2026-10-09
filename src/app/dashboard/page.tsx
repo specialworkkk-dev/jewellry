@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, Package, Eye, Heart, MessageSquare, Plus } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
@@ -15,10 +16,14 @@ import { getOwnerShop } from "@/lib/owner-data";
 import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
-import { requireOwnerTenant } from "@/lib/tenant";
+import { getVerifiedOwnerTenant, requireOwnerTenant } from "@/lib/tenant";
 
 export default async function DashboardOverviewPage() {
-  const { shopId, shop: tenantShop } = await requireOwnerTenant();
+  // The layout also guards this, but pages render concurrently with it: redirect instead of throwing
+  // so a signed-out visitor never produces a server error.
+  const tenantResult = await getVerifiedOwnerTenant();
+  if (!tenantResult) redirect("/login?reauth=1");
+  const { shopId, shop: tenantShop } = tenantResult;
   const planExpired = isPlanExpired(tenantShop);
 
   async function updateGoldRate(rate22k: number | null, rate24k: number | null) {
