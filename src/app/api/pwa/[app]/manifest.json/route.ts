@@ -7,7 +7,7 @@ const INSTALLABLE_APPS = {
     shortName: "Store Owner",
     description: "Manage your jewellery storefront, products and enquiries.",
     startUrl: "/dashboard?source=pwa",
-    scope: "/dashboard",
+    scope: "/",
   },
   admin: {
     id: "/admin",
@@ -15,7 +15,7 @@ const INSTALLABLE_APPS = {
     shortName: "Admin",
     description: "Manage LuxeStore shops, users and platform settings.",
     startUrl: "/admin?source=pwa",
-    scope: "/admin",
+    scope: "/",
   },
 } as const;
 
