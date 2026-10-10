@@ -91,7 +91,7 @@ export function TemplateRose(props: TemplateProps) {
                   <div className="relative">
                     <Link href={productHref(shop, product)} className="relative block aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-rose-100 shadow-[0_25px_60px_-25px_rgba(140,58,82,.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">
                       {product.images?.[0] ? (
-                        <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 639px) 92vw, 45vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-105" />
+                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 92vw, 45vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-105" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-rose-500">No image</div>
                       )}

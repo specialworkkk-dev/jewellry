@@ -8,6 +8,7 @@ import MediaReservation from "@/models/MediaReservation";
 import { markReservationConfirmed, rejectReservation } from "@/lib/media-quota";
 import { SNIFF_BYTES, verifyUploadedObject } from "@/lib/media-sniff";
 import { Types } from "mongoose";
+import { createThumbnailForKey } from "@/lib/image-variants";
 
 /**
  * Post-upload verification for presigned uploads. The server reads the stored
@@ -61,6 +62,8 @@ export async function POST(req: Request) {
     if (!(await markReservationConfirmed(shopId, key))) {
       return NextResponse.json({ error: "Upload expired. Please upload again." }, { status: 410 });
     }
+    // Best-effort small copy for grids and circles; the storefront falls back to the full image without it.
+    if (reservation.contentType === "image/webp") await createThumbnailForKey(key);
     return NextResponse.json({ confirmed: true });
   } catch (error: unknown) {
     console.error("Upload confirm error:", error instanceof Error ? error.message : "unknown error");

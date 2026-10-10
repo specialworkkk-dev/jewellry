@@ -1,4 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { fullSizeBaseName, isThumbEligible } from "@/lib/media-url";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2";
@@ -81,7 +82,11 @@ export async function POST(req: Request) {
     }
 
     const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}-${safeFilename}`;
+    // Eligible WebP photos get a "~t" marker in their name so the server can add a thumbnail on confirm.
+    const baseName = isThumbEligible(folder, contentType) && /\.webp$/i.test(safeFilename)
+      ? fullSizeBaseName(crypto.randomUUID())
+      : crypto.randomUUID();
+    const key = `shops/${shopId}/${folder}/${baseName}-${safeFilename}`;
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,

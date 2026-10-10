@@ -73,7 +73,7 @@ export function TemplatePearl(props: TemplateProps) {
                   <div className="relative">
                     <Link href={productHref(shop, product)} className="relative block aspect-[4/5] overflow-hidden bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950">
                       {product.images?.[0] ? (
-                        <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 1023px) 48vw, 24vw" className="h-full w-full object-cover transition duration-[1100ms] group-hover:scale-[1.06]" />
+                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 1023px) 48vw, 24vw" className="h-full w-full object-cover transition duration-[1100ms] group-hover:scale-[1.06]" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-sm text-neutral-500">No image</div>
                       )}

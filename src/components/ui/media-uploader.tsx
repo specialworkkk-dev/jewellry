@@ -31,12 +31,22 @@ function readVideoDuration(file: File) {
   });
 }
 
-async function optimizeLargePhoto(file: File) {
+// Longest side per section. Cover photos run full-bleed on big screens, logos are tiny.
+const MAX_DIMENSION: Record<MediaUploaderProps["folder"], number> = {
+  products: 1600,
+  posts: 1600,
+  stories: 1600,
+  covers: 2400,
+  logos: 800,
+};
+
+async function optimizeLargePhoto(file: File, folder: MediaUploaderProps["folder"]) {
   try {
     const bitmap = await createImageBitmap(file);
-    const maxDimension = 1920;
+    const maxDimension = MAX_DIMENSION[folder];
     const needsResize = Math.max(bitmap.width, bitmap.height) > maxDimension;
-    const needsCompression = file.size > 1.5 * 1024 * 1024;
+    // Re-encode everything except small WebP files: storefronts serve these files directly from R2.
+    const needsCompression = file.type !== "image/webp" || file.size > (folder === "covers" ? 900 : 400) * 1024;
     if (!needsResize && !needsCompression) {
       bitmap.close();
       return file;
@@ -49,7 +59,7 @@ async function optimizeLargePhoto(file: File) {
     if (!context) return file;
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", folder === "covers" ? 0.82 : 0.8));
     if (!blob || blob.size >= file.size) return file;
     return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
   } catch {
@@ -105,7 +115,7 @@ export function MediaUploader({ folder, onUploadSuccess, mediaType = "image", ma
       if (durationSeconds && durationSeconds > maxVideoDurationSeconds + 0.25) {
         throw new Error(`Video must be ${maxVideoDurationSeconds} seconds or shorter.`);
       }
-      const uploadFile = isVideo ? file : await optimizeLargePhoto(file);
+      const uploadFile = isVideo ? file : await optimizeLargePhoto(file, folder);
       let result: { publicUrl: string; key: string } | null = null;
 
       try {

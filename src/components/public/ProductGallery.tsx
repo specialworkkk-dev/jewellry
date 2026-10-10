@@ -28,7 +28,7 @@ export function ProductGallery({ images, videos = [], productName }: { images: s
           {media.map((item, index) => (
             <button key={`${item.url}-${index}`} type="button" onClick={() => setSelected(index)} aria-label={`Show ${item.type} ${index + 1}`} className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-stone-100 transition ${selected === index ? "border-amber-500" : "border-transparent hover:border-stone-300"}`}>
               {item.type === "image" ? (
-                <StoreImage src={item.url} alt="" sizes="80px" className="h-full w-full object-cover" />
+                <StoreImage src={item.url} alt="" thumb sizes="80px" className="h-full w-full object-cover" />
               ) : (
                 <><video src={item.url} muted playsInline preload="none" className="h-full w-full bg-black object-cover" /><span className="absolute inset-0 flex items-center justify-center bg-black/25"><Play className="h-6 w-6 fill-white text-white" /></span></>
               )}

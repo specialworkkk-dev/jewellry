@@ -109,7 +109,7 @@ export function TemplateNoir(props: TemplateProps) {
                   <div className="relative">
                     <Link href={productHref(shop, product)} className="relative block aspect-square overflow-hidden bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
                       {product.images?.[0] ? (
-                        <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-110" />
+                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-110" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-sm text-white/50">No image</div>
                       )}

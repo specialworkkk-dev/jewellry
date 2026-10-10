@@ -102,7 +102,7 @@ export function TemplateRoyal(props: TemplateProps) {
                     <div className="rounded-t-[999px] border border-[#c9a24b]/70 p-2 transition duration-500 group-hover:border-[#9a7420] group-hover:shadow-[0_24px_60px_-20px_rgba(122,30,43,.45)]">
                       <Link href={productHref(shop, product)} className="relative block aspect-[4/5] overflow-hidden rounded-t-[999px] bg-[#f0e4c8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9a7420]">
                         {product.images?.[0] ? (
-                          <StoreImage src={product.images[0]} alt={product.name} sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                          <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
                         ) : (
                           <div className="flex h-full items-center justify-center text-[#c9a24b]"><Gem className="h-10 w-10" /></div>
                         )}

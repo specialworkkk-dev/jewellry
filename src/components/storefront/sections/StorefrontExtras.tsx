@@ -111,7 +111,7 @@ export function StorefrontExtras({
                   {isVideo ? (
                     <video src={first} controls playsInline preload="none" className="h-full w-full object-cover" />
                   ) : (
-                    <StoreImage src={first} alt={post.caption.slice(0, 80) || `Post by ${shop.name}`} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="h-full w-full object-cover" />
+                    <StoreImage src={first} alt={post.caption.slice(0, 80) || `Post by ${shop.name}`} thumb sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="h-full w-full object-cover" />
                   )}
                   {post.mediaType === "CAROUSEL" && (
                     <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">+{post.mediaUrls.length - 1}</span>

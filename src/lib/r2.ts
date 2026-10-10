@@ -1,4 +1,5 @@
 import { DeleteObjectsCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { thumbKeyFor } from "@/lib/media-url";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -56,10 +57,15 @@ export async function deleteShopObjects(shopId: string, urls: unknown[]): Promis
 }
 
 /** Best-effort deletion of exact R2 keys (callers must have verified ownership). Never throws. */
-export async function deleteR2Keys(keys: string[]): Promise<void> {
+export async function deleteR2Keys(requestedKeys: string[]): Promise<void> {
   try {
     const bucket = process.env.R2_BUCKET_NAME;
-    if (!bucket || keys.length === 0) return;
+    if (!bucket || requestedKeys.length === 0) return;
+    // A photo's generated thumbnail lives next to it and must go with it.
+    const keys = [...new Set(requestedKeys.flatMap((key) => {
+      const thumb = thumbKeyFor(key);
+      return thumb ? [key, thumb] : [key];
+    }))];
     for (let index = 0; index < keys.length; index += 1000) {
       const chunk = keys.slice(index, index + 1000);
       await r2Client.send(new DeleteObjectsCommand({
@@ -89,6 +95,21 @@ export async function readObjectHead(key: string, bytes = 512): Promise<{ length
     const name = (error as { name?: string })?.name;
     if (name === "NoSuchKey" || name === "NotFound") return null;
     if (name === "InvalidRange") return { length: 0, head: new Uint8Array() }; // zero-byte object
+    throw error;
+  }
+}
+
+/** Reads a whole (size-capped) object. Returns null when it does not exist or is larger than maxBytes. */
+export async function readObjectBytes(key: string, maxBytes: number): Promise<Uint8Array | null> {
+  const bucket = process.env.R2_BUCKET_NAME;
+  if (!bucket) throw new Error("Media storage is not configured");
+  try {
+    const response = await r2Client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    if (typeof response.ContentLength === "number" && response.ContentLength > maxBytes) return null;
+    return response.Body ? await response.Body.transformToByteArray() : null;
+  } catch (error) {
+    const name = (error as { name?: string })?.name;
+    if (name === "NoSuchKey" || name === "NotFound") return null;
     throw error;
   }
 }

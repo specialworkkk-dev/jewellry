@@ -1,6 +1,8 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { deleteR2Keys, r2Client } from "@/lib/r2";
+import { fullSizeBaseName, isThumbEligible } from "@/lib/media-url";
+import { putThumbnailFromBytes } from "@/lib/image-variants";
 import { errorMessage } from "@/lib/validation";
 import { getVerifiedOwnerTenant } from "@/lib/tenant";
 import { withRetry } from "@/lib/retry";
@@ -90,7 +92,8 @@ export async function POST(req: Request) {
     }
 
     const extension = EXTENSION_BY_TYPE[file.type] ?? (isImage ? "jpg" : "mp4");
-    const key = `shops/${shopId}/${folder}/${crypto.randomUUID()}.${extension}`;
+    const withThumbnail = isThumbEligible(folder, file.type);
+    const key = `shops/${shopId}/${folder}/${withThumbnail ? fullSizeBaseName(crypto.randomUUID()) : crypto.randomUUID()}.${extension}`;
 
     const kind = isVideo ? "videos" : "photos";
     const limit = dailyLimit(kind, shop);
@@ -119,6 +122,8 @@ export async function POST(req: Request) {
       await deleteR2Keys([key]);
       throw uploadError;
     }
+
+    if (withThumbnail) await putThumbnailFromBytes(key, fileBuffer);
 
     return NextResponse.json({ publicUrl: `${publicBaseUrl}/${key}`, key });
   } catch (error: unknown) {

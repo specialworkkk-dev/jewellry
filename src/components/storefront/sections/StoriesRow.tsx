@@ -56,7 +56,7 @@ export function StoriesRow({
                 {story.mediaType === "VIDEO" ? (
                   <video src={story.mediaUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
                 ) : (
-                  <StoreImage src={story.mediaUrl} alt="" sizes="64px" className="h-full w-full object-cover" />
+                  <StoreImage src={story.mediaUrl} alt="" thumb sizes="64px" className="h-full w-full object-cover" />
                 )}
               </span>
             </span>
