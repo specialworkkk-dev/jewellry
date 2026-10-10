@@ -7,6 +7,7 @@ import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 import { requireOwnerTenant } from "@/lib/tenant";
+import { normalizeBrandColor } from "@/lib/brand-color";
 
 export async function updateShopSettings(formData: FormData) {
   const { shopId, shop } = await requireOwnerTenant();
@@ -25,7 +26,8 @@ export async function updateShopSettings(formData: FormData) {
     pincode: cleanString(formData.get("pincode"), 20),
   };
 
-  await Shop.findByIdAndUpdate(shopId, { $set: updates });
+  const brandColor = normalizeBrandColor(formData.get("brandColor"));
+  await Shop.findByIdAndUpdate(shopId, brandColor ? { $set: { ...updates, brandColor } } : { $set: updates, $unset: { brandColor: 1 } });
 
   revalidatePath("/dashboard/settings");
   if (shop?.slug) {

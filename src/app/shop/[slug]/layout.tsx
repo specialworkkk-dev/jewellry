@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { forbidden, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
@@ -14,8 +14,15 @@ import { ShopNotificationButton } from "@/components/public/ShopNotificationButt
 import { getCurrentSession } from "@/lib/session";
 import { resolveStorefrontTemplate } from "@/lib/storefront-template";
 import { STOREFRONT_THEMES } from "@/components/storefront/themes";
+import { DEFAULT_THEME_COLOR, darken, normalizeBrandColor, readableTextOn } from "@/lib/brand-color";
 
 export const dynamic = 'force-dynamic'; // Ensure we track every view accurately
+
+export async function generateViewport({ params }: { params: Promise<{ slug: string }> }): Promise<Viewport> {
+  const { slug } = await params;
+  const shop = await getPublicShopBySlug(slug);
+  return { themeColor: normalizeBrandColor(shop?.brandColor) ?? DEFAULT_THEME_COLOR };
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -50,7 +57,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     manifest: `/api/shop/${shop.slug}/manifest.json`,
     icons: {
       apple: [{
-        url: `/api/shop/${shop.slug}/icon/180`,
+        // Versioned by brand color so a color change replaces the cached icon instead of waiting for it to expire.
+        url: `/api/shop/${shop.slug}/icon/180${normalizeBrandColor(shop.brandColor) ? `?c=${normalizeBrandColor(shop.brandColor)!.slice(1)}` : ""}`,
         sizes: "180x180",
         type: "image/png",
       }],
@@ -108,6 +116,9 @@ export default async function PublicShopLayout({
 
   const templateId = resolveStorefrontTemplate(shop);
   const theme = STOREFRONT_THEMES[templateId];
+  // Owner-chosen brand color: tints the gold-rate banner, header edge and footer; templates stay as they are otherwise.
+  const brandColor = normalizeBrandColor(shop.brandColor);
+  const brandFooter = brandColor ? darken(brandColor, 0.45) : undefined;
   const whatsappNumber = (shop.whatsappNumber || "").replace(/\D/g, "");
   const isOwnerPreview = session?.user.role === "SHOP_OWNER"
     && session.user.shopId === shop._id.toString();
@@ -195,7 +206,7 @@ export default async function PublicShopLayout({
       
       {/* Daily Gold Rate Banner */}
       {(shop.goldRate22K || shop.goldRate24K) && (
-        <div className={`${theme.banner} px-4 py-2 text-center`}>
+        <div className={`${theme.banner} px-4 py-2 text-center`} style={brandColor ? { backgroundColor: brandColor, color: readableTextOn(brandColor) } : undefined}>
           <p className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold sm:gap-4 sm:text-sm">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-amber-400"></span>
@@ -209,7 +220,7 @@ export default async function PublicShopLayout({
       )}
       
       {/* Public Shop Header: identity row, then ONE compact action row on phones. */}
-      <header className={`relative z-50 ${theme.header} lg:sticky ${isOwnerPreview ? "lg:top-12" : "lg:top-0"}`}>
+      <header className={`relative z-50 ${theme.header} lg:sticky ${isOwnerPreview ? "lg:top-12" : "lg:top-0"}`} style={brandColor ? { borderBottom: `3px solid ${brandColor}` } : undefined}>
         <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
           <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center lg:gap-4">
 
@@ -280,11 +291,14 @@ export default async function PublicShopLayout({
       </main>
       
       {/* Footer */}
-      <footer className={`border-t border-white/10 px-4 py-10 text-center text-sm ${theme.footer}`}>
-        <p style={{ fontFamily: theme.display }} className={`text-lg [overflow-wrap:anywhere] ${theme.footerTitle}`}>{shop.name}</p>
+      <footer
+        className={`border-t border-white/10 px-4 py-10 text-center text-sm ${theme.footer}`}
+        style={brandFooter ? { backgroundColor: brandFooter, color: `${readableTextOn(brandFooter)}b3` } : undefined}
+      >
+        <p style={{ fontFamily: theme.display, ...(brandFooter ? { color: readableTextOn(brandFooter) } : {}) }} className={`text-lg [overflow-wrap:anywhere] ${theme.footerTitle}`}>{shop.name}</p>
         {socials("mt-4 flex justify-center min-[400px]:hidden", "h-11 w-11")}
         <p className="mt-2">&copy; {new Date().getFullYear()} All rights reserved.</p>
-        <p className={`mt-1 text-xs ${theme.footerMuted}`}>Powered by LuxeStore</p>
+        <p className={`mt-1 text-xs ${brandFooter ? "opacity-60" : theme.footerMuted}`}>Powered by LuxeStore</p>
       </footer>
 
     </div>

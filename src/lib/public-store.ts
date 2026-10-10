@@ -45,7 +45,7 @@ export const getPublicShopBySlug = cache(async (slug: string) => unstable_cache(
   async () => {
     await connectToDatabase();
     return Shop.findOne({ slug, isApproved: true })
-      .select("name slug storefrontTemplate logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
+      .select("name slug storefrontTemplate brandColor logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
       .lean();
   },
   ["public-shop-by-slug", PUBLIC_STORE_CACHE_NAMESPACE, slug],

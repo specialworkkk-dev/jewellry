@@ -17,6 +17,7 @@ export interface IShop extends Document {
   coverUrl?: string;
   shortDescription?: string;
   storefrontTemplate?: number; // 1-5, customer storefront design
+  brandColor?: string; // owner-chosen "#rrggbb"; themes the installed app and storefront accents
   
   // Socials
   instagramUrl?: string;
@@ -62,6 +63,7 @@ const ShopSchema: Schema = new Schema(
     coverUrl: { type: String },
     shortDescription: { type: String },
     storefrontTemplate: { type: Number, min: 1, max: STOREFRONT_TEMPLATE_COUNT },
+    brandColor: { type: String, match: /^#[0-9a-f]{6}$/ },
     
     instagramUrl: { type: String },
     facebookUrl: { type: String },

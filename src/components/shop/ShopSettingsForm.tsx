@@ -10,6 +10,9 @@ import dynamic from "next/dynamic";
 import { updateShopSettings } from "@/app/dashboard/settings/actions";
 import { AtSign, Check, Copy, LoaderCircle, LogOut, MessageCircle, Share2, Users } from "lucide-react";
 import { LanguageSwitcher, useLocale } from "@/i18n/useLocale";
+import { DEFAULT_THEME_COLOR, normalizeBrandColor, readableTextOn } from "@/lib/brand-color";
+
+const BRAND_COLOR_PRESETS = ["#7b1e2b", "#0f5132", "#1e3a8a", "#6b21a8", "#be185d", "#b45309", "#111827"];
 
 const MediaUploader = dynamic(
   () => import("@/components/ui/media-uploader").then((module) => module.MediaUploader),
@@ -23,6 +26,7 @@ type ShopSettings = {
   slug?: string;
   logoUrl?: string;
   coverUrl?: string;
+  brandColor?: string;
   whatsappNumber?: string;
   instagramUrl?: string;
   facebookUrl?: string;
@@ -38,6 +42,8 @@ type ShopSettings = {
 export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
   const [logoUrl, setLogoUrl] = useState(shop?.logoUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(shop?.coverUrl ?? "");
+  const [brandColor, setBrandColor] = useState(normalizeBrandColor(shop?.brandColor) ?? "");
+  const previewColor = brandColor || DEFAULT_THEME_COLOR;
   const [copied, setCopied] = useState(false);
   const [publicShopUrl, setPublicShopUrl] = useState("");
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -225,6 +231,47 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
           <form action={updateShopSettings} className="space-y-6">
             <input type="hidden" name="logoUrl" value={logoUrl} />
             <input type="hidden" name="coverUrl" value={coverUrl} />
+            <input type="hidden" name="brandColor" value={brandColor} />
+
+            <div className="min-w-0 space-y-3 rounded-lg border bg-gray-50/60 p-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Brand Color</p>
+                <p className="text-xs text-gray-500">Colors your customers&apos; installed app (icon, splash screen, browser bar) and your storefront banner and footer.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Brand color presets">
+                {BRAND_COLOR_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    aria-label={`Use color ${preset}`}
+                    aria-pressed={brandColor === preset}
+                    onClick={() => setBrandColor(preset)}
+                    style={{ backgroundColor: preset }}
+                    className={`h-11 w-11 rounded-full border-2 ${brandColor === preset ? "border-amber-500 ring-2 ring-amber-300" : "border-white shadow"}`}
+                  />
+                ))}
+                <label className="relative inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-dashed border-gray-400 bg-white px-3 text-xs font-medium text-gray-600">
+                  Custom
+                  <input
+                    type="color"
+                    aria-label="Pick a custom brand color"
+                    value={previewColor}
+                    onChange={(event) => setBrandColor(normalizeBrandColor(event.target.value) ?? "")}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                </label>
+                {brandColor && (
+                  <button type="button" onClick={() => setBrandColor("")} className="min-h-11 px-2 text-xs font-medium text-gray-600 underline">Reset</button>
+                )}
+              </div>
+              <div
+                className="flex min-h-11 items-center justify-between gap-3 rounded-md px-4 py-3 text-sm font-semibold"
+                style={{ backgroundColor: previewColor, color: readableTextOn(previewColor) }}
+              >
+                <span className="truncate">{shop?.name || "Your Shop"}</span>
+                <span className="shrink-0 text-xs font-medium opacity-80">{brandColor || "Default"}</span>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="min-w-0 space-y-2">
