@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Activity, ExternalLink, LayoutDashboard, LogOut, Package, Settings, HelpCircle, Menu, X, Store, Users } from "lucide-react";
+import { Activity, ExternalLink, LayoutDashboard, LogOut, Package, Settings, HelpCircle, Menu, X, Store, Users, Trophy } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { NavPendingIndicator } from "@/components/ui/nav-pending-indicator";
@@ -16,6 +16,7 @@ export default function MobileSidebar({ mode = "shop", shopSlug }: { mode?: "sho
     { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
     { href: "/dashboard/products", icon: Package, label: "Products" },
     { href: "/dashboard/enquiries", icon: HelpCircle, label: "Enquiries" },
+    { href: "/dashboard/design-poll", icon: Trophy, label: "Design of the Week" },
     { href: "/dashboard/settings", icon: Settings, label: "Shop Settings" },
   ];
   const adminLinks = [

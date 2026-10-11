@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Package, Settings, HelpCircle, ExternalLink, Trophy } from "lucide-react";
 import MobileSidebar from "@/components/admin/MobileSidebar";
 import UserProfileDropdown from "@/components/admin/UserProfileDropdown";
 import { getCurrentSession } from "@/lib/session";
@@ -90,6 +90,11 @@ export default async function DashboardLayout({
           <Link prefetch={true} href="/dashboard/enquiries" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
             <HelpCircle className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
             Enquiries
+            <NavPendingIndicator />
+          </Link>
+          <Link prefetch={true} href="/dashboard/design-poll" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors group">
+            <Trophy className="w-5 h-5 text-gray-400 group-hover:text-amber-500" />
+            Design of the Week
             <NavPendingIndicator />
           </Link>
           
