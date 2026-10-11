@@ -8,7 +8,7 @@ import Product from "@/models/Product";
 import Story from "@/models/Story";
 import { EVENT_DEDUPE_WINDOWS_MS, isNonHumanRequest, viewDedupeKey } from "@/lib/engagement-dedupe";
 
-const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAPP_CLICK"]);
+const EVENT_TYPES = new Set(["SHOP_VIEW", "PRODUCT_VIEW", "STORY_VIEW", "WHATSAPP_CLICK", "PHOTO_SAVE"]);
 
 export async function POST(req: Request) {
   try {
@@ -43,6 +43,11 @@ export async function POST(req: Request) {
     } else if (body.eventType === "STORY_VIEW") {
       if (!targetId) return NextResponse.json({ success: false }, { status: 400 });
       const exists = await Story.exists({ _id: targetId, shopId: body.shopId });
+      if (!exists) return NextResponse.json({ success: false }, { status: 404 });
+    } else if (body.eventType === "PHOTO_SAVE") {
+      // A saved photo always belongs to a published product of this shop.
+      if (!targetId) return NextResponse.json({ success: false }, { status: 400 });
+      const exists = await Product.exists({ _id: targetId, shopId: body.shopId, isPublished: true });
       if (!exists) return NextResponse.json({ success: false }, { status: 404 });
     } else if (body.eventType === "WHATSAPP_CLICK" && targetId) {
       // A WhatsApp tap may carry the product that was being viewed.

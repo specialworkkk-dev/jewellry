@@ -33,6 +33,9 @@ export interface IProduct extends Document {
   isNewArrival: boolean;
   isBestseller: boolean;
   isBridalCollection: boolean;
+  stockStatus: 'IN_STOCK' | 'OUT_OF_STOCK'; // sold-out designs stay visible; back in stock alerts fire on OUT -> IN
+  lastPriceDropAlertAt?: Date; // rate-limits price-drop alerts for this product
+  isDesignOfTheWeek: boolean; // set on the winner of the latest closed design poll
   
   // Stats
   likesCount: number;
@@ -81,6 +84,9 @@ const ProductSchema: Schema = new Schema(
     isNewArrival: { type: Boolean, default: false },
     isBestseller: { type: Boolean, default: false },
     isBridalCollection: { type: Boolean, default: false },
+    stockStatus: { type: String, enum: ['IN_STOCK', 'OUT_OF_STOCK'], default: 'IN_STOCK' },
+    lastPriceDropAlertAt: { type: Date },
+    isDesignOfTheWeek: { type: Boolean, default: false },
     
     likesCount: { type: Number, default: 0 },
     viewsCount: { type: Number, default: 0 },

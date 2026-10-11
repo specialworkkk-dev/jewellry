@@ -18,6 +18,7 @@ export interface IShop extends Document {
   shortDescription?: string;
   storefrontTemplate?: number; // 1-5, customer storefront design
   brandColor?: string; // owner-chosen "#rrggbb"; themes the installed app and storefront accents
+  allowPhotoDownload?: boolean; // customers may save watermarked product photos (owner opt-in)
   
   // Socials
   instagramUrl?: string;
@@ -64,6 +65,7 @@ const ShopSchema: Schema = new Schema(
     shortDescription: { type: String },
     storefrontTemplate: { type: Number, min: 1, max: STOREFRONT_TEMPLATE_COUNT },
     brandColor: { type: String, match: /^#[0-9a-f]{6}$/ },
+    allowPhotoDownload: { type: Boolean, default: false },
     
     instagramUrl: { type: String },
     facebookUrl: { type: String },

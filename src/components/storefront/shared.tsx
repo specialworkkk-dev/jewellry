@@ -64,6 +64,8 @@ export const purityText = (product: StorefrontProduct) => (product.goldPurity ? 
 
 export function productTags(product: StorefrontProduct) {
   return [
+    product.stockStatus === "OUT_OF_STOCK" && "Sold out",
+    product.isDesignOfTheWeek && "Design of the Week",
     product.isNewArrival && "New",
     product.isBestseller && "Bestseller",
     product.isBridalCollection && "Bridal",

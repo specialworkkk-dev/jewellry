@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAnalyticsEvent extends Document {
   shopId: mongoose.Types.ObjectId;
-  eventType: 'SHOP_VIEW' | 'PRODUCT_VIEW' | 'STORY_VIEW' | 'WHATSAPP_CLICK';
+  eventType: 'SHOP_VIEW' | 'PRODUCT_VIEW' | 'STORY_VIEW' | 'WHATSAPP_CLICK' | 'PHOTO_SAVE';
   targetId?: mongoose.Types.ObjectId; // Product ID or Story ID
   userAgent?: string;
   ipAddress?: string;
@@ -15,7 +15,7 @@ const AnalyticsEventSchema: Schema = new Schema(
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
     eventType: { 
       type: String, 
-      enum: ['SHOP_VIEW', 'PRODUCT_VIEW', 'STORY_VIEW', 'WHATSAPP_CLICK'], 
+      enum: ['SHOP_VIEW', 'PRODUCT_VIEW', 'STORY_VIEW', 'WHATSAPP_CLICK', 'PHOTO_SAVE'], 
       required: true 
     },
     targetId: { type: Schema.Types.ObjectId },

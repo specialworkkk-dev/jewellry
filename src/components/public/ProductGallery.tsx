@@ -4,7 +4,19 @@ import { useState } from "react";
 import { StoreImage } from "@/components/public/StoreImage";
 import { Play } from "lucide-react";
 
-export function ProductGallery({ images, videos = [], productName }: { images: string[]; videos?: string[]; productName: string }) {
+export interface ProductGalleryProps {
+  images: string[];
+  videos?: string[];
+  productName: string;
+  productId: string;
+  shopId: string;
+  shopSlug: string;
+  /** Shop opted in to customers saving watermarked photos (Shop.allowPhotoDownload). */
+  allowDownload?: boolean;
+}
+
+// allowDownload / productId / shopId / shopSlug are wired by the product page for the "Save photo" feature.
+export function ProductGallery({ images, videos = [], productName }: ProductGalleryProps) {
   const [selected, setSelected] = useState(0);
   const media = [
     ...images.map((url) => ({ type: "image" as const, url })),

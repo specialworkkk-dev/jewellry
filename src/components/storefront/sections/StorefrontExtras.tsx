@@ -4,6 +4,8 @@ import type { PublicAd, PublicPost, PublicStory } from "@/lib/public-store";
 import type { StorefrontTemplateId } from "@/lib/storefront-template";
 import { STOREFRONT_THEMES } from "@/components/storefront/themes";
 import { StoriesRow } from "./StoriesRow";
+import { FestivalOffers } from "./FestivalOffers";
+import { DesignOfTheWeek } from "./DesignOfTheWeek";
 
 interface ExtrasShop {
   _id: { toString(): string };
@@ -51,14 +53,16 @@ export function StorefrontExtras({
   const liveStories = stories;
   const liveAds = ads;
   const goldRate = liveAds.find((ad) => ad.type === "GOLD_RATE");
-  const promos = liveAds.filter((ad) => ad.type !== "GOLD_RATE").slice(0, 3);
+  const festivalOffers = liveAds.filter((ad) => ad.type === "FESTIVAL_OFFER");
+  const promos = liveAds.filter((ad) => ad.type !== "GOLD_RATE" && ad.type !== "FESTIVAL_OFFER").slice(0, 3);
   const shopId = shop._id.toString();
 
   if (placement === "top") {
-    if (!goldRate && promos.length === 0 && liveStories.length === 0) return null;
+    if (!goldRate && promos.length === 0 && festivalOffers.length === 0 && liveStories.length === 0) return null;
     return (
       <section aria-label="Offers and stories" className={`${theme.pageBg} px-4 pt-4`}>
         <div className="mx-auto max-w-6xl space-y-3">
+          <FestivalOffers ads={festivalOffers} template={template} shopSlug={shop.slug} />
           {goldRate && (
             <div className={`${glass} flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5`}>
               <span className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${theme.detail.subtle}`}>{goldRate.title}</span>
@@ -96,7 +100,15 @@ export function StorefrontExtras({
     );
   }
 
-  if (posts.length === 0) return null;
+  return (
+    <>
+      <DesignOfTheWeek shop={shop} template={template} />
+      {posts.length > 0 && <LatestPosts shop={shop} posts={posts} theme={theme} />}
+    </>
+  );
+}
+
+function LatestPosts({ shop, posts, theme }: { shop: ExtrasShop; posts: PublicPost[]; theme: (typeof STOREFRONT_THEMES)[StorefrontTemplateId] }) {
   return (
     <section aria-label="Latest posts" className={`${theme.pageBg} px-4 py-10`}>
       <div className="mx-auto max-w-6xl">

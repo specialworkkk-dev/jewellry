@@ -3,7 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IAdvertisement extends Document {
   shopId: mongoose.Types.ObjectId;
   title: string;
-  type: 'HERO_BANNER' | 'PROMO_STRIP' | 'GOLD_RATE';
+  type: 'HERO_BANNER' | 'PROMO_STRIP' | 'GOLD_RATE' | 'FESTIVAL_OFFER';
+  festival?: string; // e.g. "Dhanteras"; label for FESTIVAL_OFFER
+  startsAt?: Date; // FESTIVAL_OFFER is hidden before this time
   message: string;
   imageUrl?: string;
   linkUrl?: string; // Where it leads when clicked
@@ -19,9 +21,11 @@ const AdvertisementSchema: Schema = new Schema(
     title: { type: String, required: true },
     type: { 
       type: String, 
-      enum: ['HERO_BANNER', 'PROMO_STRIP', 'GOLD_RATE'], 
+      enum: ['HERO_BANNER', 'PROMO_STRIP', 'GOLD_RATE', 'FESTIVAL_OFFER'], 
       default: 'PROMO_STRIP' 
     },
+    festival: { type: String, maxlength: 80 },
+    startsAt: { type: Date },
     message: { type: String, required: true },
     imageUrl: { type: String },
     linkUrl: { type: String },

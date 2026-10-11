@@ -45,7 +45,7 @@ export const getPublicShopBySlug = cache(async (slug: string) => unstable_cache(
   async () => {
     await connectToDatabase();
     return Shop.findOne({ slug, isApproved: true })
-      .select("name slug storefrontTemplate brandColor logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
+      .select("name slug storefrontTemplate brandColor allowPhotoDownload logoUrl coverUrl shortDescription address city state pincode whatsappNumber businessPhone instagramUrl facebookUrl websiteUrl goldRate22K goldRate24K maxLinkOpens currentLinkOpens uniqueVisitorTrackingVersion isActive")
       .lean();
   },
   ["public-shop-by-slug", PUBLIC_STORE_CACHE_NAMESPACE, slug],
@@ -103,7 +103,7 @@ export const getPublicCatalogue = cache(async (shopId: string, activeCategory?: 
       const findProducts = () => Product.find(query)
         .sort({ createdAt: -1, _id: -1 })
         .limit(PUBLIC_CATALOGUE_PAGE_SIZE + 1)
-        .select("name sku images goldPurity priceType price originalPrice discountPercentage discountType discountValue makingCharges makingChargesDiscountType makingChargesDiscountValue isNewArrival isBestseller isBridalCollection createdAt")
+        .select("name sku images goldPurity priceType price originalPrice discountPercentage discountType discountValue makingCharges makingChargesDiscountType makingChargesDiscountValue isNewArrival isBestseller isBridalCollection stockStatus isDesignOfTheWeek createdAt")
         .lean();
 
       const pageResult = (categories: Awaited<typeof categoriesPromise>, foundProducts: Awaited<ReturnType<typeof findProducts>>) => {
@@ -159,7 +159,9 @@ export interface PublicAd {
   _id: string;
   title: string;
   message: string;
-  type: "HERO_BANNER" | "PROMO_STRIP" | "GOLD_RATE";
+  type: "HERO_BANNER" | "PROMO_STRIP" | "GOLD_RATE" | "FESTIVAL_OFFER";
+  festival?: string;
+  startsAt?: string;
   imageUrl?: string;
   linkUrl?: string;
   validUntil?: string;
@@ -228,13 +230,15 @@ export const getPublicAds = cache(async (shopId: string): Promise<PublicAd[]> =>
       })
         .sort({ createdAt: -1 })
         .limit(10)
-        .select("title message type imageUrl linkUrl validUntil")
+        .select("title message type festival startsAt imageUrl linkUrl validUntil")
         .lean();
       return ads.map((ad) => ({
         _id: ad._id.toString(),
         title: ad.title,
         message: ad.message,
         type: ad.type as PublicAd["type"],
+        festival: ad.festival || undefined,
+        startsAt: ad.startsAt ? new Date(ad.startsAt).toISOString() : undefined,
         imageUrl: ad.imageUrl || undefined,
         linkUrl: ad.linkUrl || undefined,
         validUntil: ad.validUntil ? new Date(ad.validUntil).toISOString() : undefined,

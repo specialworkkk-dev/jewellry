@@ -101,7 +101,7 @@ export default async function ProductDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 lg:gap-16">
 
         {/* Left: Image Gallery */}
-        <ProductGallery images={product.images || []} videos={product.videos || []} productName={product.name} />
+        <ProductGallery images={product.images || []} videos={product.videos || []} productName={product.name} productId={product._id.toString()} shopId={shop._id.toString()} shopSlug={shop.slug} allowDownload={Boolean(shop.allowPhotoDownload)} />
 
         {/* Right: Product Details */}
         <div className="flex min-w-0 flex-col pt-2">

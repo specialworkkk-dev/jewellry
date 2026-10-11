@@ -9,6 +9,9 @@ const PushSubscriptionSchema = new Schema(
       p256dh: { type: String, required: true, maxlength: 512 },
       auth: { type: String, required: true, maxlength: 512 },
     },
+    // Anonymous visitor id (luxestore_visitor_id cookie / user id). Lets price-drop and back-in-stock
+    // alerts reach only the people who saved that design.
+    actorId: { type: Schema.Types.ObjectId, index: true },
     userAgent: { type: String, default: "", maxlength: 500 },
     failureCount: { type: Number, default: 0, min: 0 },
     lastDeliveredAt: { type: Date },
