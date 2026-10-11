@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, Package, Eye, Heart, MessageSquare, Plus } from "lucide-react";
+import { ExternalLink, Package, Eye, Heart, MessageSquare, Plus, Download } from "lucide-react";
 import connectToDatabase from "@/lib/mongoose";
 import Product from "@/models/Product";
 import Enquiry from "@/models/Enquiry";
@@ -17,6 +17,9 @@ import { scheduleShopEvent } from "@/lib/realtime";
 import { scheduleShopPushNotification } from "@/lib/push-notifications";
 import { invalidatePublicStoreCache } from "@/lib/public-store-cache";
 import { getVerifiedOwnerTenant, requireOwnerTenant } from "@/lib/tenant";
+
+// Kept outside the component so the render stays pure.
+const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
 export default async function DashboardOverviewPage() {
   // The layout also guards this, but pages render concurrently with it: redirect instead of throwing
@@ -62,7 +65,7 @@ export default async function DashboardOverviewPage() {
   }
 
   await connectToDatabase();
-  const [shop, totalProducts, profileViews, productLikes, newEnquiries, recentEnquiries, topProducts] = await Promise.all([
+  const [shop, totalProducts, profileViews, productLikes, newEnquiries, recentEnquiries, topProducts, photosSaved] = await Promise.all([
     getOwnerShop(shopId),
     Product.countDocuments({ shopId }),
     AnalyticsEvent.countDocuments({ shopId, eventType: "SHOP_VIEW" }),
@@ -79,6 +82,8 @@ export default async function DashboardOverviewPage() {
       .sort({ viewsCount: -1, likesCount: -1 })
       .limit(3)
       .lean(),
+    // Served by the (shopId, eventType, createdAt) index.
+    AnalyticsEvent.countDocuments({ shopId, eventType: "PHOTO_SAVE", createdAt: { $gte: daysAgo(30) } }),
   ]);
   return (
     <div className="space-y-6">
@@ -111,7 +116,7 @@ export default async function DashboardOverviewPage() {
         onSave={updateGoldRate} 
       />
       
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <Card className="min-w-0 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Products</CardTitle>
@@ -155,6 +160,16 @@ export default async function DashboardOverviewPage() {
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{newEnquiries}</div>
             <p className="text-xs text-gray-500 mt-1">Need a reply</p>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 min-w-0 shadow-sm lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Photos Saved</CardTitle>
+            <Download className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{photosSaved}</div>
+            <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
           </CardContent>
         </Card>
       </div>

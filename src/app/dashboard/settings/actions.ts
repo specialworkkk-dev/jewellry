@@ -24,6 +24,8 @@ export async function updateShopSettings(formData: FormData) {
     city: cleanString(formData.get("city"), 100),
     state: cleanString(formData.get("state"), 100),
     pincode: cleanString(formData.get("pincode"), 20),
+    // An unchecked checkbox is simply absent from the form data.
+    allowPhotoDownload: formData.get("allowPhotoDownload") === "on",
   };
 
   const brandColor = normalizeBrandColor(formData.get("brandColor"));

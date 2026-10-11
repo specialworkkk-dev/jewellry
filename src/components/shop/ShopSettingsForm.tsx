@@ -37,6 +37,7 @@ type ShopSettings = {
   city?: string;
   state?: string;
   pincode?: string;
+  allowPhotoDownload?: boolean;
 };
 
 export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
@@ -272,6 +273,19 @@ export function ShopSettingsForm({ shop }: { shop?: ShopSettings }) {
                 <span className="shrink-0 text-xs font-medium opacity-80">{brandColor || "Default"}</span>
               </div>
             </div>
+
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border bg-gray-50/60 p-4">
+              <input
+                type="checkbox"
+                name="allowPhotoDownload"
+                defaultChecked={Boolean(shop?.allowPhotoDownload)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-amber-600"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-gray-700">Allow customers to save product photos</span>
+                <span className="mt-1 block text-xs text-gray-500">Adds a &ldquo;Save photo&rdquo; button on product pages. Photos are saved with your shop name/logo watermark.</span>
+              </span>
+            </label>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="min-w-0 space-y-2">
