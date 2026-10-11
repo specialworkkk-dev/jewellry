@@ -7,6 +7,7 @@ import { getVerifiedOwnerTenant } from '@/lib/tenant';
 import { getPlanBlock } from '@/lib/plan';
 import { publishShopContentChange } from '@/lib/public-store-cache';
 import { deleteShopObjects } from '@/lib/r2';
+import { MAX_ACTIVE_FESTIVAL_OFFERS } from '@/lib/festival';
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -49,6 +50,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (block) return NextResponse.json({ error: block.error }, { status: block.status });
       if (ad.validUntil && new Date(ad.validUntil).getTime() <= Date.now()) {
         return NextResponse.json({ error: 'This advertisement has expired. Create a new one.' }, { status: 400 });
+      }
+      if (ad.type === 'FESTIVAL_OFFER') {
+        if (!ad.validUntil) {
+          return NextResponse.json({ error: 'This festival offer has no end time. Create a new one.' }, { status: 400 });
+        }
+        if (!ad.isActive) {
+          const activeCount = await Advertisement.countDocuments({
+            shopId: new Types.ObjectId(tenant.shopId),
+            type: 'FESTIVAL_OFFER',
+            isActive: true,
+            validUntil: { $gt: new Date() },
+            _id: { $ne: ad._id },
+          });
+          if (activeCount >= MAX_ACTIVE_FESTIVAL_OFFERS) {
+            return NextResponse.json(
+              { error: `You can run at most ${MAX_ACTIVE_FESTIVAL_OFFERS} festival offers at a time. Deactivate or delete one first.` },
+              { status: 409 },
+            );
+          }
+        }
       }
       if (ad.type === 'GOLD_RATE') {
         await Advertisement.updateMany(

@@ -253,6 +253,6 @@ export const getPublicAds = cache(async (shopId: string): Promise<PublicAd[]> =>
 export function selectLiveContent(stories: PublicStory[], ads: PublicAd[], now: number = Date.now()) {
   return {
     stories: stories.filter((story) => new Date(story.expiresAt).getTime() > now),
-    ads: ads.filter((ad) => !ad.validUntil || new Date(ad.validUntil).getTime() > now),
+    ads: ads.filter((ad) => (!ad.validUntil || new Date(ad.validUntil).getTime() > now) && (!ad.startsAt || new Date(ad.startsAt).getTime() <= now)),
   };
 }

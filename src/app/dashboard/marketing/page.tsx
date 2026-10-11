@@ -7,6 +7,7 @@ import { RowActions } from "../media/row-actions";
 import Image from "next/image";
 import { requireOwnerTenant } from "@/lib/tenant";
 import { OwnerPagination } from "@/components/ui/owner-pagination";
+import { festivalStatus, formatCountdown, formatIstDisplay } from "@/lib/festival";
 import { clampOwnerPage, getOwnerPagination, type OwnerListSearchParams } from "@/lib/owner-pagination";
 
 const currentTimeMs = () => Date.now();
@@ -18,7 +19,7 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
 
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadAds = (pageNumber: number) => Advertisement.find({ shopId })
-    .select("title type message imageUrl isActive validUntil createdAt")
+    .select("title type festival startsAt message imageUrl isActive validUntil createdAt")
     .sort({ createdAt: -1 })
     .skip((pageNumber - 1) * perPage)
     .limit(perPage)
@@ -35,7 +36,7 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
       <div className="flex items-center justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Marketing & Offers</h1>
-          <p className="text-gray-500 mt-2">Manage live gold rates and promotional banners on your storefront.</p>
+          <p className="text-gray-500 mt-2">Manage live gold rates, promotional banners and festival offers with a countdown.</p>
         </div>
       </div>
 
@@ -65,8 +66,15 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
             </Card>
           ) : (
             <>
-            {ads.map((ad) => (
-              <Card key={ad._id.toString()} className={!ad.isActive ? "opacity-60" : ""}>
+            {ads.map((ad) => {
+              const isFestival = ad.type === "FESTIVAL_OFFER";
+              const fStatus = isFestival ? festivalStatus(ad, nowMs) : null;
+              const endMs = ad.validUntil ? new Date(ad.validUntil).getTime() : NaN;
+              const startMs = ad.startsAt ? new Date(ad.startsAt).getTime() : NaN;
+              const statusLabel = fStatus === "SCHEDULED" ? "Scheduled" : fStatus === "LIVE" ? "Live" : fStatus === "EXPIRED" ? "Expired" : "Inactive";
+              const statusDot = fStatus === "LIVE" ? "bg-green-500" : fStatus === "SCHEDULED" ? "bg-amber-500" : "bg-gray-300";
+              return (
+              <Card key={ad._id.toString()} className={(isFestival ? fStatus === "EXPIRED" || fStatus === "INACTIVE" : !ad.isActive) ? "opacity-60" : ""}>
                 <CardContent className="!p-0 flex flex-col sm:flex-row">
                   {ad.imageUrl && (
                     <div className="relative aspect-video w-full bg-gray-100 sm:aspect-auto sm:w-1/3 sm:min-h-32">
@@ -77,30 +85,37 @@ export default async function MarketingDashboardPage({ searchParams }: { searchP
                     <div className="min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                          {ad.type.replace('_', ' ')}
+                          {ad.type.replace('_', ' ')}{isFestival && ad.festival ? ` · ${ad.festival}` : ""}
                         </span>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${ad.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                          <span className="text-xs font-medium text-gray-600">{ad.isActive ? 'Active' : 'Inactive'}</span>
+                          <span className={`w-2 h-2 rounded-full ${isFestival ? statusDot : ad.isActive ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                          <span className="text-xs font-medium text-gray-600">{isFestival ? statusLabel : ad.isActive ? 'Active' : 'Inactive'}</span>
                         </div>
                       </div>
                       <h3 className="text-lg font-bold text-gray-900 mt-1 break-words [overflow-wrap:anywhere]">{ad.title}</h3>
                       <p className="text-sm text-gray-600 mt-2 break-words [overflow-wrap:anywhere]">{ad.message}</p>
                     </div>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-                      <span className="text-xs text-gray-500">
-                        {ad.validUntil && new Date(ad.validUntil).getTime() < nowMs ? "Expired" : ad.validUntil ? `Valid till ${new Date(ad.validUntil).toLocaleDateString()}` : 'Runs continuously'}
+                      <span className="min-w-0 text-xs text-gray-500 [overflow-wrap:anywhere]">
+                        {isFestival && Number.isFinite(endMs)
+                          ? fStatus === "EXPIRED"
+                            ? `Ended ${formatIstDisplay(endMs)}`
+                            : fStatus === "SCHEDULED" && Number.isFinite(startMs)
+                              ? `Starts ${formatIstDisplay(startMs)} · runs till ${formatIstDisplay(endMs)}`
+                              : `${formatCountdown(endMs - nowMs)} left · ends ${formatIstDisplay(endMs)}`
+                          : ad.validUntil && new Date(ad.validUntil).getTime() < nowMs ? "Expired" : ad.validUntil ? `Valid till ${new Date(ad.validUntil).toLocaleDateString()}` : 'Runs continuously'}
                       </span>
                       <RowActions
                         endpoint={`/api/advertisements/${ad._id.toString()}`}
                         noun="advertisement"
-                        toggle={{ field: "isActive", value: ad.isActive, onLabel: "Activate", offLabel: "Deactivate" }}
+                        toggle={isFestival && fStatus === "EXPIRED" ? undefined : { field: "isActive", value: ad.isActive, onLabel: "Activate", offLabel: "Deactivate" }}
                       />
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
             <OwnerPagination basePath="/dashboard/marketing" page={page} perPage={perPage} totalItems={totalAds} />
             </>
           )}
