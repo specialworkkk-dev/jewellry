@@ -7,7 +7,12 @@ const NotificationJobSchema = new Schema(
     context: {
       entityId: { type: String, maxlength: 100 },
       productName: { type: String, maxlength: 200 },
+      // Numeric price shown in price-drop alerts (formatted as INR when the message is built).
+      price: { type: Number, min: 0 },
     },
+    // Targeted alerts (price drop / back in stock): ONLY these subscriptions are notified. When the
+    // field exists (even as an empty list) the job must never broadcast to the whole shop.
+    audienceSubscriptionIds: { type: [Schema.Types.ObjectId], default: undefined },
     status: {
       type: String,
       enum: ["PENDING", "PROCESSING", "DELIVERED", "FAILED"],

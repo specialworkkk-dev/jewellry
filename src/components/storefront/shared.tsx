@@ -72,6 +72,21 @@ export function productTags(product: StorefrontProduct) {
   ].filter(Boolean) as string[];
 }
 
+export const isSoldOut = (product: { stockStatus?: string | null }) => product.stockStatus === "OUT_OF_STOCK";
+
+/** Dims a sold-out design's photo; the "Sold out" tag/badge says why. */
+export const soldOutImageClass = (product: { stockStatus?: string | null }) => (isSoldOut(product) ? "opacity-50 grayscale-[0.7]" : "");
+
+/** Small "Sold out" chip laid over a card photo. `position` is Tailwind positioning classes. */
+export function SoldOutBadge({ product, position }: { product: { stockStatus?: string | null }; position: string }) {
+  if (!isSoldOut(product)) return null;
+  return (
+    <span className={`pointer-events-none absolute z-10 rounded-full bg-stone-900/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow ${position}`}>
+      Sold out
+    </span>
+  );
+}
+
 const collectionHref = (shop: StorefrontShop, category?: string) =>
   `/shop/${shop.slug}${category ? `?category=${encodeURIComponent(category)}` : ""}#collection`;
 

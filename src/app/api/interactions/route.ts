@@ -10,6 +10,7 @@ import Post from "@/models/Post";
 import Product from "@/models/Product";
 import Shop from "@/models/Shop";
 import { scheduleShopEvent } from "@/lib/realtime";
+import { priceToRememberAtSave } from "@/lib/wishlist-alerts";
 
 const TARGET_TYPES = new Set(["PRODUCT", "POST", "SHOP"]);
 const INTERACTION_TYPES = new Set(["LIKE", "FAVORITE", "FOLLOW"]);
@@ -108,8 +109,14 @@ export async function POST(req: NextRequest) {
     }
 
     let targetModel = null;
+    let priceAtSave: number | undefined;
     if (body.targetType === "PRODUCT") {
-      targetModel = await Product.findOne({ _id: body.targetId, shopId: shop._id, isPublished: true }).select("_id");
+      const product = await Product.findOne({ _id: body.targetId, shopId: shop._id, isPublished: true })
+        .select("_id price priceType")
+        .lean();
+      targetModel = product;
+      // Remember the price at the moment of saving so the Saved page can show "Price dropped".
+      if (product && body.interactionType === "LIKE") priceAtSave = priceToRememberAtSave(product);
     } else if (body.targetType === "POST") {
       targetModel = await Post.findOne({ _id: body.targetId, shopId: shop._id, isPublished: true }).select("_id");
     } else if (body.targetId === body.shopId) {
@@ -126,7 +133,8 @@ export async function POST(req: NextRequest) {
       targetType: body.targetType,
       interactionType: body.interactionType,
     };
-    const removed = await Interaction.findOneAndDelete(identity);
+    // `ensure: true` ("notify me" on a sold-out product) only ever saves; it never un-saves.
+    const removed = body.ensure === true ? null : await Interaction.findOneAndDelete(identity);
 
     if (removed) {
       let likesCount: number | undefined;
@@ -142,7 +150,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      await Interaction.create(identity);
+      await Interaction.create(priceAtSave === undefined ? identity : { ...identity, priceAtSave });
     } catch (error: unknown) {
       if (!isDuplicateKeyError(error)) throw error;
       const response = NextResponse.json({ message: "Interaction already exists", state: true });

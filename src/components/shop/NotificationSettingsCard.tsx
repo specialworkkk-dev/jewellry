@@ -6,6 +6,7 @@ import { updateNotificationSettings } from "@/app/dashboard/settings/notificatio
 import {
   customerNotificationTriggers,
   renderNotificationText,
+  targetedNotificationTriggers,
   templatesForTrigger,
   triggerLabels,
   type CustomerNotificationTrigger,
@@ -55,8 +56,8 @@ export function NotificationSettingsCard({
     const template = templatesForTrigger(trigger).find((item) => item.id === selections[trigger])
       || templatesForTrigger(trigger)[0];
     return {
-      title: renderNotificationText(customTitles[trigger] || template.title, { shopName, productName: "Diamond Necklace" }),
-      body: renderNotificationText(customBodies[trigger] || template.body, { shopName, productName: "Diamond Necklace" }),
+      title: renderNotificationText(customTitles[trigger] || template.title, { shopName, productName: "Diamond Necklace", price: "₹45,000" }),
+      body: renderNotificationText(customBodies[trigger] || template.body, { shopName, productName: "Diamond Necklace", price: "₹45,000" }),
     };
   };
 
@@ -106,6 +107,11 @@ export function NotificationSettingsCard({
                     <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition group-open:rotate-180" />
                   </summary>
                   <div className="min-w-0 space-y-4 border-t bg-gray-50/60 p-3 sm:p-4">
+                    {targetedNotificationTriggers.includes(trigger) && (
+                      <p className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-2 text-xs text-violet-900">
+                        Sent only to customers who saved this product and turned on notifications for your shop. {trigger === "product.price-dropped" ? "At most once a day per product, when the price falls by 1% or more." : "When you mark a sold-out product back in stock."}
+                      </p>
+                    )}
                     <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-gray-800">
                       <input name={`${trigger}:enabled`} type="checkbox" defaultChecked={initialMap.get(trigger)?.enabled ?? true} className="h-5 w-5 shrink-0 accent-violet-600" />
                       Send this notification automatically
@@ -141,7 +147,7 @@ export function NotificationSettingsCard({
                           onChange={(event) => setCustomBodies((current) => ({ ...current, [trigger]: event.target.value }))}
                           maxLength={240}
                           rows={2}
-                          placeholder="Use {productName} and {shopName}"
+                          placeholder="Use {productName}, {price} and {shopName}"
                           className="block w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-base sm:text-sm"
                         />
                       </div>

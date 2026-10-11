@@ -3,6 +3,7 @@ import { ArrowLeft, MessageCircle, Phone, ShieldCheck, MapPin } from "lucide-rea
 import Link from "next/link";
 import { Metadata, ResolvingMetadata } from "next";
 import { ProductActionButtons } from "@/components/public/ProductActionButtons";
+import { ProductNotifyMe } from "@/components/public/ProductNotifyMe";
 import { EnquiryForm } from "@/components/public/EnquiryForm";
 import { StorefrontAnalytics } from "@/components/public/StorefrontAnalytics";
 import { getPublicProductById, getPublicShopBySlug } from "@/lib/public-store";
@@ -85,6 +86,9 @@ export default async function ProductDetailPage({
   const savings = savingsText(product);
   const makingCharge = makingChargeText(product);
 
+  const soldOut = product.stockStatus === "OUT_OF_STOCK";
+  const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
+
   const specRow = "flex min-w-0 justify-between gap-4 border-b pb-2 [&>dd]:min-w-0 [&>dd]:text-right [&>dd]:[overflow-wrap:anywhere] " + d.rule;
 
   return (
@@ -131,6 +135,19 @@ export default async function ProductDetailPage({
             )}
             <p className={`mt-1 text-sm ${d.subtle}`}>Inclusive of all taxes. Gold rates subject to daily change.</p>
           </div>
+
+          {soldOut && (
+            <ProductNotifyMe
+              shopId={shop._id.toString()}
+              productId={product._id.toString()}
+              publicVapidKey={publicVapidKey}
+              initialSaved={initiallyLiked}
+              panelClass={d.panel}
+              headingClass={d.heading}
+              subtleClass={d.subtle}
+              buttonClass={d.primaryButton}
+            />
+          )}
 
           {/* Action Buttons */}
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8">

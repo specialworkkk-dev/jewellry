@@ -1,4 +1,7 @@
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { Types } from "mongoose";
+import { authOptions } from "@/lib/authOptions";
 import connectToDatabase from "@/lib/mongoose";
 import { checkRateLimit, requestClientId } from "@/lib/rate-limit";
 import { cleanString, isObjectId, isRecord } from "@/lib/validation";
@@ -9,6 +12,32 @@ import { getVerifiedOwnerTenant } from "@/lib/tenant";
 
 const MAX_SUBSCRIPTIONS_PER_SHOP = 5000;
 const MAX_OWNER_DEVICES_PER_SHOP = 20;
+const VISITOR_COOKIE = "luxestore_visitor_id";
+const VISITOR_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
+
+// Same identity rule as /api/interactions: signed-in user id, otherwise the anonymous visitor cookie
+// (created here if missing) so price-drop alerts can be matched with the products this person saved.
+async function resolveActor(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const sessionUserId = session?.user?.id;
+  if (sessionUserId && isObjectId(sessionUserId)) return { actorId: sessionUserId, newVisitorId: undefined };
+  const existing = request.cookies.get(VISITOR_COOKIE)?.value;
+  const visitorId = existing && isObjectId(existing) ? existing : new Types.ObjectId().toString();
+  return { actorId: visitorId, newVisitorId: visitorId };
+}
+
+function withVisitorCookie(response: NextResponse, visitorId?: string) {
+  if (visitorId) {
+    response.cookies.set(VISITOR_COOKIE, visitorId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: VISITOR_COOKIE_MAX_AGE,
+    });
+  }
+  return response;
+}
 
 function sameOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
@@ -100,10 +129,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const { actorId, newVisitorId } = await resolveActor(request);
   await PushSubscriptionModel.updateOne(
     { shopId: body.shopId, endpoint: subscription.endpoint },
     {
       $set: {
+        actorId,
         expirationTime: subscription.expirationTime,
         keys: { p256dh: subscription.p256dh, auth: subscription.auth },
         userAgent: cleanString(request.headers.get("user-agent"), 500),
@@ -114,7 +145,7 @@ export async function POST(request: NextRequest) {
     { upsert: true, runValidators: true },
   );
 
-  return NextResponse.json({ subscribed: true }, { headers: { "Cache-Control": "no-store" } });
+  return withVisitorCookie(NextResponse.json({ subscribed: true }, { headers: { "Cache-Control": "no-store" } }), newVisitorId);
 }
 
 export async function DELETE(request: NextRequest) {

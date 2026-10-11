@@ -40,6 +40,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     images: product.images ?? [],
     videos: product.videos ?? [],
     isPublished: product.isPublished,
+    soldOut: product.stockStatus === "OUT_OF_STOCK",
   };
   const policy = {
     videoUploadsEnabled: shop.videoUploadsEnabled === true,

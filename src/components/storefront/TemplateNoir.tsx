@@ -5,7 +5,7 @@ import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import {
   CataloguePager, CategoryNav, DEFAULT_TAGLINE, EMPTY_COPY, chatHref, enquiryHref, makingChargeText,
-  priceText, productHref, productTags, purityText, savingsText, type TemplateProps,
+  priceText, productHref, productTags, purityText, savingsText, soldOutImageClass, SoldOutBadge, type TemplateProps,
 } from "./shared";
 import { STOREFRONT_THEMES } from "./themes";
 
@@ -109,12 +109,13 @@ export function TemplateNoir(props: TemplateProps) {
                   <div className="relative">
                     <Link href={productHref(shop, product)} className="relative block aspect-square overflow-hidden bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
                       {product.images?.[0] ? (
-                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-[900ms] group-hover:scale-110" />
+                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className={`h-full w-full object-cover transition duration-[900ms] group-hover:scale-110 ${soldOutImageClass(product)}`} />
                       ) : (
                         <div className="flex h-full items-center justify-center text-sm text-white/50">No image</div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
                       <span className="absolute left-3 top-3 bg-black/60 px-1.5 py-0.5 text-xs tabular-nums tracking-[0.3em] text-white">{String(index + 1).padStart(2, "0")}</span>
+                      <SoldOutBadge product={product} position="bottom-3 left-3" />
                     </Link>
                     <ProductCardFavorite productId={id} shopId={shop._id.toString()} initialSaved={saved.has(id)} />
                   </div>

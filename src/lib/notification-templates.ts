@@ -6,6 +6,8 @@ export const customerNotificationTriggers = [
   "story.created",
   "gold-rate.updated",
   "shop.updated",
+  "product.price-dropped",
+  "product.back-in-stock",
 ] as const;
 
 export type CustomerNotificationTrigger = (typeof customerNotificationTriggers)[number];
@@ -75,6 +77,18 @@ export const customerNotificationTemplates: CustomerNotificationTemplate[] = [
   { id: "shop-updated-04", trigger: "shop.updated", label: "Banner updated", title: "See our new store banner", body: "Open {shopName} to view our latest storefront update." },
   { id: "shop-updated-05", trigger: "shop.updated", label: "Visit again", title: "Visit {shopName} again", body: "We have improved our digital store with a fresh update." },
   { id: "shop-updated-06", trigger: "shop.updated", label: "Something changed", title: "Something new at {shopName}", body: "Our storefront was just updated. Tap to discover the changes." },
+
+  { id: "price-dropped-01", trigger: "product.price-dropped", label: "Price dropped", title: "Price drop at {shopName}", body: "{productName} you saved is now {price}. Tap to take a look." },
+  { id: "price-dropped-02", trigger: "product.price-dropped", label: "Good news", title: "Good news from {shopName}", body: "The price of {productName} has come down to {price}." },
+  { id: "price-dropped-03", trigger: "product.price-dropped", label: "Lower price", title: "A lower price for your saved design", body: "{productName} is now {price} at {shopName}." },
+  { id: "price-dropped-04", trigger: "product.price-dropped", label: "Saved item cheaper", title: "Your saved jewellery got cheaper", body: "{productName} now starts at {price}. Open {shopName} to see it." },
+  { id: "price-dropped-05", trigger: "product.price-dropped", label: "Do not miss it", title: "Do not miss this price", body: "{shopName} has reduced {productName} to {price}." },
+
+  { id: "back-in-stock-01", trigger: "product.back-in-stock", label: "Back in stock", title: "Back in stock at {shopName}", body: "{productName} you saved is available again. Tap to view it." },
+  { id: "back-in-stock-02", trigger: "product.back-in-stock", label: "Available again", title: "It is available again", body: "Good news, {productName} is back at {shopName}." },
+  { id: "back-in-stock-03", trigger: "product.back-in-stock", label: "Restocked", title: "Restocked for you", body: "{shopName} has {productName} in stock again. Enquire before it goes." },
+  { id: "back-in-stock-04", trigger: "product.back-in-stock", label: "Your saved design", title: "Your saved design is back", body: "{productName} is ready to order again from {shopName}." },
+  { id: "back-in-stock-05", trigger: "product.back-in-stock", label: "Waiting for you", title: "We kept you waiting, it is back", body: "{productName} is back in the {shopName} collection. Tap to see it." },
 ];
 
 export const triggerLabels: Record<CustomerNotificationTrigger, string> = {
@@ -85,7 +99,15 @@ export const triggerLabels: Record<CustomerNotificationTrigger, string> = {
   "story.created": "New story",
   "gold-rate.updated": "Gold rate updated",
   "shop.updated": "Store banner/details updated",
+  "product.price-dropped": "Saved product price dropped",
+  "product.back-in-stock": "Saved product back in stock",
 };
+
+/** Triggers that go only to customers who saved the product (never to every subscriber). */
+export const targetedNotificationTriggers: readonly CustomerNotificationTrigger[] = [
+  "product.price-dropped",
+  "product.back-in-stock",
+];
 
 export function templatesForTrigger(trigger: CustomerNotificationTrigger) {
   return customerNotificationTemplates.filter((template) => template.trigger === trigger);
@@ -99,10 +121,11 @@ export function defaultTemplateForTrigger(trigger: CustomerNotificationTrigger) 
 
 export function renderNotificationText(
   text: string,
-  values: { shopName: string; productName?: string },
+  values: { shopName: string; productName?: string; price?: string },
 ) {
+  // Function replacers: a product name containing "$&" or "$1" must be inserted literally.
   return text
-    .replaceAll("{shopName}", values.shopName)
-    .replaceAll("{productName}", values.productName || "our newest design");
+    .replaceAll("{shopName}", () => values.shopName)
+    .replaceAll("{productName}", () => values.productName || "our newest design")
+    .replaceAll("{price}", () => values.price || "a lower price");
 }
-

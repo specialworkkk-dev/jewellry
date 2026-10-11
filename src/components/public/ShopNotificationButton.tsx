@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
-
-function urlBase64ToUint8Array(value: string) {
-  const padding = "=".repeat((4 - value.length % 4) % 4);
-  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
-}
+import { PUSH_CHANGED_EVENT, announcePushChange, pushStorageKey, subscribeToShop } from "./push-client";
 
 type Status = "loading" | "off" | "on" | "blocked" | "unsupported";
 
@@ -22,7 +16,7 @@ export function ShopNotificationButton({
   publicVapidKey: string;
 }) {
   const [status, setStatus] = useState<Status>("loading");
-  const storageKey = `luxestore-shop-notifications:${shopId}`;
+  const storageKey = pushStorageKey(shopId);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,31 +57,21 @@ export function ShopNotificationButton({
     return () => { cancelled = true; };
   }, [shopId, storageKey]);
 
+  // Stay in sync when "Notify me" or the Saved page turns alerts on.
+  useEffect(() => {
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ shopId: string; subscribed: boolean }>).detail;
+      if (detail?.shopId === shopId) setStatus(detail.subscribed ? "on" : "off");
+    };
+    window.addEventListener(PUSH_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(PUSH_CHANGED_EVENT, onChange);
+  }, [shopId]);
+
   const subscribe = async () => {
     setStatus("loading");
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setStatus(permission === "denied" ? "blocked" : "off");
-        return;
-      }
-      const registration = await navigator.serviceWorker.ready;
-      const existing = await registration.pushManager.getSubscription();
-      const subscription = existing || await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
-      });
-      const response = await fetch("/api/notifications/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shopId, subscription: subscription.toJSON() }),
-      });
-      if (!response.ok) throw new Error("Subscription failed");
-      window.localStorage.setItem(storageKey, "true");
-      setStatus("on");
-    } catch {
-      setStatus("off");
-    }
+    const result = await subscribeToShop(shopId, publicVapidKey);
+    if (result.ok) setStatus("on");
+    else setStatus(result.reason === "blocked" ? "blocked" : "off");
   };
 
   const unsubscribe = async () => {
@@ -105,6 +89,7 @@ export function ShopNotificationButton({
     } finally {
       window.localStorage.removeItem(storageKey);
       setStatus("off");
+      announcePushChange(shopId, false);
     }
   };
 

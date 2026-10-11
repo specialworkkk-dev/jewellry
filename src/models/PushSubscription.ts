@@ -20,6 +20,7 @@ const PushSubscriptionSchema = new Schema(
 );
 
 PushSubscriptionSchema.index({ shopId: 1, endpoint: 1 }, { unique: true });
+PushSubscriptionSchema.index({ shopId: 1, actorId: 1 });
 
 export default mongoose.models.PushSubscription
   || mongoose.model("PushSubscription", PushSubscriptionSchema);

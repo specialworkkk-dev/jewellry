@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { forbidden, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, AtSign, Users, Globe, Heart } from "lucide-react";
 import { ShareButton } from "@/components/public/ShareButton";
 import { LanguageSwitcher } from "@/i18n/useLocale";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
@@ -258,8 +258,17 @@ export default async function PublicShopLayout({
 
             {/* Quick actions: icon-only secondary buttons on phones so everything fits one row. */}
             <div className="flex w-full shrink-0 items-center justify-between gap-3 lg:w-auto">
-              <div className="flex w-full min-w-0 items-center gap-2 lg:w-auto">
+              <div className="flex w-full min-w-0 items-center gap-2 max-[359px]:flex-wrap lg:w-auto">
                 <LanguageSwitcher responsive />
+                <Link
+                  href={`/shop/${shop.slug}/saved`}
+                  aria-label="Saved designs"
+                  title="Saved designs"
+                  className={`inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full border border-current/20 text-xs font-bold transition sm:w-auto sm:px-3 ${theme.muted} ${theme.iconHover}`}
+                >
+                  <Heart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Saved</span>
+                </Link>
                 {publicVapidKey && (
                   <ShopNotificationButton
                     shopId={shop._id.toString()}
@@ -268,7 +277,7 @@ export default async function PublicShopLayout({
                   />
                 )}
                 {whatsappNumber && (
-                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-green-700 px-3 sm:px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-800 sm:flex-none">
+                  <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp" className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 max-[359px]:min-w-[7.5rem] rounded-full bg-green-700 px-3 sm:px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-800 sm:flex-none">
                     <Phone className="h-4 w-4 shrink-0" /> <span className="truncate max-[359px]:hidden">WhatsApp</span><span className="min-[360px]:hidden">Chat</span>
                   </a>
                 )}

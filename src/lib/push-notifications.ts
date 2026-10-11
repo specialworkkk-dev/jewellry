@@ -7,6 +7,7 @@ import {
   customerNotificationTemplates,
   defaultTemplateForTrigger,
   renderNotificationText,
+  targetedNotificationTriggers,
   type CustomerNotificationTrigger,
 } from "@/lib/notification-templates";
 import PushSubscriptionModel from "@/models/PushSubscription";
@@ -15,7 +16,15 @@ import Shop from "@/models/Shop";
 import ShopNotificationSettings from "@/models/ShopNotificationSettings";
 import { httpStatusFromError, isTransientHttpError, withRetry } from "@/lib/retry";
 import NotificationJob from "@/models/NotificationJob";
+import Interaction from "@/models/Interaction";
+import Product from "@/models/Product";
 import { cleanString, isObjectId } from "@/lib/validation";
+import {
+  BACK_IN_STOCK_ALERT_WINDOW_MS,
+  PRICE_DROP_ALERT_WINDOW_MS,
+  buildAlertValues,
+  selectAudienceSubscriptionIds,
+} from "@/lib/wishlist-alerts";
 
 export const MAX_SUBSCRIPTION_FAILURES = 10;
 
@@ -28,6 +37,7 @@ class PartialDeliveryError extends Error {
 type PushContext = {
   entityId?: string;
   productName?: string;
+  price?: number;
 };
 
 type StoredSubscription = {
@@ -60,8 +70,11 @@ async function deliverShopNotification(
   shopId: string,
   trigger: CustomerNotificationTrigger,
   context: PushContext,
-  onlySubscriptionIds?: string[],
+  /** undefined = every subscriber of the shop; an array (even empty) = ONLY those subscriptions. */
+  restrictToSubscriptionIds?: string[],
 ) {
+  // Safety net: alerts meant for people who saved a product must never fan out to the whole shop.
+  if (!restrictToSubscriptionIds && targetedNotificationTriggers.includes(trigger)) return;
   if (!configureWebPush()) return;
   await connectToDatabase();
 
@@ -70,7 +83,7 @@ async function deliverShopNotification(
       .select("name slug")
       .lean(),
     ShopNotificationSettings.findOne({ shopId }).lean(),
-    PushSubscriptionModel.find(onlySubscriptionIds?.length ? { shopId, _id: { $in: onlySubscriptionIds } } : { shopId })
+    PushSubscriptionModel.find(restrictToSubscriptionIds ? { shopId, _id: { $in: restrictToSubscriptionIds } } : { shopId })
       .select("endpoint expirationTime keys")
       .limit(5000)
       .lean<StoredSubscription[]>(),
@@ -86,7 +99,7 @@ async function deliverShopNotification(
   const selectedTemplate = customerNotificationTemplates.find(
     (template) => template.id === triggerSetting?.templateId && template.trigger === trigger,
   ) || defaultTemplateForTrigger(trigger);
-  const values = { shopName: String(shop.name), productName: context.productName };
+  const values = buildAlertValues({ shopName: String(shop.name), productName: context.productName, price: context.price });
   const rawTitle = triggerSetting?.customTitle?.trim() || selectedTemplate.title;
   const rawBody = triggerSetting?.customBody?.trim() || selectedTemplate.body;
   const productUrl = context.entityId && trigger.startsWith("product.")
@@ -98,7 +111,8 @@ async function deliverShopNotification(
     url: productUrl,
     icon: `/api/shop/${shop.slug}/icon/192`,
     badge: "/icon-192.png",
-    tag: `luxestore:${shopId}:${trigger}`,
+    // Targeted alerts are per product so one product's alert never replaces another's on the device.
+    tag: `luxestore:${shopId}:${trigger}${targetedNotificationTriggers.includes(trigger) && context.entityId ? `:${context.entityId}` : ""}`,
   });
 
   const expiredIds: string[] = [];
@@ -178,11 +192,15 @@ export async function processNotificationJob(jobId: string) {
   if (!job) return false;
 
   try {
+    const ids = (list?: { toString(): string }[]) => list?.map((id) => id.toString());
+    const retryIds = ids(job.retrySubscriptionIds);
+    // Retries target only the failed subscriptions; targeted alerts always stay inside their audience.
+    const restrictTo = retryIds?.length ? retryIds : ids(job.audienceSubscriptionIds);
     await deliverShopNotification(
       job.shopId.toString(),
       job.trigger as CustomerNotificationTrigger,
       job.context || {},
-      (job.retrySubscriptionIds || []).map((id: { toString(): string }) => id.toString()),
+      restrictTo,
     );
     await NotificationJob.updateOne({ _id: job._id }, {
       $set: {
@@ -237,6 +255,10 @@ export async function scheduleShopPushNotification(
   context: PushContext = {},
 ) {
   if (!pushIsConfigured()) return;
+  if (targetedNotificationTriggers.includes(trigger)) {
+    console.error(`Refusing to broadcast targeted notification ${trigger}`);
+    return;
+  }
   await connectToDatabase();
   let jobId: string | null = null;
   try {
@@ -246,6 +268,7 @@ export async function scheduleShopPushNotification(
       context: {
         entityId: cleanString(context.entityId, 100) || undefined,
         productName: cleanString(context.productName, 200) || undefined,
+        price: typeof context.price === "number" && Number.isFinite(context.price) && context.price > 0 ? context.price : undefined,
       },
       expiresAt: new Date(Date.now() + JOB_RETENTION_MS),
     });
@@ -265,6 +288,119 @@ export async function scheduleShopPushNotification(
       console.error("Shop push notification delivery failed", error);
     }
   });
+}
+
+type WishlistAlert = {
+  shopId: string;
+  productId: string;
+  productName: string;
+  trigger: "product.price-dropped" | "product.back-in-stock";
+  /** New price, for price-drop alerts. */
+  price?: number;
+};
+
+/**
+ * Queue a targeted alert for the people who saved this product AND opted in to this shop's
+ * notifications on the same device/browser. Never broadcasts: with no matching audience nothing is
+ * created. Runs after the response so the owner's save is never slowed down or rolled back.
+ */
+export function scheduleWishlistAlert(alert: WishlistAlert) {
+  if (!pushIsConfigured() || !isObjectId(alert.shopId) || !isObjectId(alert.productId)) return;
+  after(async () => {
+    try {
+      const jobId = await queueWishlistAlert(alert);
+      if (jobId) await processNotificationJob(jobId);
+      await drainPendingNotificationJobs(2);
+    } catch (error) {
+      console.error("Wishlist alert failed", error);
+    }
+  });
+}
+
+/** Creates the targeted job (or returns null when there is nothing to send). Exported for tests/tools. */
+export async function queueWishlistAlert(alert: WishlistAlert): Promise<string | null> {
+  await connectToDatabase();
+  const { shopId, productId, trigger } = alert;
+  const now = Date.now();
+
+  const [shop, settings] = await Promise.all([
+    Shop.exists({ _id: shopId, isApproved: true, isActive: true }),
+    ShopNotificationSettings.findOne({ shopId }).lean(),
+  ]);
+  if (!shop || settings?.enabled === false) return null;
+  const triggerSetting = settings?.triggers?.find((item: { trigger: string }) => item.trigger === trigger);
+  if (triggerSetting?.enabled === false) return null;
+
+  // Audience = subscriptions of this shop whose visitor saved this product.
+  const subscriptions = await PushSubscriptionModel.find({ shopId, actorId: { $exists: true, $ne: null } })
+    .select("_id actorId")
+    .limit(5000)
+    .lean<{ _id: { toString(): string }; actorId?: { toString(): string } }[]>();
+  if (subscriptions.length === 0) return null;
+  const actorIds = [...new Set(subscriptions.map((item) => String(item.actorId)))];
+  const savers = await Interaction.find({
+    shopId,
+    targetId: productId,
+    targetType: "PRODUCT",
+    interactionType: "LIKE",
+    userId: { $in: actorIds },
+  }).select("userId").lean<{ userId: { toString(): string } }[]>();
+  const audience = selectAudienceSubscriptionIds(
+    subscriptions.map((item) => ({ id: item._id.toString(), actorId: item.actorId ? String(item.actorId) : null })),
+    savers.map((item) => item.userId.toString()),
+  );
+  if (audience.length === 0) return null;
+
+  if (trigger === "product.price-dropped") {
+    // Atomic once-per-24h guard: only the caller that flips lastPriceDropAlertAt may send.
+    const claimed = await Product.findOneAndUpdate(
+      {
+        _id: productId,
+        shopId,
+        isPublished: true,
+        stockStatus: { $ne: "OUT_OF_STOCK" },
+        $or: [
+          { lastPriceDropAlertAt: { $exists: false } },
+          { lastPriceDropAlertAt: null },
+          { lastPriceDropAlertAt: { $lte: new Date(now - PRICE_DROP_ALERT_WINDOW_MS) } },
+        ],
+      },
+      { $set: { lastPriceDropAlertAt: new Date(now) } },
+      { returnDocument: "after" },
+    ).select("_id").lean();
+    if (!claimed) return null;
+  } else {
+    const live = await Product.exists({ _id: productId, shopId, isPublished: true, stockStatus: { $ne: "OUT_OF_STOCK" } });
+    if (!live) return null;
+    const recent = await NotificationJob.exists({
+      shopId,
+      trigger,
+      "context.entityId": productId,
+      createdAt: { $gte: new Date(now - BACK_IN_STOCK_ALERT_WINDOW_MS) },
+    });
+    if (recent) return null;
+  }
+
+  const context = { entityId: productId, productName: alert.productName, price: alert.price };
+  try {
+    const job = await NotificationJob.create({
+      shopId,
+      trigger,
+      context: {
+        entityId: productId,
+        productName: cleanString(alert.productName, 200) || undefined,
+        price: typeof alert.price === "number" && Number.isFinite(alert.price) && alert.price > 0 ? alert.price : undefined,
+      },
+      audienceSubscriptionIds: audience,
+      expiresAt: new Date(now + JOB_RETENTION_MS),
+    });
+    return job._id.toString();
+  } catch (error) {
+    console.error("Unable to enqueue wishlist alert", error);
+    // Queue write failed: still deliver once, strictly inside the audience.
+    await deliverShopNotification(shopId, trigger, context, audience);
+    return null;
+  }
 }
 
 export function ownerPushIsConfigured() {

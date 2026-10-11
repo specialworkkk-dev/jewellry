@@ -3,10 +3,10 @@ import Product from "@/models/Product";
 import "@/models/Category";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Pencil, Eye, EyeOff } from "lucide-react";
+import { Plus, Package, PackageCheck, PackageX, Pencil, Eye, EyeOff } from "lucide-react";
 import { isPlanExpired } from "@/components/shop/plan-state";
 import Image from "next/image";
-import { deleteProductAction, setProductPublishedAction } from "./actions";
+import { deleteProductAction, setProductPublishedAction, setProductStockAction } from "./actions";
 import { ConfirmDeleteProductButton } from "@/components/shop/ConfirmDeleteProductButton";
 import { ActionSubmitButton } from "@/components/ui/action-submit-button";
 import { requireOwnerTenant } from "@/lib/tenant";
@@ -27,7 +27,7 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
 
   const { page: requestedPage, perPage } = await getOwnerPagination(searchParams);
   const loadProducts = (pageNumber: number) => Product.find({ shopId })
-    .select("name sku images priceType price isPublished categoryId createdAt")
+    .select("name sku images priceType price isPublished stockStatus categoryId createdAt")
     .sort({ createdAt: -1 })
     .skip((pageNumber - 1) * perPage)
     .limit(perPage)
@@ -98,13 +98,16 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                         {product.isPublished ? "Live" : "Draft"}
                       </span>
                     </div>
+                    {product.stockStatus === "OUT_OF_STOCK" && (
+                      <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Sold out</span>
+                    )}
                     <p className="mt-1 break-all text-xs text-gray-500">SKU: {product.sku}</p>
                     <p className="mt-2 break-words text-sm font-medium text-gray-800">
                       {formatOwnerPrice(product.priceType, product.price)}
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {planExpired ? (
                     <Button variant="outline" disabled className="w-full min-h-11 gap-2 px-2"><Pencil className="h-4 w-4" /> Edit</Button>
                   ) : (
@@ -117,7 +120,17 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                       {product.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />} {product.isPublished ? "Make Draft" : "Publish"}
                     </ActionSubmitButton>
                   </form>
-                  <form action={deleteProductAction.bind(null, product._id.toString())} className="col-span-2 min-w-0 sm:col-span-1">
+                  {planExpired ? (
+                    <Button variant="outline" disabled className="w-full min-h-11 gap-2 px-2"><PackageX className="h-4 w-4" /> Sold out</Button>
+                  ) : (
+                    <form action={setProductStockAction.bind(null, product._id.toString(), product.stockStatus !== "OUT_OF_STOCK")} className="min-w-0">
+                      <ActionSubmitButton pendingLabel="Saving…" variant="outline" className="w-full min-h-11 gap-2 px-2">
+                        {product.stockStatus === "OUT_OF_STOCK" ? <PackageCheck className="h-4 w-4 shrink-0" /> : <PackageX className="h-4 w-4 shrink-0" />}
+                        <span className="min-w-0 truncate">{product.stockStatus === "OUT_OF_STOCK" ? "Back in stock" : "Mark sold out"}</span>
+                      </ActionSubmitButton>
+                    </form>
+                  )}
+                  <form action={deleteProductAction.bind(null, product._id.toString())} className="min-w-0">
                     <ConfirmDeleteProductButton />
                   </form>
                 </div>
@@ -151,6 +164,9 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                       <span className={`px-2.5 py-1 text-xs rounded-full ${product.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                         {product.isPublished ? 'Published' : 'Draft'}
                       </span>
+                      {product.stockStatus === "OUT_OF_STOCK" && (
+                        <span className="ml-2 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">Sold out</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-gray-500 lg:px-6">
                       {formatOwnerPrice(product.priceType, product.price)}
@@ -168,6 +184,13 @@ export default async function ProductsListPage({ searchParams }: { searchParams:
                           {product.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </ActionSubmitButton>
                       </form>
+                      {!planExpired && (
+                        <form action={setProductStockAction.bind(null, product._id.toString(), product.stockStatus !== "OUT_OF_STOCK")} className="inline-block">
+                          <ActionSubmitButton pendingLabel="" variant="ghost" size="icon" title={product.stockStatus === "OUT_OF_STOCK" ? "Back in stock" : "Mark sold out"} aria-label={product.stockStatus === "OUT_OF_STOCK" ? `Mark ${product.name} back in stock` : `Mark ${product.name} sold out`} className="h-10 w-10 text-gray-500 hover:text-blue-600">
+                            {product.stockStatus === "OUT_OF_STOCK" ? <PackageCheck className="w-4 h-4" /> : <PackageX className="w-4 h-4" />}
+                          </ActionSubmitButton>
+                        </form>
+                      )}
                       <form action={deleteProductAction.bind(null, product._id.toString())} className="inline-block">
                         <ConfirmDeleteProductButton compact />
                       </form>

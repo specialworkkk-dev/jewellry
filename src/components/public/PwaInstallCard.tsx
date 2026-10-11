@@ -122,7 +122,7 @@ export function PwaInstallCard({ appName }: { appName: string }) {
         <button type="button" onClick={() => setHidden(true)} aria-label="Hide install suggestion" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-stone-400 hover:bg-white hover:text-stone-700">
           <X className="h-4 w-4" />
         </button>
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:pr-10">
           <div className="flex min-w-0 gap-4 pr-8 sm:pr-0">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-900 text-amber-300 shadow-md">
               <Smartphone className="h-6 w-6" />

@@ -5,7 +5,7 @@ import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import {
   CataloguePager, CategoryNav, DEFAULT_TAGLINE, EMPTY_COPY, chatHref, enquiryHref, makingChargeText,
-  priceText, productHref, productTags, purityText, savingsText, type TemplateProps,
+  priceText, productHref, productTags, purityText, savingsText, soldOutImageClass, SoldOutBadge, type TemplateProps,
 } from "./shared";
 import { STOREFRONT_THEMES } from "./themes";
 
@@ -102,11 +102,12 @@ export function TemplateRoyal(props: TemplateProps) {
                     <div className="rounded-t-[999px] border border-[#c9a24b]/70 p-2 transition duration-500 group-hover:border-[#9a7420] group-hover:shadow-[0_24px_60px_-20px_rgba(122,30,43,.45)]">
                       <Link href={productHref(shop, product)} className="relative block aspect-[4/5] overflow-hidden rounded-t-[999px] bg-[#f0e4c8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9a7420]">
                         {product.images?.[0] ? (
-                          <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                          <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 30vw" className={`h-full w-full object-cover transition duration-700 group-hover:scale-110 ${soldOutImageClass(product)}`} />
                         ) : (
                           <div className="flex h-full items-center justify-center text-[#c9a24b]"><Gem className="h-10 w-10" /></div>
                         )}
                         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#2a0a10]/55 to-transparent" />
+                        <SoldOutBadge product={product} position="bottom-4 left-1/2 -translate-x-1/2" />
                       </Link>
                     </div>
                     <div className="absolute right-4 top-[28%] h-10 w-10">
@@ -115,7 +116,7 @@ export function TemplateRoyal(props: TemplateProps) {
                   </div>
                   <div className="mt-6 flex flex-col items-center px-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a7420]">{purityText(product)}</p>
-                    <h3 className="mt-2 line-clamp-2 min-h-[3.25rem] [overflow-wrap:anywhere] text-2xl font-medium leading-[1.2]">
+                    <h3 className="mt-2 line-clamp-2 min-h-[3.25rem] w-full min-w-0 max-w-full [overflow-wrap:anywhere] [word-break:break-word] text-2xl font-medium leading-[1.2]">
                       <Link href={productHref(shop, product)} className="hover:text-[#7b1e2b]">{product.name}</Link>
                     </h3>
                     {productTags(product).length > 0 && (

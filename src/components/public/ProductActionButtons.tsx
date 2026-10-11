@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Share2, Check, MessageCircle, Globe, AtSign, Copy } from "lucide-react";
 
 interface ProductActionButtonsProps {
@@ -24,6 +24,19 @@ export function ProductActionButtons({
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [likeError, setLikeError] = useState("");
+
+  // "Notify me" on a sold-out product saves it too; reflect that on the heart without a refresh.
+  useEffect(() => {
+    const onSaved = (event: Event) => {
+      const detail = (event as CustomEvent<{ productId: string }>).detail;
+      if (detail?.productId !== productId) return;
+      if (isLiked) return;
+      setIsLiked(true);
+      setLikesCount((count) => count + 1);
+    };
+    window.addEventListener("luxestore:product-saved", onSaved);
+    return () => window.removeEventListener("luxestore:product-saved", onSaved);
+  }, [productId, isLiked]);
 
   const handleShare = async () => {
     const url = window.location.href;

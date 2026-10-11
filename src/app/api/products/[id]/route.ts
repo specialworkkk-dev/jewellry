@@ -12,9 +12,12 @@ import { getVerifiedOwnerTenant } from '@/lib/tenant';
 import { getPlanReminderStatus, isShopMediaUrl, shopMediaBaseUrl } from '@/lib/plan';
 import { deleteUnreferencedShopObjects } from '@/lib/media-refs';
 import { findUnconfirmedMedia } from '@/lib/media-quota';
+import { scheduleWishlistAlert } from '@/lib/push-notifications';
+import { decidePriceDrop, isBackInStock } from '@/lib/wishlist-alerts';
 
 const PRICE_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM', 'PRICE_ON_REQUEST', 'CONTACT_FOR_PRICE']);
 const PRICED_TYPES = new Set(['FIXED_PRICE', 'STARTING_FROM']);
+const STOCK_STATUSES = new Set(['IN_STOCK', 'OUT_OF_STOCK']);
 const GOLD_PURITIES = new Set(['14K', '18K', '22K', '24K']);
 const DISCOUNT_TYPES = new Set<DiscountType>(['PERCENTAGE', 'FIXED_AMOUNT']);
 
@@ -185,12 +188,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     assign('makingChargesDiscountType', set.makingChargesDiscountType);
     assign('makingChargesDiscountValue', set.makingChargesDiscountValue);
     if (typeof body.isPublished === 'boolean') set.isPublished = body.isPublished;
+    if (typeof body.stockStatus === 'string' && STOCK_STATUSES.has(body.stockStatus)) set.stockStatus = body.stockStatus;
 
-    await Product.updateOne(
+    // Returns the document as it was just BEFORE this update, so price drops and stock flips are
+    // detected against the exact previous state even when two edits race.
+    const before = await Product.findOneAndUpdate(
       { _id: product._id, shopId },
       { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) },
-      { runValidators: true },
-    );
+      { runValidators: true, returnDocument: 'before' },
+    ).select('price priceType stockStatus isPublished').lean<{
+      price?: number; priceType?: string; stockStatus?: string; isPublished?: boolean;
+    } | null>();
+    if (!before) return fail('Product not found', 404);
 
     if (removedMedia.length > 0) await deleteUnreferencedShopObjects(shopId, removedMedia);
     revalidatePath('/dashboard/products', 'page');
@@ -198,6 +207,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     revalidatePath('/shop/[slug]', 'page');
     invalidatePublicStoreCache({ shopId, slug: shop.slug });
     scheduleShopEvent(shopId, 'product.updated', 'both', id);
+
+    // Wishlist alerts: only for live products, only to people who saved this design.
+    const nowPublished = typeof set.isPublished === 'boolean' ? set.isPublished : before.isPublished === true;
+    if (nowPublished) {
+      const nowStock = typeof set.stockStatus === 'string' ? set.stockStatus : (before.stockStatus ?? 'IN_STOCK');
+      if (isBackInStock(before.stockStatus ?? 'IN_STOCK', nowStock)) {
+        scheduleWishlistAlert({ shopId, productId: id, productName: name, trigger: 'product.back-in-stock', price: finalPrice });
+      } else if (decidePriceDrop({
+        oldPrice: before.price, newPrice: finalPrice, oldPriceType: before.priceType, newPriceType: priceType,
+      }).drop) {
+        scheduleWishlistAlert({ shopId, productId: id, productName: name, trigger: 'product.price-dropped', price: finalPrice });
+      }
+    }
 
     return NextResponse.json({ message: 'Product updated successfully' });
   } catch (error: unknown) {

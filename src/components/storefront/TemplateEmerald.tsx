@@ -5,7 +5,7 @@ import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import {
   CataloguePager, CategoryNav, DEFAULT_TAGLINE, EMPTY_COPY, chatHref, enquiryHref, makingChargeText,
-  priceText, productHref, productTags, purityText, savingsText, type StorefrontProduct, type TemplateProps,
+  priceText, productHref, productTags, purityText, savingsText, soldOutImageClass, type StorefrontProduct, type TemplateProps,
 } from "./shared";
 import { STOREFRONT_THEMES } from "./themes";
 
@@ -25,7 +25,7 @@ export function TemplateEmerald(props: TemplateProps) {
         <div className="relative">
           <Link href={productHref(shop, product)} className="relative block aspect-square overflow-hidden bg-[#031a14] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e6d49b]">
             {product.images?.[0] ? (
-              <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 25vw" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+              <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 639px) 90vw, (max-width: 1023px) 45vw, 25vw" className={`h-full w-full object-cover transition duration-700 group-hover:scale-110 ${soldOutImageClass(product)}`} />
             ) : (
               <div className="flex h-full items-center justify-center text-[#d8c288]/30"><Gem className="h-9 w-9" /></div>
             )}
@@ -126,7 +126,7 @@ export function TemplateEmerald(props: TemplateProps) {
               <div className="relative">
                 <Link href={productHref(shop, spotlight)} className="relative block aspect-square overflow-hidden lg:h-full lg:aspect-auto lg:min-h-[480px]">
                   {spotlight.images?.[0] ? (
-                    <StoreImage src={spotlight.images[0]} alt={spotlight.name} sizes="(max-width: 1023px) 95vw, 50vw" className="h-full w-full object-cover transition duration-1000 hover:scale-105" />
+                    <StoreImage src={spotlight.images[0]} alt={spotlight.name} sizes="(max-width: 1023px) 95vw, 50vw" className={`h-full w-full object-cover transition duration-1000 hover:scale-105 ${soldOutImageClass(spotlight)}`} />
                   ) : (
                     <div className="flex h-full min-h-72 items-center justify-center text-[#d8c288]/30"><Gem className="h-12 w-12" /></div>
                   )}

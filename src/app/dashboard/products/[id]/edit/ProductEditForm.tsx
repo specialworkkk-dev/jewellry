@@ -34,7 +34,7 @@ interface InitialProduct {
   goldPurity: string; goldWeight: string; diamondWeight: string; stoneType: string;
   priceType: string; price: string; discountType: DiscountType; discountValue: string;
   makingCharges: string; makingChargesDiscountType: DiscountType; makingChargesDiscountValue: string;
-  images: string[]; videos: string[]; isPublished: boolean;
+  images: string[]; videos: string[]; isPublished: boolean; soldOut: boolean;
 }
 
 export function ProductEditForm({ initial, categories, mediaPolicy }: {
@@ -60,6 +60,7 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
   const [images, setImages] = useState<string[]>(initial.images);
   const [videos, setVideos] = useState<string[]>(initial.videos);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
+  const [soldOut, setSoldOut] = useState(initial.soldOut);
 
   const handleUploadSuccess = (publicUrl: string) => {
     setImages((prev) => [...prev, publicUrl]);
@@ -143,6 +144,8 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
           images,
           videos,
           isPublished: initial.isPublished,
+          // Only sent when changed here, so a stale form never overwrites a stock toggle made elsewhere.
+          ...(soldOut !== initial.soldOut ? { stockStatus: soldOut ? "OUT_OF_STOCK" : "IN_STOCK" } : {}),
         })
       });
 
@@ -191,6 +194,14 @@ export function ProductEditForm({ initial, categories, mediaPolicy }: {
           {error}
         </div>
       )}
+
+      <label className="flex min-h-12 items-start gap-3 rounded-lg border bg-white p-3 sm:p-4">
+        <input type="checkbox" checked={soldOut} onChange={(event) => setSoldOut(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-600" />
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-gray-900">Mark as sold out</span>
+          <span className="block text-xs text-gray-500">The design stays visible with a &quot;Sold out&quot; tag. Customers who saved it are alerted when you mark it back in stock.</span>
+        </span>
+      </label>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
         <div className="xl:col-span-2 space-y-5 sm:space-y-6">

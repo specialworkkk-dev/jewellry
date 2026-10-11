@@ -5,7 +5,7 @@ import { ProductCardFavorite } from "@/components/public/ProductCardFavorite";
 import { PwaInstallCard } from "@/components/public/PwaInstallCard";
 import {
   CataloguePager, CategoryNav, DEFAULT_TAGLINE, EMPTY_COPY, chatHref, enquiryHref, makingChargeText,
-  priceText, productHref, productTags, purityText, savingsText, type TemplateProps,
+  priceText, productHref, productTags, purityText, savingsText, soldOutImageClass, SoldOutBadge, type TemplateProps,
 } from "./shared";
 import { STOREFRONT_THEMES } from "./themes";
 
@@ -73,10 +73,11 @@ export function TemplatePearl(props: TemplateProps) {
                   <div className="relative">
                     <Link href={productHref(shop, product)} className="relative block aspect-[4/5] overflow-hidden bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950">
                       {product.images?.[0] ? (
-                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 1023px) 48vw, 24vw" className="h-full w-full object-cover transition duration-[1100ms] group-hover:scale-[1.06]" />
+                        <StoreImage src={product.images[0]} alt={product.name} thumb sizes="(max-width: 1023px) 48vw, 24vw" className={`h-full w-full object-cover transition duration-[1100ms] group-hover:scale-[1.06] ${soldOutImageClass(product)}`} />
                       ) : (
                         <div className="flex h-full items-center justify-center text-sm text-neutral-500">No image</div>
                       )}
+                      <SoldOutBadge product={product} position="left-3 top-3" />
                       <span className="absolute bottom-3 left-3 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] opacity-0 transition duration-300 group-hover:opacity-100">View</span>
                     </Link>
                     <ProductCardFavorite productId={id} shopId={shop._id.toString()} initialSaved={saved.has(id)} />
